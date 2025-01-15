@@ -2,7 +2,7 @@
 #define TEXTURE_COMPILER_H
 #pragma once
 
-#include "../../dependencies/xresource_pipelineV2/source/xresource_pipeline.h"
+#include "../../dependencies/xresource_pipeline_v2/source/xresource_pipeline.h"
 
 namespace xtexture_compiler
 {

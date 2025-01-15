@@ -3,7 +3,7 @@
 #include "../../dependencies/xbmp_tools/src/xbmp_tools.h"
 #include "../../dependencies/crunch/inc/crnlib.h"
 #include "../xtexture_rsc_descriptor.h"
-#include "../../dependencies/xresource_pipelineV2/dependencies/xproperty/source/examples/xcore_sprop_serializer/xcore_sprop_serializer.h"
+#include "../../dependencies/xresource_pipeline_v2/dependencies/xproperty/source/examples/xcore_sprop_serializer/xcore_sprop_serializer.h"
 #include "Compressonator.h"
 #include "etcpack.h"
 #include <iostream>
