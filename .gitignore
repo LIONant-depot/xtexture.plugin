@@ -2,7 +2,7 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
-/bin/example.lion_project/Cache/Resources
-/Build/xtexture_compiler.vs2022/.vs/xtexture_compiler
+/bin/example.lion_project/Cache
+/Build/xtexture_compiler.vs2022/.vs
 /Build/xtexture_compiler.vs2022/x64
-/Build/xtexture_compiler.vs2022/xtexture.4c9e9518/x64
+/Build/xtexture_compiler.vs2022/xtexture.4c9e9518

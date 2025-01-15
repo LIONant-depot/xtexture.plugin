@@ -1,0 +1,24 @@
+
+[ DescriptorVersion ]
+{ Major:d  Minor:d }
+//-------  -------
+     1        0   
+
+// New Types
+< s32:d u32:g s16:C u16:H s8:c u8:h f32:f f64:F string:s u64:G s64:D bool:c enum:s >
+
+[ xProperties : 12 ]
+{ Name:s                         Value:?                                                                                              }
+//-----------------------------  ----------------------------------------------------------------------------------------------------
+  "Texture/Usage"                ;enum   "COLOR_AND_ALPHA"                                                                           
+  "Texture/Wrap Mode U"          ;enum   "CLAMP_TO_EDGE"                                                                             
+  "Texture/Wrap Mode V"          ;enum   "CLAMP_TO_EDGE"                                                                             
+  "Texture/InputType"            ;enum   "SINGLE_INPUT"                                                                              
+  "Texture/Input/Filename"       ;string "D:\LIONant\xGPU\dependencies\xtexture.plugin\bin\example.lion_project\Assets\SheKnewMe.tga"
+  "Texture/Compression"          ;enum   "RGBA_BC7"                                                                                  
+  "Texture/Quality"              ;f32    #3F800000                                                                                   
+  "Texture/SRGB"                 ;bool   1                                                                                           
+  "Texture/GenerateMips"         ;bool   1                                                                                           
+  "Texture/Mipmap Filter"        ;enum   "BOX"                                                                                       
+  "Texture/FillAveColorByAlpha"  ;bool   1                                                                                           
+  "Texture/AlphaThreshold"       ;u8     #80                                                                                         
