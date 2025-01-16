@@ -34,35 +34,35 @@
     <Filter Include="Dependencies\xResourcePipelineV2\Documentation">
       <UniqueIdentifier>{9a52f5d3-f4a1-49ea-b559-ed90880fcdd2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\compressator">
+    <Filter Include="Dependencies\compressonator">
       <UniqueIdentifier>{b7f5f19d-a55f-4529-92fb-e08591ce0bce}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\compressator\cmp_compressonatorlib">
+    <Filter Include="Dependencies\compressonator\cmp_compressonatorlib">
       <UniqueIdentifier>{b6458e67-79dd-468e-877e-0a189255d2c6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\compressator\Half">
+    <Filter Include="Dependencies\compressonator\Half">
       <UniqueIdentifier>{97c281a3-a486-4a3f-b926-62478178d1ba}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\compressator\_pluins">
+    <Filter Include="Dependencies\compressonator\_pluins">
       <UniqueIdentifier>{06f03f64-5fdf-418d-a6bd-78cfd8d9a560}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\compressator\_cpu_ext">
-      <UniqueIdentifier>{71e15e5d-35bf-4419-a380-6241be13c65c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Dependencies\compressator\cmp_core">
-      <UniqueIdentifier>{60e9b84c-0089-4277-89f5-9165955eb654}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Dependencies\compressator\cmp_core\Shaders">
-      <UniqueIdentifier>{866d4f91-875e-434a-81f9-c32950e01986}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Dependencies\compressator\_pluins\dds">
+    <Filter Include="Dependencies\compressonator\_pluins\dds">
       <UniqueIdentifier>{bb76a6fc-294d-493c-82e9-e06c9101c0be}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\compressator\_pluins\hpc">
+    <Filter Include="Dependencies\compressonator\_pluins\hpc">
       <UniqueIdentifier>{cf91794b-7527-4656-b16e-7e2c76c1183b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\compressator\_pluins\bc1">
+    <Filter Include="Dependencies\compressonator\_pluins\bc1">
       <UniqueIdentifier>{72600877-de87-43ae-ab4d-5c87608f7ba8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dependencies\compressonator\_cpu_ext">
+      <UniqueIdentifier>{71e15e5d-35bf-4419-a380-6241be13c65c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dependencies\compressonator\cmp_core">
+      <UniqueIdentifier>{60e9b84c-0089-4277-89f5-9165955eb654}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dependencies\compressonator\cmp_core\Shaders">
+      <UniqueIdentifier>{866d4f91-875e-434a-81f9-c32950e01986}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -313,421 +313,421 @@
       <Filter>Dependencies\xCore</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\3dquant_vpc.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\apc\apc_decode.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\apc\apc_encode.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_decode.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_definitions.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_encode.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_library.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_utils.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_decode.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_definitions.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_encode.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_library.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_partitions.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_utils.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\common\codec.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\apc\codec_apc.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\atc\codec_atc.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\atc\codec_atc_rgb.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\atc\codec_atc_rgba_explicit.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\atc\codec_atc_rgba_interpolated.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\ati\codec_ati_tc.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\ati\codec_ati1n.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\ati\codec_ati2n.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\ati\codec_ati2n_dxt5.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\basis\codec_basis.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\codec_bc6h.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\codec_bc7.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\block\codec_block.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\block\codec_block_4x4.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\block\codec_block_8x8.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt1.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt3.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_rbxg.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_rgxb.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_rxbg.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_swizzled.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_xgbr.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_xgxr.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_xrbg.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxtc\codec_dxtc.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxtc\codec_dxtc_alpha.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxtc\codec_dxtc_rgba.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\gt\codec_gt.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_block.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r8.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r8s.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r16.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r16f.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r32.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r32f.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg8.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg8s.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg16.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg16f.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg32.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg32f.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgb888.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgb888s.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgb9995ef.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba16.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba16f.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba32.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba32f.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba8888.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba8888s.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba1010102.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba2101010.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\compress.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\compressonator.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\ati\compressonatori_tc.c">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\ati\compressonatorxcodec.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxtc\dxtc_v11_compress.c">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxtc\dxtc_v11_compress_asm.c">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\etcpack\etcdec.cxx">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\etcpack\etcimage.cxx">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\gt\gt_decode.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\gt\gt_encode.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\astc\arm\mathlib.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\reconstruct.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\shake.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\astc\arm\softfloat.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_framework\common\half\half.cpp">
-      <Filter>Dependencies\compressator\Half</Filter>
+      <Filter>Dependencies\compressonator\Half</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_framework\common\hdr_encode.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_framework\common\cmp_boxfilter.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_framework\common\cmp_mips.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_framework\compute_base.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\codec_common.cpp">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\cpu_timing.cpp">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\format_conversion.cpp">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\mipstoqimage.cpp">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\misc.cpp">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\pluginmanager.cpp">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\tc_plugininternal.cpp">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\texture_utils.cpp">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\userinterface.cpp">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\utilfuncs.cpp">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\atiformats.cpp">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\cmp_fileio.cpp">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\cmp_math_common.cpp">
-      <Filter>Dependencies\compressator\_cpu_ext</Filter>
+      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\cpu_extensions.cpp">
-      <Filter>Dependencies\compressator\_cpu_ext</Filter>
+      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\jmlfuncs.cpp">
-      <Filter>Dependencies\compressator\_cpu_ext</Filter>
+      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_core\source\cmp_core.cpp">
-      <Filter>Dependencies\compressator\cmp_core</Filter>
+      <Filter>Dependencies\compressonator\cmp_core</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_core\source\core_simd_avx.cpp">
-      <Filter>Dependencies\compressator\cmp_core</Filter>
+      <Filter>Dependencies\compressonator\cmp_core</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_core\source\core_simd_avx512.cpp">
-      <Filter>Dependencies\compressator\cmp_core</Filter>
+      <Filter>Dependencies\compressonator\cmp_core</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_core\source\core_simd_sse.cpp">
-      <Filter>Dependencies\compressator\cmp_core</Filter>
+      <Filter>Dependencies\compressonator\cmp_core</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc2.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc2_rgb.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc2_rgba.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc2_rgba1.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc_rgb.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc_rgba_explicit.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc_rgba_interpolated.cpp">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\etcpack\etcpack.cxx">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_core\shaders\bc1_encode_kernel.cpp">
-      <Filter>Dependencies\compressator\cmp_core\Shaders</Filter>
+      <Filter>Dependencies\compressonator\cmp_core\Shaders</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_core\shaders\bc2_encode_kernel.cpp">
-      <Filter>Dependencies\compressator\cmp_core\Shaders</Filter>
+      <Filter>Dependencies\compressonator\cmp_core\Shaders</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_core\shaders\bc3_encode_kernel.cpp">
-      <Filter>Dependencies\compressator\cmp_core\Shaders</Filter>
+      <Filter>Dependencies\compressonator\cmp_core\Shaders</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_core\shaders\bc4_encode_kernel.cpp">
-      <Filter>Dependencies\compressator\cmp_core\Shaders</Filter>
+      <Filter>Dependencies\compressonator\cmp_core\Shaders</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_core\shaders\bc5_encode_kernel.cpp">
-      <Filter>Dependencies\compressator\cmp_core\Shaders</Filter>
+      <Filter>Dependencies\compressonator\cmp_core\Shaders</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_core\shaders\bc6_encode_kernel.cpp">
-      <Filter>Dependencies\compressator\cmp_core\Shaders</Filter>
+      <Filter>Dependencies\compressonator\cmp_core\Shaders</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_core\shaders\bc7_encode_kernel.cpp">
-      <Filter>Dependencies\compressator\cmp_core\Shaders</Filter>
+      <Filter>Dependencies\compressonator\cmp_core\Shaders</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\cmp_core\shaders\brlg_encode_kernel.cpp">
-      <Filter>Dependencies\compressator\cmp_core\Shaders</Filter>
+      <Filter>Dependencies\compressonator\cmp_core\Shaders</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\cimage\dds\dds.cpp">
-      <Filter>Dependencies\compressator\_pluins\dds</Filter>
+      <Filter>Dependencies\compressonator\_pluins\dds</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\cimage\dds\dds_dx10.cpp">
-      <Filter>Dependencies\compressator\_pluins\dds</Filter>
+      <Filter>Dependencies\compressonator\_pluins\dds</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\cimage\dds\dds_file.cpp">
-      <Filter>Dependencies\compressator\_pluins\dds</Filter>
+      <Filter>Dependencies\compressonator\_pluins\dds</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\cimage\dds\dds_helpers.cpp">
-      <Filter>Dependencies\compressator\_pluins\dds</Filter>
+      <Filter>Dependencies\compressonator\_pluins\dds</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_encode\hpc\ccpu_hpc.cpp">
-      <Filter>Dependencies\compressator\_pluins\hpc</Filter>
+      <Filter>Dependencies\compressonator\_pluins\hpc</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_encode\hpc\cmp_hpc.cpp">
-      <Filter>Dependencies\compressator\_pluins\hpc</Filter>
+      <Filter>Dependencies\compressonator\_pluins\hpc</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_encode\hpc\compute_cpu_hpc.cpp">
-      <Filter>Dependencies\compressator\_pluins\hpc</Filter>
+      <Filter>Dependencies\compressonator\_pluins\hpc</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_sdk\bc1\bc1.cpp">
-      <Filter>Dependencies\compressator\_pluins\bc1</Filter>
+      <Filter>Dependencies\compressonator\_pluins\bc1</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_sdk\bc2\bc2.cpp">
-      <Filter>Dependencies\compressator\_pluins\bc1</Filter>
+      <Filter>Dependencies\compressonator\_pluins\bc1</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_sdk\bc3\bc3.cpp">
-      <Filter>Dependencies\compressator\_pluins\bc1</Filter>
+      <Filter>Dependencies\compressonator\_pluins\bc1</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_sdk\bc4\bc4.cpp">
-      <Filter>Dependencies\compressator\_pluins\bc1</Filter>
+      <Filter>Dependencies\compressonator\_pluins\bc1</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_sdk\bc5\bc5.cpp">
-      <Filter>Dependencies\compressator\_pluins\bc1</Filter>
+      <Filter>Dependencies\compressonator\_pluins\bc1</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_sdk\bc6\bc6h.cpp">
-      <Filter>Dependencies\compressator\_pluins\bc1</Filter>
+      <Filter>Dependencies\compressonator\_pluins\bc1</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_sdk\bc7\bc7.cpp">
-      <Filter>Dependencies\compressator\_pluins\bc1</Filter>
+      <Filter>Dependencies\compressonator\_pluins\bc1</Filter>
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_sdk\bcn.cpp">
-      <Filter>Dependencies\compressator\_pluins\bc1</Filter>
+      <Filter>Dependencies\compressonator\_pluins\bc1</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1248,445 +1248,445 @@
       <Filter>Dependencies\xResourcePipelineV2</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\3dquant_constants.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\3dquant_vpc.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\apc\apc_decode.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\apc\apc_definitions.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\apc\apc_encode.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_decode.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_definitions.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_encode.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_library.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_utils.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_decode.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_definitions.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_encode.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_library.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_partitions.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_utils.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\common\codec.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\apc\codec_apc.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\atc\codec_atc.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\atc\codec_atc_rgb.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\atc\codec_atc_rgba_explicit.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\atc\codec_atc_rgba_interpolated.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\ati\codec_ati1n.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\ati\codec_ati2n.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\ati\codec_ati2n_dxt5.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\basis\codec_basis.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\codec_bc6h.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\codec_bc7.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\block\codec_block.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\block\codec_block_4x4.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\block\codec_block_8x8.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt1.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt3.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_rbxg.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_rgxb.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_rxbg.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_swizzled.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_xgbr.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_xgxr.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_xrbg.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxtc\codec_dxtc.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\gt\codec_gt.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_block.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r8.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r8s.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r16.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r16f.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r32.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r32f.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg8.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg8s.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg16.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg16f.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg32.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg32f.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgb888.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgb888s.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgb9995ef.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba16.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba16f.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba32.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba32f.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba8888.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba8888s.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba1010102.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba2101010.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\common.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\common\compclient.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\common\compress.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\compressonator.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\ati\compressonator_tc.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\ati\compressonatorxcodec.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\common\debug.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxtc\dxtc_v11_compress.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\etcpack\etcimage.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\etcpack.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\etcpack\etcpack_lib.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\gt\gt_decode.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\gt\gt_definitions.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\gt\gt_encode.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\astc\arm\mathlib.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\reconstruct.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\shake.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\astc\arm\softfloat.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\astc\arm\vectypes.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\version.h">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_framework\common\half\elut.h">
-      <Filter>Dependencies\compressator\Half</Filter>
+      <Filter>Dependencies\compressonator\Half</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_framework\common\half\half.h">
-      <Filter>Dependencies\compressator\Half</Filter>
+      <Filter>Dependencies\compressonator\Half</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_framework\common\half\halfexport.h">
-      <Filter>Dependencies\compressator\Half</Filter>
+      <Filter>Dependencies\compressonator\Half</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_framework\common\half\halffunction.h">
-      <Filter>Dependencies\compressator\Half</Filter>
+      <Filter>Dependencies\compressonator\Half</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_framework\common\half\halflimits.h">
-      <Filter>Dependencies\compressator\Half</Filter>
+      <Filter>Dependencies\compressonator\Half</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_framework\common\half\tofloat.h">
-      <Filter>Dependencies\compressator\Half</Filter>
+      <Filter>Dependencies\compressonator\Half</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\codec_common.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\common_kerneldef.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\cpu_timing.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\crc32.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\format_conversion.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\hpc_compress.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\mipstoqimage.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\misc.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\modeldata.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\namespacealias.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\pluginbase.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\plugininterface.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\pluginmanager.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\psnr.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\ssim.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\tc_pluginapi.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\tc_plugininternal.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\testreport.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\texture.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\texture_utils.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\textureio.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\userinterface.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\utilfuncs.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\vectypes.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\atiformats.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\cexr.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\cmdline.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\cmp_fileio.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\cmp_plugininterface.h">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\cmp_rapidxml.hpp">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\tootlepch.h">
-      <Filter>Dependencies\compressator\_cpu_ext</Filter>
+      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\cmp_intrinsics.h">
-      <Filter>Dependencies\compressator\_cpu_ext</Filter>
+      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\cmp_math_common.h">
-      <Filter>Dependencies\compressator\_cpu_ext</Filter>
+      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\cpu_extensions.h">
-      <Filter>Dependencies\compressator\_cpu_ext</Filter>
+      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\jml.h">
-      <Filter>Dependencies\compressator\_cpu_ext</Filter>
+      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\jmlfuncs.h">
-      <Filter>Dependencies\compressator\_cpu_ext</Filter>
+      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\jmlmatrix.h">
-      <Filter>Dependencies\compressator\_cpu_ext</Filter>
+      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\jmlscalar.h">
-      <Filter>Dependencies\compressator\_cpu_ext</Filter>
+      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\jmlssevec.h">
-      <Filter>Dependencies\compressator\_cpu_ext</Filter>
+      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\jmlvec2.h">
-      <Filter>Dependencies\compressator\_cpu_ext</Filter>
+      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\jmlvec3.h">
-      <Filter>Dependencies\compressator\_cpu_ext</Filter>
+      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\jrtcommon.h">
-      <Filter>Dependencies\compressator\_cpu_ext</Filter>
+      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_core\source\cmp_core.h">
-      <Filter>Dependencies\compressator\cmp_core</Filter>
+      <Filter>Dependencies\compressonator\cmp_core</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_core\source\cmp_math_func.h">
-      <Filter>Dependencies\compressator\cmp_core</Filter>
+      <Filter>Dependencies\compressonator\cmp_core</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_core\source\cmp_math_vec4.h">
-      <Filter>Dependencies\compressator\cmp_core</Filter>
+      <Filter>Dependencies\compressonator\cmp_core</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\cmp_core\source\core_simd.h">
-      <Filter>Dependencies\compressator\cmp_core</Filter>
+      <Filter>Dependencies\compressonator\cmp_core</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\cimage\dds\dds_helpers.h">
-      <Filter>Dependencies\compressator\_pluins\dds</Filter>
+      <Filter>Dependencies\compressonator\_pluins\dds</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\cimage\dds\dds.h">
-      <Filter>Dependencies\compressator\_pluins\dds</Filter>
+      <Filter>Dependencies\compressonator\_pluins\dds</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\cimage\dds\dds_dx10.h">
-      <Filter>Dependencies\compressator\_pluins\dds</Filter>
+      <Filter>Dependencies\compressonator\_pluins\dds</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\cimage\dds\dds_file.h">
-      <Filter>Dependencies\compressator\_pluins\dds</Filter>
+      <Filter>Dependencies\compressonator\_pluins\dds</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_encode\hpc\compute_cpu_hpc.h">
-      <Filter>Dependencies\compressator\_pluins\hpc</Filter>
+      <Filter>Dependencies\compressonator\_pluins\hpc</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_encode\hpc\ccpu_hpc.h">
-      <Filter>Dependencies\compressator\_pluins\hpc</Filter>
+      <Filter>Dependencies\compressonator\_pluins\hpc</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_encode\hpc\cmp_hpc.h">
-      <Filter>Dependencies\compressator\_pluins\hpc</Filter>
+      <Filter>Dependencies\compressonator\_pluins\hpc</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dependencies\xbmp_tools\src\xbmp_tools_filters.h">
       <Filter>Dependencies\xBitmapTools</Filter>
@@ -1706,16 +1706,16 @@
       <Filter>Dependencies\xResourcePipelineV2\Documentation</Filter>
     </None>
     <None Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxtc\dxtc_v11_compress_64.asm">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </None>
     <None Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxtc\dxtc_v11_compress_sse2.asm">
-      <Filter>Dependencies\compressator\cmp_compressonatorlib</Filter>
+      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
     </None>
     <None Include="..\..\README.md" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\dependencies\compressonator\applications\_plugins\common\CMakeLists.txt">
-      <Filter>Dependencies\compressator\_pluins</Filter>
+      <Filter>Dependencies\compressonator\_pluins</Filter>
     </Text>
   </ItemGroup>
 </Project>

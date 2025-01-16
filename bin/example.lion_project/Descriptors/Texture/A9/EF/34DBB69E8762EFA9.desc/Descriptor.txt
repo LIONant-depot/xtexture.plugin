@@ -15,7 +15,7 @@
   "Texture/Wrap Mode V"          ;enum   "CLAMP_TO_EDGE"                                                                             
   "Texture/InputType"            ;enum   "SINGLE_INPUT"                                                                              
   "Texture/Input/Filename"       ;string "D:\LIONant\xGPU\dependencies\xtexture.plugin\bin\example.lion_project\Assets\SheKnewMe.tga"
-  "Texture/Compression"          ;enum   "RGBA_BC7"                                                                                  
+  "Texture/Compression"          ;enum   "RGBA_BC1_A1"                                                                               
   "Texture/Quality"              ;f32    #3F800000                                                                                   
   "Texture/SRGB"                 ;bool   1                                                                                           
   "Texture/GenerateMips"         ;bool   1                                                                                           
