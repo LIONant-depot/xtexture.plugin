@@ -529,6 +529,10 @@ namespace xtexture_rsc
         mipmap_filter               m_MipmapFilter          { mipmap_filter::BOX };
         wrap_type                   m_UWrap                 { wrap_type::CLAMP_TO_EDGE };
         wrap_type                   m_VWrap                 { wrap_type::CLAMP_TO_EDGE };
+        bool                        m_bTillableFilter        {false};
+        float                       m_TilableWidthPercentage{ 0.1f };
+        float                       m_TilableHeightPercentage{ 0.1f };
+        bool                        m_bNormalMapFlipY         {false};
 
         virtual void SetupFromSource(std::string_view FileName)
         {
@@ -555,6 +559,14 @@ namespace xtexture_rsc
             if (m_UWrap == xtexture_rsc::wrap_type::WRAP && m_VWrap == xtexture_rsc::wrap_type::MIRROR)
             {
                 Errors.push_back("Sorry but (U set to wrap and V set to mirror) is the only combination that we do not support");
+            }
+
+            if(m_bTillableFilter)
+            {
+                if (m_UWrap != wrap_type::WRAP || m_VWrap != wrap_type::WRAP)
+                {
+                    Errors.push_back("You have enable to Tillable filter so you must setup the Both Wrap Modes to WRAP....");
+                }
             }
         }
 
@@ -769,6 +781,51 @@ namespace xtexture_rsc
             }>
             , member_help<"Specifies the alpha threshold value, which determines how transparent parts of the texture are "
                              "handled.It's like setting a cutoff point for what is considered see-through in your picture."
+            >>
+
+        , obj_scope< "Tillable Filter"
+            , obj_member<"Tillable Filter"
+                , &descriptor::m_bTillableFilter
+                , member_help<"Makes the final image tillable by blending the edges. You can enable or disable this filter"
+                >>
+            , obj_member<"Width Blend Percentage"
+                , &descriptor::m_TilableWidthPercentage
+                , member_ui<float>::scroll_bar<0, 0.5f>
+                , member_dynamic_flags < +[](const descriptor& O)
+                {
+                    xproperty::flags::type Flags{};
+                    Flags.m_bDontShow = O.m_bTillableFilter == false;
+                    return Flags;
+                } >
+                , member_help<"Permanganate on how much to blend relative to the Width of the image. Values ranges from 0 to 0.5f"
+                >>
+            , obj_member<"Height Blend Percentage"
+                , &descriptor::m_TilableHeightPercentage
+                , member_ui<float>::scroll_bar<0, 0.5f>
+                , member_dynamic_flags < +[](const descriptor& O)
+                {
+                    xproperty::flags::type Flags{};
+                    Flags.m_bDontShow = O.m_bTillableFilter == false;
+                    return Flags;
+                } >
+                , member_help<"Permanganate on how much to blend relative to the Height of the image. Values ranges from 0 to 0.5f"
+                >>
+            , member_dynamic_flags < +[](const descriptor& O)
+            {
+                xproperty::flags::type Flags{};
+                Flags.m_bDontShow = O.m_InputVariant.index() >= static_cast<std::size_t>(variant_enum::CUBE_INPUT);
+                return Flags;
+            } 
+            >>
+        , obj_member < "Normal Flip Y"
+            , &descriptor::m_bNormalMapFlipY
+            , member_dynamic_flags < +[](const descriptor& O)
+            {
+                xproperty::flags::type Flags{};
+                Flags.m_bDontShow = O.m_UsageType != usage_type::TANGENT_NORMAL;
+                return Flags;
+            } >
+            , member_help<"Flips the Y in the normal map making it compatible with OpenGL or DX"
             >>
         )
     };

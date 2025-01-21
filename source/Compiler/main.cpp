@@ -15,6 +15,8 @@ int main( int argc, const char* argv[] )
         { "TextureCompiler"
         , "-PROJECT"
         , "D:\\LIONant\\xGPU\\dependencies\\xtexture.plugin\\bin\\example.lion_project"
+        , "-DEBUG"
+        , "-Dz"
         , "-DESCRIPTOR"
         , "Descriptors\\Texture\\A9\\EF\\34DBB69E8762EFA9.desc"
         , "-OUTPUT"
@@ -47,7 +49,7 @@ int main( int argc, const char* argv[] )
         printf("%s\nERROR: Fail to compile(2)\n", Err.getCode().m_pString);
         return Err.getCode().m_RawState;
     }
-    
+
     return 0;
 }
 

@@ -1,22 +1,19 @@
-
 #include "xtexture_compiler.h"
 #include "../../dependencies/xbmp_tools/src/xbmp_tools.h"
 #include "../../dependencies/crunch/inc/crnlib.h"
 #include "../xtexture_rsc_descriptor.h"
 #include "../../dependencies/xresource_pipeline_v2/dependencies/xproperty/source/examples/xcore_sprop_serializer/xcore_sprop_serializer.h"
 #include "Compressonator.h"
-#include "etcpack.h"
 #include <iostream>
 
 namespace crnlib
 {
     extern std::uint32_t g_number_of_processors;
 }
-namespace xtexture_compiler {
 
 //---------------------------------------------------------------------------------------------
 
-struct implementation final : instance
+struct implementation final : xtexture_compiler::instance
 {
     xtexture_rsc::descriptor                        m_Descriptor;
     std::unordered_map<std::string, int>            m_BitmapHash;
@@ -68,15 +65,15 @@ struct implementation final : instance
         //
         // Compile the textures
         //
-        displayProgressBar("Processing Textures", 0.0f);
+        displayProgressBar("Processing ", 0.0f);
         DumpAllFileNamesIntoHash();
-        displayProgressBar("Processing Textures", 20.0f);
+        displayProgressBar("Processing ", 20.0f);
         LoopThrowTheHashAndLoadImages();
-        displayProgressBar("Processing Textures", 40.0f);
+        displayProgressBar("Processing", 40.0f);
         if (m_HasMixes) CollapseMixes();
-        displayProgressBar("Processing Textures", 60.0f);
+        displayProgressBar("Processing ", 60.0f);
         RunGenericFilters();
-        displayProgressBar("Processing Textures", 100.0f);
+        displayProgressBar("Processing ", 100.0f);
         printf("\n");
 
         //
@@ -85,22 +82,27 @@ struct implementation final : instance
         if (false)
         {
             UseCrunch();
-
-            //
-            // Serialize textures
-            //
-            for (auto& T : m_Target)
-            {
-                if (T.m_bValid)
-                {
-                    Serialize(T.m_DataPath.data());
-                }
-            }
         }
         else
         {
             UseCompressonator();
         }
+
+        //
+        // Serialize Final xBitmap
+        //
+        int Count = 0;
+        for (auto& T : m_Target)
+        {
+            displayProgressBar("Serializing", (Count++ / (float)m_Target.size() * 100.0f));
+
+            if (T.m_bValid)
+            {
+                Serialize(T.m_DataPath.data());
+            }
+        }
+        displayProgressBar("Serializing", 100);
+        printf("\n");
 
         return {};
     }
@@ -109,55 +111,6 @@ struct implementation final : instance
 
     void RunGenericFilters()
     {
-        //
-        // Set all the wrapping properly
-        //
-        {
-            xcore::bitmap::wrap_mode Mode;
-            if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::CLAMP_TO_EDGE && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::CLAMP_TO_EDGE)
-            {
-                Mode = xcore::bitmap::wrap_mode::UV_BOTH_CLAMP_TO_EDGE;
-            }
-            else if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::CLAMP_TO_EDGE && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::WRAP)
-            {
-                Mode = xcore::bitmap::wrap_mode::UV_UCLAMP_VWRAP;
-            }
-            else if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::WRAP && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::CLAMP_TO_EDGE)
-            {
-                Mode = xcore::bitmap::wrap_mode::UV_UWRAP_VCLAMP;
-            }
-            else if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::WRAP && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::WRAP)
-            {
-                Mode = xcore::bitmap::wrap_mode::UV_BOTH_WRAP;
-            }
-            else if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::MIRROR && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::CLAMP_TO_EDGE)
-            {
-                Mode = xcore::bitmap::wrap_mode::UV_UMIRROR_VCLAMP;
-            }
-            else if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::CLAMP_TO_EDGE && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::MIRROR)
-            {
-                Mode = xcore::bitmap::wrap_mode::UV_UCLAMP_VMIRROR;
-            }
-            else if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::MIRROR && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::MIRROR)
-            {
-                Mode = xcore::bitmap::wrap_mode::UV_BOTH_MIRROR;
-            }
-            else if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::MIRROR && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::WRAP)
-            {
-                Mode = xcore::bitmap::wrap_mode::UV_UMIRROR_VWRAP;
-            }
-            else
-            {
-                // We do not support any other mode...
-                assert(false);
-            }
-
-            for (auto& B : m_Bitmaps)
-            {
-                B.setWrapMode(Mode);
-            }
-        }
-
         //
         // If the user told us that he does not care about alpha let us make sure is set to 255
         //
@@ -191,6 +144,31 @@ struct implementation final : instance
             for (auto& B : m_Bitmaps)
             {
                 xbmp::tools::filters::FillAvrColorBaseOnAlpha(B, m_Descriptor.m_AlphaThreshold);
+            }
+        }
+
+        //
+        // Make it tillable if requested by the user
+        //
+        if ( m_Descriptor.m_bTillableFilter)
+        {
+            for (auto& B : m_Bitmaps)
+            {
+                xbmp::tools::filters::MakeBitmapTilable(B, m_Descriptor.m_TilableWidthPercentage, m_Descriptor.m_TilableHeightPercentage);
+            }
+        }
+
+        //
+        // m_bNormalMapFlipY
+        //
+        if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::TANGENT_NORMAL && m_Descriptor.m_bNormalMapFlipY)
+        {
+            for (auto& B : m_Bitmaps)
+            {
+                for (auto& E : B.getMip<xcore::icolor>(0))
+                {
+                    E.m_G = 255 - E.m_G;
+                }
             }
         }
     }
@@ -354,7 +332,59 @@ struct implementation final : instance
     // We normalize the bitmaps so we can treat them all the same way
     void NormalizeBitmap( xcore::bitmap& Bitmap )
     {
-        if( Bitmap.getFormat() == xcore::bitmap::format::R8G8B8A8 ) return;
+        //
+        // Set all the wrapping properly
+        //
+        auto SetTheRightWrapMode = [&]()
+        {
+            xcore::bitmap::wrap_mode Mode;
+            if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::CLAMP_TO_EDGE && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::CLAMP_TO_EDGE)
+            {
+                Mode = xcore::bitmap::wrap_mode::UV_BOTH_CLAMP_TO_EDGE;
+            }
+            else if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::CLAMP_TO_EDGE && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::WRAP)
+            {
+                Mode = xcore::bitmap::wrap_mode::UV_UCLAMP_VWRAP;
+            }
+            else if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::WRAP && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::CLAMP_TO_EDGE)
+            {
+                Mode = xcore::bitmap::wrap_mode::UV_UWRAP_VCLAMP;
+            }
+            else if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::WRAP && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::WRAP)
+            {
+                Mode = xcore::bitmap::wrap_mode::UV_BOTH_WRAP;
+            }
+            else if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::MIRROR && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::CLAMP_TO_EDGE)
+            {
+                Mode = xcore::bitmap::wrap_mode::UV_UMIRROR_VCLAMP;
+            }
+            else if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::CLAMP_TO_EDGE && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::MIRROR)
+            {
+                Mode = xcore::bitmap::wrap_mode::UV_UCLAMP_VMIRROR;
+            }
+            else if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::MIRROR && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::MIRROR)
+            {
+                Mode = xcore::bitmap::wrap_mode::UV_BOTH_MIRROR;
+            }
+            else if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::MIRROR && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::WRAP)
+            {
+                Mode = xcore::bitmap::wrap_mode::UV_UMIRROR_VWRAP;
+            }
+            else
+            {
+                // We do not support any other mode...
+                assert(false);
+            }
+
+            Bitmap.setWrapMode(Mode);
+        };
+
+        if( Bitmap.getFormat() == xcore::bitmap::format::R8G8B8A8 ) 
+        {
+            // Make sure it has the right wrap mode
+            SetTheRightWrapMode();
+            return;
+        }
 
         if( Bitmap.getFormat() != xcore::bitmap::format::R8G8B8 && Bitmap.getFormat() != xcore::bitmap::format::R5G6B5 )
             throw(std::runtime_error("Source texture has a strange format"));
@@ -391,6 +421,11 @@ struct implementation final : instance
         , 1
         , 1
         );
+
+        //
+        // Make sure it has the right wrap mode
+        //
+        SetTheRightWrapMode();
     }
 
     //---------------------------------------------------------------------------------------------
@@ -580,33 +615,26 @@ struct implementation final : instance
 
     //---------------------------------------------------------------------------------------------
 
-    crn_format MatchForceCompressionFormat()
-    {
-        constexpr static auto Table = []() consteval ->auto
-        {
-            std::array< crn_format, static_cast<std::int32_t>(xtexture_rsc::compression_format::count_v) > Array = { crn_format::cCRNFmtInvalid };
-
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_BC1)]     = crn_format::cCRNFmtDXT1;
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC1_A1)] = crn_format::cCRNFmtDXT1;
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC3_A8)] = crn_format::cCRNFmtDXT3;
-
-            return Array;
-        }();
-
-        return Table[static_cast<std::int32_t>(m_Descriptor.m_Compression) ];
-    }
-
-    //---------------------------------------------------------------------------------------------
-
     void UseCrunch( void )
     {
+        constexpr static auto TableConvertFormat = []() consteval ->auto
+            {
+                std::array< crn_format, static_cast<std::int32_t>(xtexture_rsc::compression_format::count_v) > Array = { crn_format::cCRNFmtInvalid };
+
+                Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_BC1)]     = crn_format::cCRNFmtDXT1;
+                Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC1_A1)] = crn_format::cCRNFmtDXT1;
+                Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC3_A8)] = crn_format::cCRNFmtDXT3;
+
+                return Array;
+            }();
+
         // Crunch the image data and return a pointer to the crunched result array
         crn_comp_params Params;
         Params.clear();
 
         Params.m_alpha_component = ( m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC1_A1 
                                   || m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC3_A8);
-        Params.m_format          = MatchForceCompressionFormat();
+        Params.m_format          = TableConvertFormat[static_cast<std::int32_t>(m_Descriptor.m_Compression)];
 
         if ( Params.m_format == crn_format::cCRNFmtInvalid )
             throw(std::runtime_error("The compiler can not handle the specified compression format"));
@@ -927,9 +955,79 @@ struct implementation final : instance
             }
         }
 
+
         //
-        // Serialize texture
-        // 
+        // Convert from Mipset to xcore::bitmap
+        //
+        static constexpr auto DescriptorBitmapFormatToxBitmap = []() consteval ->auto
+            {
+                std::array< xcore::bitmap::format, static_cast<std::int32_t>(xtexture_rsc::compression_format::count_v) > Array = { xcore::bitmap::format::XCOLOR_END };
+                Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_BC1)]             = xcore::bitmap::format::BC1_4RGB;
+                Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC1_A1)]         = xcore::bitmap::format::BC1_4RGBA1;
+                Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC3_A8)]         = xcore::bitmap::format::BC3_8RGBA;
+                Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::R_BC4)]               = xcore::bitmap::format::BC4_4R;
+                Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RG_BC5)]              = xcore::bitmap::format::BC5_8RG;
+                Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_UHDR_BC6)]        = xcore::bitmap::format::BC6H_8RGB_FLOAT;
+                Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_SHDR_BC6)]        = xcore::bitmap::format::BC6H_8RGB_FLOAT;
+                Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC7)]            = xcore::bitmap::format::BC7_8RGBA;
+                Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_UNCOMPRESSED)]   = xcore::bitmap::format::XCOLOR;
+                return Array;
+            }();
+
+        if (DescriptorBitmapFormatToxBitmap[static_cast<std::int32_t>(m_Descriptor.m_Compression)] == xcore::bitmap::format::XCOLOR_END)
+            throw(std::runtime_error("Unable to convert the texture to xcore::bitmap"));
+
+        //
+        // Set up the Final xBitmap
+        //
+        {
+            // Compute total memory require for the texture
+            std::uint32_t TotalTexelByteSize = 0;
+            for ( int i=0; i< MipSetCompressed.m_nMipLevels; ++i )
+            {
+                TotalTexelByteSize += MipSetCompressed.m_pMipLevelTable[i]->m_dwLinearSize;
+            }
+            const auto MipTableSize = sizeof(xcore::bitmap::mip) * MipSetCompressed.m_nMipLevels;
+            std::unique_ptr<std::byte[]> TextureData = std::make_unique<std::byte[]>(MipTableSize + TotalTexelByteSize);
+
+            // Copy the data to the texture
+            {
+                auto pTextureData   = MipTableSize + TextureData.get();
+                auto pMipTable      = reinterpret_cast<xcore::bitmap::mip*>(TextureData.get());
+                auto PrevOffset     = 0u;
+
+                for (int i = 0; i < MipSetCompressed.m_nMipLevels; ++i)
+                {
+                    // Handle copying the mip data
+                    const auto& Mip = *MipSetCompressed.m_pMipLevelTable[i];
+                    memcpy(pTextureData, Mip.m_pbData, Mip.m_dwLinearSize);
+                    pTextureData += Mip.m_dwLinearSize;
+
+                    // Handle the mip table
+                    pMipTable[i].m_Offset = static_cast<int>(PrevOffset);
+                    PrevOffset += Mip.m_dwLinearSize;
+                }
+            }
+
+            m_FinalBitmap.setup
+            (  static_cast<std::uint32_t>(MipSetCompressed.m_nWidth)
+             , static_cast<std::uint32_t>(MipSetCompressed.m_nHeight)
+             , DescriptorBitmapFormatToxBitmap[static_cast<std::int32_t>(m_Descriptor.m_Compression)]
+             , static_cast<std::uint64_t>(TotalTexelByteSize)
+             , { reinterpret_cast<std::byte*>(TextureData.release()), static_cast<std::uint64_t>(MipTableSize + TotalTexelByteSize) }
+             , true
+             , MipSetCompressed.m_nMipLevels
+             , 1 );
+
+            m_FinalBitmap.setColorSpace(m_Descriptor.m_bSRGB ? xcore::bitmap::color_space::SRGB : xcore::bitmap::color_space::LINEAR);
+            m_FinalBitmap.setCubemap(m_bCubeMap);
+            m_FinalBitmap.setWrapMode(m_Bitmaps[0].getWrapMode());
+        }
+
+        //
+        // Serialize DDS texture (Only for debug mode... since we are using xbmp for the final texture)
+        //
+        if (m_DebugType == debug_type::D1)
         {
             assert( m_Target[static_cast<int>(xcore::target::platform::WINDOWS)].m_bValid );
             auto& Path = m_Target[static_cast<int>(xcore::target::platform::WINDOWS)].m_DataPath;
@@ -992,15 +1090,21 @@ struct implementation final : instance
 
     void Serialize(const std::string_view FilePath)
     {
-        if (auto Err = m_FinalBitmap.SerializeSave(xcore::string::To<wchar_t>(FilePath), false); Err)
+        //
+        // We serialize the final image as a xbmp because the file size is usually half the size of a DDS file
+        //
+        auto FinalPath = xcore::string::Fmt("%s.xbmp", FilePath.data());
+
+        if (auto Err = m_FinalBitmap.SerializeSave(xcore::string::To<wchar_t>(FinalPath), false); Err)
             throw(std::runtime_error(Err.getCode().m_pString));
 
         //
-        // Verify this can be loaded... this can be put into a debug mode later..
+        // Verify this can be loaded... 
         //
+        if( m_DebugType == debug_type::Dz )
         {
             xcore::bitmap* pTemp;
-            if (auto Err = m_FinalBitmap.SerializeLoad( pTemp, xcore::string::To<wchar_t>(FilePath)); Err)
+            if (auto Err = m_FinalBitmap.SerializeLoad( pTemp, xcore::string::To<wchar_t>(FinalPath)); Err)
                 throw(std::runtime_error(Err.getCode().m_pString));
 
             //
@@ -1013,12 +1117,11 @@ struct implementation final : instance
 
 //---------------------------------------------------------------------------------------------
 
-std::unique_ptr<instance> instance::Create( void )
+namespace xtexture_compiler
 {
-    return std::make_unique<implementation>();
+    std::unique_ptr<instance> instance::Create( void )
+    {
+        return std::make_unique<implementation>();
+    }
 }
 
-//---------------------------------------------------------------------------------------------
-// end of namespace xtexture_compiler
-//---------------------------------------------------------------------------------------------
-} 
