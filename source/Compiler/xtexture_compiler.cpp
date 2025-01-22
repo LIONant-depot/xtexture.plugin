@@ -32,7 +32,7 @@ struct implementation final : xtexture_compiler::instance
 
     //---------------------------------------------------------------------------------------------
 
-    xcore::err onCompile(void) noexcept override
+    xcore::err onCompile(void) override
     {
         //
         // Read the descriptor file...
@@ -179,12 +179,12 @@ struct implementation final : xtexture_compiler::instance
         if( xcore::string::FindStrI( FilePath, ".dds" ) == 0 )
         {
             if( auto Err = xbmp::tools::loader::LoadDSS( Bitmap, FilePath ); Err )
-                throw( std::runtime_error( xbmp::tools::getErrorMsg(Err) ) );
+                throw( std::runtime_error( std::format( "{}, [BROKEN_LINK] {}", xbmp::tools::getErrorMsg(Err), FilePath.c_str() )) );
         }
         else
         {
             if( auto Err = xbmp::tools::loader::LoadSTDImage( Bitmap, FilePath ); Err )
-                throw(std::runtime_error(xbmp::tools::getErrorMsg(Err)));
+                throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", xbmp::tools::getErrorMsg(Err), FilePath.c_str())));
         }
     }
 
