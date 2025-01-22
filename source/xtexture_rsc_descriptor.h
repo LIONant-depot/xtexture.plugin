@@ -170,7 +170,7 @@ namespace xtexture_rsc
         , obj_member< "Copy To",   &mix::m_CopyTo, member_enum_span<compositing_v> >
         , obj_member< "FileName"
             , &mix::m_FileName
-            , member_ui<std::string>::file_dialog<image_filter_v> 
+            , member_ui<std::string>::file_dialog<image_filter_v, true, 1> 
             >
         )
     };
@@ -271,7 +271,7 @@ namespace xtexture_rsc
         ("single_input", single_input
         , obj_member<"Filename"
             , &single_input::m_FileName
-            , member_ui<std::string>::file_dialog<image_filter_v> 
+            , member_ui<std::string>::file_dialog<image_filter_v, true, 1> 
             >
         )
     };
@@ -295,7 +295,7 @@ namespace xtexture_rsc
         , obj_member<"Filenames"
             , &single_input_array::m_FileNameList
             , member_ui_open<true>
-            , member_ui<std::string>::file_dialog<image_filter_v>
+            , member_ui<std::string>::file_dialog<image_filter_v, true, 1>
             , member_ui_list_size::drag_bar<1, 100> 
             >
         )
@@ -322,12 +322,12 @@ namespace xtexture_rsc
 
         XPROPERTY_DEF
         ("cube_input", cube_input
-            , obj_member<"Filename Left Face", &cube_input::m_FileNameLeft, member_ui<std::string>::file_dialog<image_filter_v> >
-            , obj_member<"Filename Back Face", &cube_input::m_FileNameBack, member_ui<std::string>::file_dialog<image_filter_v> >
-            , obj_member<"Filename Right Face", &cube_input::m_FileNameRight, member_ui<std::string>::file_dialog<image_filter_v> >
-            , obj_member<"Filename Down Face", &cube_input::m_FileNameDown, member_ui<std::string>::file_dialog<image_filter_v> >
-            , obj_member<"Filename Up Face", &cube_input::m_FileNameUp, member_ui<std::string>::file_dialog<image_filter_v> >
-            , obj_member<"Filename Forward Face", &cube_input::m_FileNameForward, member_ui<std::string>::file_dialog<image_filter_v> >
+            , obj_member<"Filename Left Face", &cube_input::m_FileNameLeft, member_ui<std::string>::file_dialog<image_filter_v, true, 1> >
+            , obj_member<"Filename Back Face", &cube_input::m_FileNameBack, member_ui<std::string>::file_dialog<image_filter_v, true, 1> >
+            , obj_member<"Filename Right Face", &cube_input::m_FileNameRight, member_ui<std::string>::file_dialog<image_filter_v, true, 1> >
+            , obj_member<"Filename Down Face", &cube_input::m_FileNameDown, member_ui<std::string>::file_dialog<image_filter_v, true, 1> >
+            , obj_member<"Filename Up Face", &cube_input::m_FileNameUp, member_ui<std::string>::file_dialog<image_filter_v, true, 1> >
+            , obj_member<"Filename Forward Face", &cube_input::m_FileNameForward, member_ui<std::string>::file_dialog<image_filter_v, true, 1> >
         )
     };
 
