@@ -67,13 +67,13 @@ struct implementation final : xtexture_compiler::instance
         //
         displayProgressBar("Processing ", 0.0f);
         DumpAllFileNamesIntoHash();
-        displayProgressBar("Processing ", 20.0f);
+        displayProgressBar("Processing ", 0.2f);
         LoopThrowTheHashAndLoadImages();
-        displayProgressBar("Processing", 40.0f);
+        displayProgressBar("Processing ", 0.4f);
         if (m_HasMixes) CollapseMixes();
-        displayProgressBar("Processing ", 60.0f);
+        displayProgressBar("Processing ", 0.6f);
         RunGenericFilters();
-        displayProgressBar("Processing ", 100.0f);
+        displayProgressBar("Processing ", 1.0f);
         printf("\n");
 
         //
@@ -94,15 +94,14 @@ struct implementation final : xtexture_compiler::instance
         int Count = 0;
         for (auto& T : m_Target)
         {
-            displayProgressBar("Serializing", (Count++ / (float)m_Target.size() * 100.0f));
+            displayProgressBar("Serializing", Count++ / (float)m_Target.size() );
 
             if (T.m_bValid)
             {
                 Serialize(T.m_DataPath.data());
             }
         }
-        displayProgressBar("Serializing", 100);
-        printf("\n");
+        displayProgressBar("Serializing", 1);
 
         return {};
     }
@@ -917,12 +916,14 @@ struct implementation final : xtexture_compiler::instance
             }
             else
             {
-                static int s_ActualProgress;
-                static int s_nMipMaps;
-                static int s_Updates;
+                static int   s_ActualProgress;
+                static int   s_nMipMaps;
+                static int   s_Updates;
+                static base* s_pBase;
                 s_nMipMaps       = MipSet.m_nMipLevels;
                 s_ActualProgress = 0;
                 s_Updates        = 0;
+                s_pBase          = this;
                 memset(&MipSetCompressed, 0, sizeof(CMP_MipSet));
                 CMP_ERROR cmp_status = CMP_ProcessTexture(&MipSet, &MipSetCompressed, KernelOps, [](CMP_FLOAT fProgress, CMP_DWORD_PTR, CMP_DWORD_PTR) ->bool
                 {
@@ -930,6 +931,7 @@ struct implementation final : xtexture_compiler::instance
                     {
                         s_ActualProgress++;
                         s_Updates=0;
+                        fProgress=0;
                     }
                     else
                     {
@@ -938,15 +940,15 @@ struct implementation final : xtexture_compiler::instance
                     
                     if ((s_Updates%20)==0)
                     {
-                        float per =  (s_ActualProgress / static_cast<float>(s_nMipMaps));
-                        displayProgressBar( "Compression", per );
+                        float t       =  (fProgress / 100.f) / static_cast<float>(s_nMipMaps);
+                        float total   =  (s_ActualProgress / static_cast<float>(s_nMipMaps)) + t;
+                        s_pBase->displayProgressBar( "Compression", total );
                     }
 
                     return CMP_OK;
                 });
 
-                // Make sure that the display finish at 100%
-                displayProgressBar("Compression", 100);
+                // Flush to the new line
                 printf("\n");
                 if (cmp_status != CMP_OK)
                     throw(std::runtime_error("Unable to compress the texture"));
@@ -1029,12 +1031,9 @@ struct implementation final : xtexture_compiler::instance
         //
         if (m_DebugType == debug_type::D1)
         {
-            assert( m_Target[static_cast<int>(xcore::target::platform::WINDOWS)].m_bValid );
-            auto& Path = m_Target[static_cast<int>(xcore::target::platform::WINDOWS)].m_DataPath;
-
             // Force the DDS file to serialize wih the DX10 Header (Only for gamma textures)
             if (m_Descriptor.m_bSRGB) MipSetCompressed.m_dwFourCC = CMP_MAKEFOURCC('D', 'X', '1', '0');
-            auto filename = xcore::string::Fmt("%s.dds", Path.data());
+            auto filename = xcore::string::Fmt("%s\\FinalImage.dds", m_ResourceLogPath.data());
 
             CMP_ERROR cmp_status = CMP_SaveTexture(filename, &MipSetCompressed);
             if (cmp_status != CMP_OK)
