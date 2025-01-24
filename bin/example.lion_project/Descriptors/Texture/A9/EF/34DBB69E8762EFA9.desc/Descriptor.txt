@@ -11,10 +11,10 @@
 { Name:s                                             Value:?                        }
 //-------------------------------------------------  ------------------------------
   "Texture/Usage"                                    ;enum   "COLOR_AND_ALPHA"     
-  "Texture/Wrap Mode U"                              ;enum   "WRAP"                
-  "Texture/Wrap Mode V"                              ;enum   "WRAP"                
+  "Texture/Wrap Mode U"                              ;enum   "CLAMP_TO_EDGE"       
+  "Texture/Wrap Mode V"                              ;enum   "CLAMP_TO_EDGE"       
   "Texture/InputType"                                ;enum   "SINGLE_INPUT"        
-  "Texture/Input/Filename"                           ;string "Assets\SheKnewMe.tga"
+  "Texture/Input/Filename"                           ;string "Assets\NormalMap.png"
   "Texture/Compression"                              ;enum   "RGBA_BC7"            
   "Texture/Quality"                                  ;f32    #3F800000             
   "Texture/SRGB"                                     ;bool   1                     
@@ -23,6 +23,6 @@
   "Texture/FillAveColorByAlpha"                      ;bool   1                     
   "Texture/AlphaThreshold"                           ;u8     #80                   
   "Texture/Tillable Filter/Tillable Filter"          ;bool   0                     
-  "Texture/Tillable Filter/Width Blend Percentage"   ;f32    #3D91B908             
-  "Texture/Tillable Filter/Height Blend Percentage"  ;f32    #3D91B908             
+  "Texture/Tillable Filter/Width Blend Percentage"   ;f32    #3D83992D             
+  "Texture/Tillable Filter/Height Blend Percentage"  ;f32    #3D8AA906             
   "Texture/Normal Flip Y"                            ;bool   1                     

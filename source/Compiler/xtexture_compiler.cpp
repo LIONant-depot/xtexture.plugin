@@ -849,12 +849,14 @@ struct implementation final : xtexture_compiler::instance
             if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::MIRROR || m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::MIRROR ) 
                 CFilterParam.dwMipFilterOptions |= CMP_D3DX_FILTER_MIRROR;
 
-            // This seems to destroy the color information for alpha textures with BC1_A1 compression
+            // Does this do anything?
             if (m_Descriptor.m_bSRGB )
                 CFilterParam.dwMipFilterOptions |= CMP_D3DX_FILTER_SRGB;
 
             CFilterParam.nMinSize           = CMP_CalcMaxMipLevel(MipSet.m_nHeight, MipSet.m_nWidth, false);
-            CFilterParam.fGammaCorrection   = 1;//m_Descriptor.m_bSRGB ? inv_gamma_v : 1.0f;
+            CFilterParam.fGammaCorrection   = m_Descriptor.m_bSRGB ? inv_gamma_v : 1.0f;
+
+            // This line below does not seem to change anything... 
             CFilterParam.useSRGB            = m_Descriptor.m_bSRGB;
 
             CMP_GenerateMIPLevelsEx(&MipSet, &CFilterParam);
@@ -883,18 +885,18 @@ struct implementation final : xtexture_compiler::instance
             else if (m_DebugType == debug_type::D1) KernelOps.getDeviceInfo = true;
             else if (m_DebugType == debug_type::Dz) KernelOps.getDeviceInfo = true;
 
+            // Set alpha compatibility for textures that need it
+            if (m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC1_A1)
+            {
+                KernelOps.bc15.useAlphaThreshold = true;
+                KernelOps.bc15.alphaThreshold = m_Descriptor.m_AlphaThreshold;
+            }
+
             //
             // handle gamma textures
             //
             if ( m_Descriptor.m_bSRGB )
             {
-
-                if( m_Descriptor.m_Compression  == xtexture_rsc::compression_format::RGBA_BC1_A1 )
-                {
-                    KernelOps.bc15.useAlphaThreshold = true;
-                    KernelOps.bc15.alphaThreshold    = m_Descriptor.m_AlphaThreshold;
-                }
-
                 // Set channel weights for better perceptual compression
                 KernelOps.bc15.useChannelWeights = true;
                 KernelOps.bc15.channelWeights[0] = 0.3086f; // Red
