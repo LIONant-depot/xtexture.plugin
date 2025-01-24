@@ -25,4 +25,4 @@
   "Texture/Tillable Filter/Tillable Filter"          ;bool   0                     
   "Texture/Tillable Filter/Width Blend Percentage"   ;f32    #3D83992D             
   "Texture/Tillable Filter/Height Blend Percentage"  ;f32    #3D8AA906             
-  "Texture/Normal Flip Y"                            ;bool   1                     
+  "Texture/Normal Flip Y"                            ;bool   0                     

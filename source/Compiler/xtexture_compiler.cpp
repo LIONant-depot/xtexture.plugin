@@ -60,6 +60,17 @@ struct implementation final : xtexture_compiler::instance
                     
                 return xerr_failure_s("The descriptor has validation errors");
             }
+
+            if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::TANGENT_NORMAL && m_Descriptor.m_bSRGB)
+            {
+                XLOG_CHANNEL_WARNING(m_LogChannel, "You have selected SRGB (Gamma) space, this will unnormalize the normals and create problems");
+            }
+
+            if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::INTENSITY && m_Descriptor.m_bSRGB)
+            {
+                XLOG_CHANNEL_WARNING(m_LogChannel, "You have selected SRGB (Gamma) space, for an intensity texture... This is unusual...");
+            }
+
         }
 
         //
@@ -74,7 +85,6 @@ struct implementation final : xtexture_compiler::instance
         displayProgressBar("Processing ", 0.6f);
         RunGenericFilters();
         displayProgressBar("Processing ", 1.0f);
-        printf("\n");
 
         //
         // Now we are ready to compress and serialize our texture
@@ -113,7 +123,8 @@ struct implementation final : xtexture_compiler::instance
         //
         // If the user told us that he does not care about alpha let us make sure is set to 255
         //
-        if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::COLOR)
+        if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::COLOR ||
+            m_Descriptor.m_UsageType == xtexture_rsc::usage_type::TANGENT_NORMAL)
         {
             for (auto& B : m_Bitmaps)
             {
@@ -167,6 +178,41 @@ struct implementation final : xtexture_compiler::instance
                 for (auto& E : B.getMip<xcore::icolor>(0))
                 {
                     E.m_G = 255 - E.m_G;
+                }
+            }
+        }
+
+        //
+        // Prepare Normal Map Compressions
+        //
+        if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::TANGENT_NORMAL )
+        {
+            if (m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC3_A8)
+            {
+                for (auto& B : m_Bitmaps)
+                {
+                    for (auto& E : B.getMip<xcore::icolor>(0))
+                    {
+                        auto O = E;
+                        E.m_R = 0;
+                        E.m_G = O.m_G;
+                        E.m_B = 0;
+                        E.m_A = O.m_R;
+                    }
+                }
+            }
+            else if (m_Descriptor.m_Compression == xtexture_rsc::compression_format::RG_BC5)
+            {
+                for (auto& B : m_Bitmaps)
+                {
+                    for (auto& E : B.getMip<xcore::icolor>(0))
+                    {
+                        auto O = E;
+                        E.m_R = O.m_G;
+                        E.m_G = O.m_R;
+                        E.m_B = 0;
+                        E.m_A = 0;
+                    }
                 }
             }
         }
@@ -951,7 +997,6 @@ struct implementation final : xtexture_compiler::instance
                 });
 
                 // Flush to the new line
-                printf("\n");
                 if (cmp_status != CMP_OK)
                     throw(std::runtime_error("Unable to compress the texture"));
 

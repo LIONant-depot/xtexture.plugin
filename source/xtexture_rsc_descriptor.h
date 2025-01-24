@@ -117,8 +117,19 @@ namespace xtexture_rsc
 
     static constexpr auto compression_format_tangent_normal_v = std::array
     { xproperty::settings::enum_item("RGBA_UNCOMPRESSED",   compression_format_tangent_normal::RGBA_UNCOMPRESSED, compression_format_uncompressed_help_v)
-    , xproperty::settings::enum_item("RG_BC5",              compression_format_tangent_normal::RG_BC5)
-    , xproperty::settings::enum_item("RGBA_BC3_A8",         compression_format_tangent_normal::RGBA_BC3_A8)
+    , xproperty::settings::enum_item("RG_BC5",              compression_format_tangent_normal::RG_BC5, "When compressing a normal map only 2 components of the normal will in fact be saved."
+                                                                                                       "To decompress from this format you will need to do the following in your shader:\n"
+                                                                                                       "vec3 Normal;\n"
+                                                                                                       "Normal.rg = texture(uSamplerNormal, In.UV).gr;\n"
+                                                                                                       "Normal.xy = Normal.rg * 2.0 - 1.0;\n"
+                                                                                                       "Normal.z  = sqrt(1.0 - dot(Normal.xy, Normal.xy));")
+    , xproperty::settings::enum_item("RGBA_BC3_A8",         compression_format_tangent_normal::RGBA_BC3_A8, "When compressing a normal map only 2 components of the normal will in fact be saved."
+                                                                                                            "Even if BC3 in back has 4 channels, due to the type of compression is always preferable to do 2."
+                                                                                                            "to decompress this format in your shader you will need to do the following:\n"
+                                                                                                            "vec3 Normal;\n"
+                                                                                                            "Normal.rg = texture(uSamplerNormal, In.UV).ag;"
+                                                                                                            "Normal.xy =  Normal.rg * 2.0 - 1.0;"
+                                                                                                            "Normal.z  = sqrt(1.0 - dot(Normal.xy, Normal.xy));")
     , xproperty::settings::enum_item("RGBA_BC7",            compression_format_tangent_normal::RGBA_BC7)
     , xproperty::settings::enum_item("RGBA_SUPER_COMPRESS", compression_format_tangent_normal::RGBA_SUPER_COMPRESS)
     };
@@ -571,6 +582,14 @@ namespace xtexture_rsc
                 if (m_UWrap != wrap_type::WRAP || m_VWrap != wrap_type::WRAP)
                 {
                     Errors.push_back("You have enable to Tillable filter so you must setup the Both Wrap Modes to WRAP....");
+                }
+            }
+
+            if (m_Compression == compression_format::RG_BC5)
+            {
+                if (m_bSRGB )
+                {
+                    Errors.push_back("BC5 does not support gamma You must set SRGB flag to false");
                 }
             }
         }
