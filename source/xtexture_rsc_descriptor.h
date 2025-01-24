@@ -80,12 +80,14 @@ namespace xtexture_rsc
     enum class compression_format_color : std::uint8_t
     { RGBA_UNCOMPRESSED     = compression_format::RGBA_UNCOMPRESSED
     , RGB_BC1               = compression_format::RGB_BC1
+    , RGB_BC7               = compression_format::RGBA_BC7
     , RGB_SUPER_COMPRESS    = compression_format::RGB_SUPER_COMPRESS
     };
 
     static constexpr auto compression_format_color_v = std::array
     { xproperty::settings::enum_item("RGBA_UNCOMPRESSED",   compression_format_color::RGBA_UNCOMPRESSED, compression_format_uncompressed_help_v)
     , xproperty::settings::enum_item("RGB_BC1",             compression_format_color::RGB_BC1, compression_format_bc1_help_v)
+    , xproperty::settings::enum_item("RGB_BC7",             compression_format_color::RGB_BC7, compression_format_bc7_help_v)
     , xproperty::settings::enum_item("RGB_SUPER_COMPRESS",  compression_format_color::RGB_SUPER_COMPRESS)
     };
 
@@ -116,6 +118,8 @@ namespace xtexture_rsc
     static constexpr auto compression_format_tangent_normal_v = std::array
     { xproperty::settings::enum_item("RGBA_UNCOMPRESSED",   compression_format_tangent_normal::RGBA_UNCOMPRESSED, compression_format_uncompressed_help_v)
     , xproperty::settings::enum_item("RG_BC5",              compression_format_tangent_normal::RG_BC5)
+    , xproperty::settings::enum_item("RGBA_BC3_A8",         compression_format_tangent_normal::RGBA_BC3_A8)
+    , xproperty::settings::enum_item("RGBA_BC7",            compression_format_tangent_normal::RGBA_BC7)
     , xproperty::settings::enum_item("RGBA_SUPER_COMPRESS", compression_format_tangent_normal::RGBA_SUPER_COMPRESS)
     };
 
@@ -550,7 +554,8 @@ namespace xtexture_rsc
             {
                 if( m_Compression != compression_format::RG_BC5 
                  && m_Compression != compression_format::RGBA_UNCOMPRESSED
-                 && m_Compression != compression_format::RGBA_BC7 )
+                 && m_Compression != compression_format::RGBA_BC7
+                 && m_Compression != compression_format::RGBA_BC3_A8)
                 {
                     Errors.push_back("You have selected usage Normal but the compression you selected does not support Normal compression");
                 }
