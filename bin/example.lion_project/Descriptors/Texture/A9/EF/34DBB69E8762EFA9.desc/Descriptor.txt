@@ -7,22 +7,24 @@
 // New Types
 < s32:d u32:g s16:C u16:H s8:c u8:h f32:f f64:F string:s u64:G s64:D bool:c enum:s >
 
-[ xProperties : 16 ]
-{ Name:s                                             Value:?                        }
-//-------------------------------------------------  ------------------------------
-  "Texture/Usage"                                    ;enum   "TANGENT_NORMAL"      
-  "Texture/Wrap Mode U"                              ;enum   "CLAMP_TO_EDGE"       
-  "Texture/Wrap Mode V"                              ;enum   "CLAMP_TO_EDGE"       
-  "Texture/InputType"                                ;enum   "SINGLE_INPUT"        
-  "Texture/Input/Filename"                           ;string "Assets\NormalMap.png"
-  "Texture/Compression"                              ;enum   "RGBA_BC7"            
-  "Texture/Quality"                                  ;f32    #3F800000             
-  "Texture/SRGB"                                     ;bool   0                     
-  "Texture/GenerateMips"                             ;bool   1                     
-  "Texture/Mipmap Filter"                            ;enum   "BOX"                 
-  "Texture/FillAveColorByAlpha"                      ;bool   0                     
-  "Texture/AlphaThreshold"                           ;u8     #80                   
-  "Texture/Tillable Filter/Tillable Filter"          ;bool   0                     
-  "Texture/Tillable Filter/Width Blend Percentage"   ;f32    #3D83992D             
-  "Texture/Tillable Filter/Height Blend Percentage"  ;f32    #3D8AA906             
-  "Texture/Normal Flip Y"                            ;bool   0                     
+[ xProperties : 18 ]
+{ Name:s                                             Value:?                                                                         }
+//-------------------------------------------------  -------------------------------------------------------------------------------
+  "Texture/Usage"                                    ;enum   "COLOR_AND_ALPHA"                                                      
+  "Texture/Wrap Mode U"                              ;enum   "CLAMP_TO_EDGE"                                                        
+  "Texture/Wrap Mode V"                              ;enum   "CLAMP_TO_EDGE"                                                        
+  "Texture/InputType"                                ;enum   "SINGLE_INPUT"                                                         
+  "Texture/Input/Filename"                           ;string "Assets\alpha_metallix_sprite_sheet_by_superretroclassic81_dg70mww.png"
+  "Texture/Compression"                              ;enum   "RGBA_BC3_A8"                                                          
+  "Texture/Quality"                                  ;f32    #3F800000                                                              
+  "Texture/SRGB/SRGB"                                ;bool   1                                                                      
+  "Texture/SRGB/Src Image To Full SRGB"              ;bool   0                                                                      
+  "Texture/SRGB/Convert With Gamma"                  ;f32    #400CCCCD                                                              
+  "Texture/GenerateMips"                             ;bool   1                                                                      
+  "Texture/Mipmap Filter"                            ;enum   "BOX"                                                                  
+  "Texture/FillAveColorByAlpha"                      ;bool   0                                                                      
+  "Texture/AlphaThreshold"                           ;u8     #80                                                                    
+  "Texture/Tillable Filter/Tillable Filter"          ;bool   0                                                                      
+  "Texture/Tillable Filter/Width Blend Percentage"   ;f32    #3DCCCCCD                                                              
+  "Texture/Tillable Filter/Height Blend Percentage"  ;f32    #3DCCCCCD                                                              
+  "Texture/Normal Flip Y"                            ;bool   0                                                                      

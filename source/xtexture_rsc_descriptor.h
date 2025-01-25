@@ -39,7 +39,9 @@ namespace xtexture_rsc
     static constexpr auto compression_format_bc1_a_help_v =
     "4bits per-pixel, block compression format also known as DXT1. It version supports 1bit alpha also known a punch-throw. \n\n"
     "It is the most used format for sRGB color images such sprites or fonts. This format compresses the image"
-    "with a block of 4x4 pixels and achieves a (6:1 compression ratio).";
+    "with a block of 4x4 pixels and achieves a (6:1 compression ratio).\n\n"
+    "NOTE: That for the pixels that are going to be transparent the color will be set to black. "
+    "This seems to be due to the BC1 compression format.";
 
     static constexpr auto compression_format_bc3_help_v =
     "8bits per-pixel, block compression format also known as DXT5. This format is typically used for alpha textures.\n\n"
@@ -127,8 +129,8 @@ namespace xtexture_rsc
                                                                                                             "Even if BC3 in back has 4 channels, due to the type of compression is always preferable to do 2."
                                                                                                             "to decompress this format in your shader you will need to do the following:\n"
                                                                                                             "vec3 Normal;\n"
-                                                                                                            "Normal.rg = texture(uSamplerNormal, In.UV).ag;"
-                                                                                                            "Normal.xy =  Normal.rg * 2.0 - 1.0;"
+                                                                                                            "Normal.rg = texture(uSamplerNormal, In.UV).ag;\n"
+                                                                                                            "Normal.xy = Normal.rg * 2.0 - 1.0;\n"
                                                                                                             "Normal.z  = sqrt(1.0 - dot(Normal.xy, Normal.xy));")
     , xproperty::settings::enum_item("RGBA_BC7",            compression_format_tangent_normal::RGBA_BC7)
     , xproperty::settings::enum_item("RGBA_SUPER_COMPRESS", compression_format_tangent_normal::RGBA_SUPER_COMPRESS)
@@ -536,18 +538,20 @@ namespace xtexture_rsc
             compression_format_hdr_color        m_CompressionHDRColor;
         };
         
-        float                       m_Quality               { 0.5f };
-        bool                        m_bSRGB                 { true };
-        bool                        m_bGenerateMips         { true };
-        bool                        m_bFillAveColorByAlpha  { false };
-        std::uint8_t                m_AlphaThreshold        { 128 };
-        mipmap_filter               m_MipmapFilter          { mipmap_filter::BOX };
-        wrap_type                   m_UWrap                 { wrap_type::CLAMP_TO_EDGE };
-        wrap_type                   m_VWrap                 { wrap_type::CLAMP_TO_EDGE };
-        bool                        m_bTillableFilter        {false};
-        float                       m_TilableWidthPercentage{ 0.1f };
-        float                       m_TilableHeightPercentage{ 0.1f };
-        bool                        m_bNormalMapFlipY         {false};
+        float                       m_Quality                   { 0.5f };
+        bool                        m_bSRGB                     { true };
+        bool                        m_bConvertSrcImageToFullSRGB{ false };
+        float                       m_ConvertSrcSRGBWithGamma   { 2.2f };
+        bool                        m_bGenerateMips             { true };
+        bool                        m_bFillAveColorByAlpha      { false };
+        std::uint8_t                m_AlphaThreshold            { 128 };
+        mipmap_filter               m_MipmapFilter              { mipmap_filter::BOX };
+        wrap_type                   m_UWrap                     { wrap_type::CLAMP_TO_EDGE };
+        wrap_type                   m_VWrap                     { wrap_type::CLAMP_TO_EDGE };
+        bool                        m_bTillableFilter           {false};
+        float                       m_TilableWidthPercentage    { 0.1f };
+        float                       m_TilableHeightPercentage   { 0.1f };
+        bool                        m_bNormalMapFlipY           {false};
 
         virtual void SetupFromSource(std::string_view FileName)
         {
@@ -755,14 +759,44 @@ namespace xtexture_rsc
             , member_help<"Quality affects the level of detail in the texture. "
                             "Higher quality means more detail, but will take longer to compute."
             >>
-        , obj_member<"SRGB"
-            , &descriptor::m_bSRGB
-            , member_help<"Specifies whether the texture should be treated as sRGB. "
-                "sRGB is a color space that is used to display images on screens. "
-                "It is the standard color space for most images, but not all images "
-                "should be treated as sRGB. For example, images that are already in "
-                "linear color space should not be treated as sRGB."
-            >>
+        , obj_scope< "SRGB"
+            , obj_member<"SRGB"
+                , &descriptor::m_bSRGB
+                , member_help<"Tell the system that the image is Gamma and that the mips and other functions "
+                              "should convert to linear before doing anything to its data. However the RAW data "
+                              "can still be store in the linear range. If you don't enable this the texture will be "
+                              "consider to be fully in linear space. Linear space is reserved for textures such "
+                              "Normal maps, Roughness, AO, etc... Basically mathematical textures not meant for the "
+                              "Humans to be seems."
+                >>
+            , obj_member<"Src Image To Full SRGB"
+                , &descriptor::m_bConvertSrcImageToFullSRGB
+                , member_dynamic_flags < +[](const descriptor& O)
+                {
+                    xproperty::flags::type Flags{};
+                    Flags.m_bDontShow = O.m_bSRGB == false;
+                    return Flags;
+                }>
+                , member_help<"Most textures raw data are express in Linear space which means "
+                              "that no hardware conversion is necessary. This works well for most images however "
+                              "if you have a dark image then fully representing your image in SRGB will give you "
+                              "a better range of colors and be more precise for the same cost of bits. "
+                              "This does require that you must tell your graphics API that the image was encoded in SRGB "
+                              "so it can convert it in real time to linear. This is basically free."
+                >>
+
+            , obj_member<"Convert With Gamma"
+                , &descriptor::m_ConvertSrcSRGBWithGamma
+                , member_dynamic_flags < +[](const descriptor& O)
+                {
+                    xproperty::flags::type Flags{};
+                    Flags.m_bDontShow = O.m_bConvertSrcImageToFullSRGB == false || O.m_bSRGB == false;
+                    return Flags;
+                }>
+                , member_help<"When converting your image to gamma space you can specify your own gamma, "
+                              "You don't need to follow the standard 2.2 all depending what you are trying to do."
+                >>
+            >
         , obj_member<"GenerateMips"
             , &descriptor::m_bGenerateMips
             , member_help<"This property indicates whether the texture should be treated as sRGB, "
@@ -800,7 +834,7 @@ namespace xtexture_rsc
             , member_dynamic_flags < +[](const descriptor& O)
             {
                 xproperty::flags::type Flags{};
-                Flags.m_bDontShow = O.m_UsageType != usage_type::COLOR_AND_ALPHA && O.m_UsageType != usage_type::INTENSITY;
+                Flags.m_bDontShow = !(O.m_UsageType == usage_type::COLOR_AND_ALPHA && (O.m_bFillAveColorByAlpha || O.m_Compression == compression_format::RGBA_BC1_A1));
                 return Flags;
             }>
             , member_help<"Specifies the alpha threshold value, which determines how transparent parts of the texture are "

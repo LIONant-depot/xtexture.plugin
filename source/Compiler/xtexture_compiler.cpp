@@ -48,30 +48,8 @@ struct implementation final : xtexture_compiler::instance
         //
         // Do a quick validation of the descriptor
         //
-        {
-            std::vector<std::string> Errors;
-            m_Descriptor.Validate(Errors);
-            if (Errors.size())
-            {
-                for (auto& E : Errors)
-                {
-                    XLOG_CHANNEL_ERROR(m_LogChannel, E.c_str());
-                }
-                    
-                return xerr_failure_s("The descriptor has validation errors");
-            }
-
-            if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::TANGENT_NORMAL && m_Descriptor.m_bSRGB)
-            {
-                XLOG_CHANNEL_WARNING(m_LogChannel, "You have selected SRGB (Gamma) space, this will unnormalize the normals and create problems");
-            }
-
-            if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::INTENSITY && m_Descriptor.m_bSRGB)
-            {
-                XLOG_CHANNEL_WARNING(m_LogChannel, "You have selected SRGB (Gamma) space, for an intensity texture... This is unusual...");
-            }
-
-        }
+        if (auto Err = DoValidation(); Err )
+            return Err;
 
         //
         // Compile the textures
@@ -89,14 +67,28 @@ struct implementation final : xtexture_compiler::instance
         //
         // Now we are ready to compress and serialize our texture
         //
-        if (false)
+        if ( false && 
+             m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC1_A1 
+          && m_Descriptor.m_UsageType   == xtexture_rsc::usage_type::COLOR_AND_ALPHA )
         {
+            // Turns out that Compressanator can not handle Color and Alpha compression well in this format
+            // It makes the color black for the transparent pixels...
+            // Seems like crunch has also this problem...
+            XLOG_CHANNEL_INFO(m_LogChannel, "using Crunch as the compression compiler");
             UseCrunch();
         }
         else
         {
+            XLOG_CHANNEL_INFO(m_LogChannel, "using Compressonator as the compression compiler");
             UseCompressonator();
         }
+
+        //
+        // Make sure the final xbitmap has all the basics setup
+        //
+        m_FinalBitmap.setColorSpace( (m_Descriptor.m_bSRGB && m_Descriptor.m_bConvertSrcImageToFullSRGB) ? xcore::bitmap::color_space::SRGB : xcore::bitmap::color_space::LINEAR);
+        m_FinalBitmap.setCubemap(m_bCubeMap);
+        m_FinalBitmap.setWrapMode(m_Bitmaps[0].getWrapMode());
 
         //
         // Serialize Final xBitmap
@@ -112,6 +104,37 @@ struct implementation final : xtexture_compiler::instance
             }
         }
         displayProgressBar("Serializing", 1);
+
+        return {};
+    }
+
+    //---------------------------------------------------------------------------------------------
+
+    xcore::err DoValidation() const
+    {
+        {
+            std::vector<std::string> Errors;
+            m_Descriptor.Validate(Errors);
+            if (Errors.size())
+            {
+                for (auto& E : Errors)
+                {
+                    XLOG_CHANNEL_ERROR(m_LogChannel, E.c_str());
+                }
+
+                return xerr_failure_s("The descriptor has validation errors");
+            }
+        }
+
+        if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::TANGENT_NORMAL && m_Descriptor.m_bSRGB)
+        {
+            XLOG_CHANNEL_WARNING(m_LogChannel, "You have selected SRGB (Gamma) space, this will unnormalize the normals and create problems");
+        }
+
+        if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::INTENSITY && m_Descriptor.m_bSRGB)
+        {
+            XLOG_CHANNEL_WARNING(m_LogChannel, "You have selected SRGB (Gamma) space, for an intensity texture... This is unusual...");
+        }
 
         return {};
     }
@@ -138,6 +161,7 @@ struct implementation final : xtexture_compiler::instance
         //
         // If we are compressing base on BC1 force the alpha base on the threshold
         //
+        if (false) // This should not be needed as the compiler already doing this
         if (m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC1_A1)
         {
             for (auto& B : m_Bitmaps)
@@ -153,7 +177,11 @@ struct implementation final : xtexture_compiler::instance
         {
             for (auto& B : m_Bitmaps)
             {
-                xbmp::tools::filters::FillAvrColorBaseOnAlpha(B, m_Descriptor.m_AlphaThreshold);
+                // If we are doing debugging let us be obvious to what this filter is doing...
+                if ( m_DebugType == debug_type::Dz || m_DebugType == debug_type::D1 )
+                    xbmp::tools::filters::FillAvrColorBaseOnAlpha(B, m_Descriptor.m_AlphaThreshold );
+                else
+                    xbmp::tools::filters::FillAvrColorBaseOnAlpha(B, m_Descriptor.m_AlphaThreshold, 1);
             }
         }
 
@@ -169,24 +197,21 @@ struct implementation final : xtexture_compiler::instance
         }
 
         //
-        // m_bNormalMapFlipY
-        //
-        if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::TANGENT_NORMAL && m_Descriptor.m_bNormalMapFlipY)
-        {
-            for (auto& B : m_Bitmaps)
-            {
-                for (auto& E : B.getMip<xcore::icolor>(0))
-                {
-                    E.m_G = 255 - E.m_G;
-                }
-            }
-        }
-
-        //
         // Prepare Normal Map Compressions
         //
         if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::TANGENT_NORMAL )
         {
+            if (m_Descriptor.m_bNormalMapFlipY)
+            {
+                for (auto& B : m_Bitmaps)
+                {
+                    for (auto& E : B.getMip<xcore::icolor>(0))
+                    {
+                        E.m_G = 255 - E.m_G;
+                    }
+                }
+            }
+
             if (m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC3_A8)
             {
                 for (auto& B : m_Bitmaps)
@@ -194,7 +219,7 @@ struct implementation final : xtexture_compiler::instance
                     for (auto& E : B.getMip<xcore::icolor>(0))
                     {
                         auto O = E;
-                        E.m_R = 0;
+                        E.m_R = 0xff;
                         E.m_G = O.m_G;
                         E.m_B = 0;
                         E.m_A = O.m_R;
@@ -677,8 +702,11 @@ struct implementation final : xtexture_compiler::instance
         crn_comp_params Params;
         Params.clear();
 
+        Params.m_dxt1a_alpha_threshold = m_Descriptor.m_AlphaThreshold;
+
         Params.m_alpha_component = ( m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC1_A1 
-                                  || m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC3_A8);
+                                  || m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC3_A8)
+                                   && m_Descriptor.m_UsageType  == xtexture_rsc::usage_type::COLOR_AND_ALPHA ? 3 : 0;
         Params.m_format          = TableConvertFormat[static_cast<std::int32_t>(m_Descriptor.m_Compression)];
 
         if ( Params.m_format == crn_format::cCRNFmtInvalid )
@@ -695,7 +723,7 @@ struct implementation final : xtexture_compiler::instance
         else if (Scalar <= 0.7f)  Params.m_dxt_quality = crn_dxt_quality::cCRNDXTQualityNormal;
         else if (Scalar <= 0.8f)  Params.m_dxt_quality = crn_dxt_quality::cCRNDXTQualityBetter;
         else if (Scalar <= 0.9f)  Params.m_dxt_quality = crn_dxt_quality::cCRNDXTQualityUber;
-        else Params.m_dxt_quality = crn_dxt_quality::cCRNDXTQualityTotal;
+        else Params.m_dxt_quality = crn_dxt_quality::cCRNDXTQualityUber;
 
 
         Params.m_width                  = m_Bitmaps[0].getWidth();
@@ -711,8 +739,10 @@ struct implementation final : xtexture_compiler::instance
             Params.m_pImages[i][0] = m_Bitmaps[i].getMip<std::uint32_t>(0).data();
         }
 
+        
+
         // If we are doing colors we can use perceptual compression otherwise we can not
-        if (m_Descriptor.m_bSRGB && (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::COLOR || m_Descriptor.m_UsageType == xtexture_rsc::usage_type::COLOR_AND_ALPHA) )
+        if (m_Descriptor.m_bSRGB )
             Params.m_flags |= crn_comp_flags::cCRNCompFlagPerceptual;
         else
             Params.m_flags &= ~crn_comp_flags::cCRNCompFlagPerceptual;
@@ -721,6 +751,10 @@ struct implementation final : xtexture_compiler::instance
             Params.m_flags |= crn_comp_flags::cCRNCompFlagGrayscaleSampling;
         else 
             Params.m_flags &= ~crn_comp_flags::cCRNCompFlagGrayscaleSampling;
+
+        if ( m_Descriptor.m_UsageType == xtexture_rsc::usage_type::COLOR_AND_ALPHA 
+          && m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC1_A1 )
+            Params.m_flags |= cCRNCompFlagDXT1AForTransparency;
 
              if (m_DebugType == debug_type::D0) Params.m_flags &= ~crn_comp_flags::cCRNCompFlagDebugging;
         else if (m_DebugType == debug_type::D1) Params.m_flags |= crn_comp_flags::cCRNCompFlagDebugging;
@@ -731,12 +765,51 @@ struct implementation final : xtexture_compiler::instance
         if( Params.check() == false )
             throw(std::runtime_error("Parameters for the compressor (crunch) failed."));
 
+
         crn_uint32        CompressSize;
         crn_mipmap_params Mipmaps;
         Mipmaps.clear();
+
+        if (m_Descriptor.m_bConvertSrcImageToFullSRGB && m_Descriptor.m_bSRGB)
+        {
+            const auto inv_gamma_v = (1.0f / m_Descriptor.m_ConvertSrcSRGBWithGamma);
+
+            // Take it from gamma space to linear space
+            for (auto& B : m_Bitmaps)
+            {
+                for (auto& E : B.getMip<xcore::icolor>(0))
+                {
+                    E.m_R = static_cast<std::uint8_t>(std::min(0xff, static_cast<int>(std::pow(E.m_R / (float)0xff, inv_gamma_v) * 0xff + 0.5f)));
+                    E.m_G = static_cast<std::uint8_t>(std::min(0xff, static_cast<int>(std::pow(E.m_G / (float)0xff, inv_gamma_v) * 0xff + 0.5f)));
+                    E.m_B = static_cast<std::uint8_t>(std::min(0xff, static_cast<int>(std::pow(E.m_B / (float)0xff, inv_gamma_v) * 0xff + 0.5f)));
+                }
+            }
+        }
+
+        // Set gamma filtering... 
+        Mipmaps.m_gamma_filtering = m_Descriptor.m_bSRGB;
+
+        //
+        // Actual compression
+        //
         {
             crn_uint32  Actual_quality_level;   // Print stats
             float       Actual_bitrate;
+
+            Params.m_pProgress_func_data = this;
+            Params.m_pProgress_func      = [](crn_uint32 phase_index, crn_uint32 total_phases, crn_uint32 subphase_index, crn_uint32 total_subphases, void* pUser_data_ptr) -> crn_bool
+            {
+                auto pThis = reinterpret_cast<implementation*>(pUser_data_ptr);
+                auto i     = phase_index * total_subphases + subphase_index ;
+
+                if ((i % 20) == 0 || (phase_index == (total_phases-1) && subphase_index == (total_subphases-1)))
+                {
+                    float total = static_cast<float>(total_phases * total_subphases);
+                    pThis->displayProgressBar("Compression", i/total);
+                }
+
+                return true;
+            };
 
             m_pDDSData = crn_compress
             ( Params
@@ -751,13 +824,33 @@ struct implementation final : xtexture_compiler::instance
         }
 
         //
+        // Debug save the dds file
+        //
+        if (m_DebugType == debug_type::D1 || m_DebugType == debug_type::D1)
+        {
+            auto filename = xcore::string::Fmt("%s\\FinalImage.dds", m_ResourceLogPath.data());
+
+            // IF it suposed to have gamma make sure to convert it to sRGB
+            FILE* fp = fopen(filename, "wb");
+            if (fp == nullptr)
+                throw(std::runtime_error("Unable to save the Debug dds..."));
+
+            // in the DDS file offset to dxgiFormat part of the DX10 header
+            if (-1 == fseek(fp, 128, SEEK_SET))
+                throw(std::runtime_error("Unable to save the Debug dds..."));
+
+            if (-1 == fwrite(m_pDDSData, CompressSize, 1, fp))
+                throw(std::runtime_error("Unable to save the Debug dds..."));
+
+            fclose(fp);
+        }
+
+
+        //
         // Convert from DDS format to xcore::bitmap
         //
         if (auto Err = xbmp::tools::loader::LoadDSS(m_FinalBitmap, { reinterpret_cast<std::byte*>(m_pDDSData), CompressSize }); Err)
             throw(std::runtime_error(xbmp::tools::getErrorMsg(Err)));
-
-        m_FinalBitmap.setColorSpace( (Params.m_flags & crn_comp_flags::cCRNCompFlagPerceptual) ? xcore::bitmap::color_space::SRGB : xcore::bitmap::color_space::LINEAR );
-        m_FinalBitmap.setCubemap(m_bCubeMap);
     }
 
     //---------------------------------------------------------------------------------------------
@@ -829,7 +922,7 @@ struct implementation final : xtexture_compiler::instance
         //
         // Setup the mip tables
         //
-        constexpr auto max_mip_levels_v = 20;
+        constexpr auto max_mip_levels_v = 40;
         CMP_MipLevel** MipLevelTable = new CMP_MipLevel*[max_mip_levels_v] {};
         for (int i = 0; i < max_mip_levels_v; ++i) MipLevelTable[i] = new CMP_MipLevel();
 
@@ -877,33 +970,36 @@ struct implementation final : xtexture_compiler::instance
         //
         // Generate the mipmaps
         //
-        if( m_Descriptor.m_bGenerateMips )
         {
-            constexpr auto      inv_gamma_v = 1.0f / 2.2f;
             CMP_CFilterParams   CFilterParam  = {};
 
             switch (m_Descriptor.m_MipmapFilter)
             {
-            case xtexture_rsc::mipmap_filter::NONE:      CFilterParam.nFilterType = CMP_D3DX_FILTER_NONE; break;
-            case xtexture_rsc::mipmap_filter::POINT:     CFilterParam.nFilterType = CMP_D3DX_FILTER_POINT; break;
-            case xtexture_rsc::mipmap_filter::LINEAR:    CFilterParam.nFilterType = CMP_D3DX_FILTER_LINEAR; break;
-            case xtexture_rsc::mipmap_filter::TRIANGLE:  CFilterParam.nFilterType = CMP_D3DX_FILTER_TRIANGLE; break;
-            case xtexture_rsc::mipmap_filter::BOX:       CFilterParam.nFilterType = CMP_D3DX_FILTER_BOX; break;
+            case xtexture_rsc::mipmap_filter::NONE:      CFilterParam.nFilterType = CMP_D3DX_FILTER_NONE;       break;
+            case xtexture_rsc::mipmap_filter::POINT:     CFilterParam.nFilterType = CMP_D3DX_FILTER_POINT;      break;
+            case xtexture_rsc::mipmap_filter::LINEAR:    CFilterParam.nFilterType = CMP_D3DX_FILTER_LINEAR;     break;
+            case xtexture_rsc::mipmap_filter::TRIANGLE:  CFilterParam.nFilterType = CMP_D3DX_FILTER_TRIANGLE;   break;
+            case xtexture_rsc::mipmap_filter::BOX:       CFilterParam.nFilterType = CMP_D3DX_FILTER_BOX;        break;
             }
 
             CFilterParam.dwMipFilterOptions = 0;
             if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::MIRROR || m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::MIRROR ) 
                 CFilterParam.dwMipFilterOptions |= CMP_D3DX_FILTER_MIRROR;
+            else
+                CFilterParam.dwMipFilterOptions &= ~CMP_D3DX_FILTER_MIRROR;
 
             // Does this do anything?
             if (m_Descriptor.m_bSRGB )
                 CFilterParam.dwMipFilterOptions |= CMP_D3DX_FILTER_SRGB;
+            else
+                CFilterParam.dwMipFilterOptions &= ~CMP_D3DX_FILTER_SRGB;
 
-            CFilterParam.nMinSize           = CMP_CalcMaxMipLevel(MipSet.m_nHeight, MipSet.m_nWidth, false);
-            CFilterParam.fGammaCorrection   = m_Descriptor.m_bSRGB ? inv_gamma_v : 1.0f;
+
+            CFilterParam.nMinSize           = (m_Descriptor.m_bGenerateMips==false) ? std::max(MipSet.m_nHeight, MipSet.m_nWidth) : CMP_CalcMaxMipLevel(MipSet.m_nHeight, MipSet.m_nWidth, false);
+            CFilterParam.fGammaCorrection   = (m_Descriptor.m_bConvertSrcImageToFullSRGB && m_Descriptor.m_bSRGB) ? (1.0f/m_Descriptor.m_ConvertSrcSRGBWithGamma) : 1.0f;
 
             // This line below does not seem to change anything... 
-            CFilterParam.useSRGB            = m_Descriptor.m_bSRGB;
+            CFilterParam.useSRGB            = (m_Descriptor.m_bConvertSrcImageToFullSRGB && m_Descriptor.m_bSRGB) ? false : m_Descriptor.m_bSRGB;
 
             CMP_GenerateMIPLevelsEx(&MipSet, &CFilterParam);
         }
@@ -932,16 +1028,20 @@ struct implementation final : xtexture_compiler::instance
             else if (m_DebugType == debug_type::Dz) KernelOps.getDeviceInfo = true;
 
             // Set alpha compatibility for textures that need it
-            if (m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC1_A1)
+            if (m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC1_A1 
+             && m_Descriptor.m_UsageType == xtexture_rsc::usage_type::COLOR_AND_ALPHA )
             {
                 KernelOps.bc15.useAlphaThreshold = true;
-                KernelOps.bc15.alphaThreshold = m_Descriptor.m_AlphaThreshold;
+                KernelOps.bc15.alphaThreshold    = m_Descriptor.m_AlphaThreshold;
             }
+
+            // I have not idea what this does...
+            KernelOps.useSRGBFrames = (m_Descriptor.m_bConvertSrcImageToFullSRGB && m_Descriptor.m_bSRGB) ? false : m_Descriptor.m_bSRGB;
 
             //
             // handle gamma textures
             //
-            if ( m_Descriptor.m_bSRGB )
+            if ( (m_Descriptor.m_bConvertSrcImageToFullSRGB && m_Descriptor.m_bSRGB) ? false : m_Descriptor.m_bSRGB )
             {
                 // Set channel weights for better perceptual compression
                 KernelOps.bc15.useChannelWeights = true;
@@ -951,7 +1051,7 @@ struct implementation final : xtexture_compiler::instance
             }
 
 
-            KernelOps.useSRGBFrames = m_Descriptor.m_bSRGB;
+            KernelOps.useSRGBFrames = (m_Descriptor.m_bConvertSrcImageToFullSRGB && m_Descriptor.m_bSRGB) ? false : m_Descriptor.m_bSRGB;
             
 
             //
@@ -1067,10 +1167,6 @@ struct implementation final : xtexture_compiler::instance
              , true
              , MipSetCompressed.m_nMipLevels
              , 1 );
-
-            m_FinalBitmap.setColorSpace(m_Descriptor.m_bSRGB ? xcore::bitmap::color_space::SRGB : xcore::bitmap::color_space::LINEAR);
-            m_FinalBitmap.setCubemap(m_bCubeMap);
-            m_FinalBitmap.setWrapMode(m_Bitmaps[0].getWrapMode());
         }
 
         //
@@ -1089,7 +1185,7 @@ struct implementation final : xtexture_compiler::instance
             //  
             // HACK: Hack to convert to sRGB since compressonator does not support it...
             //
-            if (m_Descriptor.m_bSRGB)
+            if (m_Descriptor.m_bConvertSrcImageToFullSRGB)
             {
                 constexpr static auto ToSRGB = []() consteval ->auto
                 {
@@ -1107,14 +1203,14 @@ struct implementation final : xtexture_compiler::instance
                     // IF it suposed to have gamma make sure to convert it to sRGB
                     FILE* fp = fopen(filename, "r+b" );
                     if( fp == nullptr )
-                        throw(std::runtime_error("Unable to reload the dds..."));
+                        throw(std::runtime_error("Unable to reload the Debug dds..."));
 
                     // in the DDS file offset to dxgiFormat part of the DX10 header
                     if (-1 == fseek(fp, 128, SEEK_SET))        
-                        throw(std::runtime_error("Unable to reload the dds..."));
+                        throw(std::runtime_error("Unable to reload the Debug dds..."));
 
                     if (-1 == fwrite(&NewFormat, 4, 1, fp))
-                        throw(std::runtime_error("Unable to reload the dds..."));
+                        throw(std::runtime_error("Unable to reload the Debug dds..."));
 
                     fclose(fp);
                 }
