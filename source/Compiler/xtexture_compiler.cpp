@@ -86,7 +86,7 @@ struct implementation final : xtexture_compiler::instance
         //
         // Make sure the final xbitmap has all the basics setup
         //
-        m_FinalBitmap.setColorSpace( (m_Descriptor.m_bSRGB && m_Descriptor.m_bConvertSrcImageToFullSRGB) ? xcore::bitmap::color_space::SRGB : xcore::bitmap::color_space::LINEAR);
+        m_FinalBitmap.setColorSpace( m_Descriptor.m_bSRGB ? xcore::bitmap::color_space::SRGB : xcore::bitmap::color_space::LINEAR);
         m_FinalBitmap.setCubemap(m_bCubeMap);
         m_FinalBitmap.setWrapMode(m_Bitmaps[0].getWrapMode());
 
@@ -770,22 +770,6 @@ struct implementation final : xtexture_compiler::instance
         crn_mipmap_params Mipmaps;
         Mipmaps.clear();
 
-        if (m_Descriptor.m_bConvertSrcImageToFullSRGB && m_Descriptor.m_bSRGB)
-        {
-            const auto inv_gamma_v = (1.0f / m_Descriptor.m_ConvertSrcSRGBWithGamma);
-
-            // Take it from gamma space to linear space
-            for (auto& B : m_Bitmaps)
-            {
-                for (auto& E : B.getMip<xcore::icolor>(0))
-                {
-                    E.m_R = static_cast<std::uint8_t>(std::min(0xff, static_cast<int>(std::pow(E.m_R / (float)0xff, inv_gamma_v) * 0xff + 0.5f)));
-                    E.m_G = static_cast<std::uint8_t>(std::min(0xff, static_cast<int>(std::pow(E.m_G / (float)0xff, inv_gamma_v) * 0xff + 0.5f)));
-                    E.m_B = static_cast<std::uint8_t>(std::min(0xff, static_cast<int>(std::pow(E.m_B / (float)0xff, inv_gamma_v) * 0xff + 0.5f)));
-                }
-            }
-        }
-
         // Set gamma filtering... 
         Mipmaps.m_gamma_filtering = m_Descriptor.m_bSRGB;
 
@@ -996,10 +980,10 @@ struct implementation final : xtexture_compiler::instance
 
 
             CFilterParam.nMinSize           = (m_Descriptor.m_bGenerateMips==false) ? std::max(MipSet.m_nHeight, MipSet.m_nWidth) : CMP_CalcMaxMipLevel(MipSet.m_nHeight, MipSet.m_nWidth, false);
-            CFilterParam.fGammaCorrection   = (m_Descriptor.m_bConvertSrcImageToFullSRGB && m_Descriptor.m_bSRGB) ? (1.0f/m_Descriptor.m_ConvertSrcSRGBWithGamma) : 1.0f;
+            CFilterParam.fGammaCorrection   = 1.0f;
 
             // This line below does not seem to change anything... 
-            CFilterParam.useSRGB            = (m_Descriptor.m_bConvertSrcImageToFullSRGB && m_Descriptor.m_bSRGB) ? false : m_Descriptor.m_bSRGB;
+            CFilterParam.useSRGB            = m_Descriptor.m_bSRGB;
 
             CMP_GenerateMIPLevelsEx(&MipSet, &CFilterParam);
         }
@@ -1036,12 +1020,12 @@ struct implementation final : xtexture_compiler::instance
             }
 
             // I have not idea what this does...
-            KernelOps.useSRGBFrames = (m_Descriptor.m_bConvertSrcImageToFullSRGB && m_Descriptor.m_bSRGB) ? false : m_Descriptor.m_bSRGB;
+            KernelOps.useSRGBFrames = m_Descriptor.m_bSRGB;
 
             //
             // handle gamma textures
             //
-            if ( (m_Descriptor.m_bConvertSrcImageToFullSRGB && m_Descriptor.m_bSRGB) ? false : m_Descriptor.m_bSRGB )
+            if ( m_Descriptor.m_bSRGB )
             {
                 // Set channel weights for better perceptual compression
                 KernelOps.bc15.useChannelWeights = true;
@@ -1051,7 +1035,7 @@ struct implementation final : xtexture_compiler::instance
             }
 
 
-            KernelOps.useSRGBFrames = (m_Descriptor.m_bConvertSrcImageToFullSRGB && m_Descriptor.m_bSRGB) ? false : m_Descriptor.m_bSRGB;
+            KernelOps.useSRGBFrames = m_Descriptor.m_bSRGB;
             
 
             //
@@ -1185,7 +1169,7 @@ struct implementation final : xtexture_compiler::instance
             //  
             // HACK: Hack to convert to sRGB since compressonator does not support it...
             //
-            if (m_Descriptor.m_bConvertSrcImageToFullSRGB)
+            if (m_Descriptor.m_bSRGB)
             {
                 constexpr static auto ToSRGB = []() consteval ->auto
                 {

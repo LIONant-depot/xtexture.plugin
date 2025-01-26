@@ -540,8 +540,6 @@ namespace xtexture_rsc
         
         float                       m_Quality                   { 0.5f };
         bool                        m_bSRGB                     { true };
-        bool                        m_bConvertSrcImageToFullSRGB{ false };
-        float                       m_ConvertSrcSRGBWithGamma   { 2.2f };
         bool                        m_bGenerateMips             { true };
         bool                        m_bFillAveColorByAlpha      { false };
         std::uint8_t                m_AlphaThreshold            { 128 };
@@ -759,44 +757,15 @@ namespace xtexture_rsc
             , member_help<"Quality affects the level of detail in the texture. "
                             "Higher quality means more detail, but will take longer to compute."
             >>
-        , obj_scope< "SRGB"
-            , obj_member<"SRGB"
-                , &descriptor::m_bSRGB
-                , member_help<"Tell the system that the image is Gamma and that the mips and other functions "
-                              "should convert to linear before doing anything to its data. However the RAW data "
-                              "can still be store in the linear range. If you don't enable this the texture will be "
-                              "consider to be fully in linear space. Linear space is reserved for textures such "
-                              "Normal maps, Roughness, AO, etc... Basically mathematical textures not meant for the "
-                              "Humans to be seems."
-                >>
-            , obj_member<"Src Image To Full SRGB"
-                , &descriptor::m_bConvertSrcImageToFullSRGB
-                , member_dynamic_flags < +[](const descriptor& O)
-                {
-                    xproperty::flags::type Flags{};
-                    Flags.m_bDontShow = O.m_bSRGB == false;
-                    return Flags;
-                }>
-                , member_help<"Most textures raw data are express in Linear space which means "
-                              "that no hardware conversion is necessary. This works well for most images however "
-                              "if you have a dark image then fully representing your image in SRGB will give you "
-                              "a better range of colors and be more precise for the same cost of bits. "
-                              "This does require that you must tell your graphics API that the image was encoded in SRGB "
-                              "so it can convert it in real time to linear. This is basically free."
-                >>
-
-            , obj_member<"Convert With Gamma"
-                , &descriptor::m_ConvertSrcSRGBWithGamma
-                , member_dynamic_flags < +[](const descriptor& O)
-                {
-                    xproperty::flags::type Flags{};
-                    Flags.m_bDontShow = O.m_bConvertSrcImageToFullSRGB == false || O.m_bSRGB == false;
-                    return Flags;
-                }>
-                , member_help<"When converting your image to gamma space you can specify your own gamma, "
-                              "You don't need to follow the standard 2.2 all depending what you are trying to do."
-                >>
-            >
+        , obj_member<"SRGB"
+            , &descriptor::m_bSRGB
+            , member_help<"Tell the system that the image is Gamma and that the mips and other functions "
+                          "should convert to linear before doing anything to its data. However the RAW data "
+                          "can still be store in the linear range. If you don't enable this the texture will be "
+                          "consider to be fully in linear space. Linear space is reserved for textures such "
+                          "Normal maps, Roughness, AO, etc... Basically mathematical textures not meant for the "
+                          "Humans to be seems."
+            >>
         , obj_member<"GenerateMips"
             , &descriptor::m_bGenerateMips
             , member_help<"This property indicates whether the texture should be treated as sRGB, "
