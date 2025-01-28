@@ -516,6 +516,16 @@ struct implementation final : xtexture_compiler::instance
             {
                 Width  = m_Bitmaps[BitmapIndex].getWidth();
                 Height = m_Bitmaps[BitmapIndex].getHeight();
+
+                if ( (Width%4) != 0 )
+                {
+                    XLOG_CHANNEL_WARNING(m_LogChannel, "Input Texture: [%s] Width is not a multiple of 4", FileName.c_str());
+                }
+
+                if ( (Height%4)!= 0)
+                {
+                    XLOG_CHANNEL_WARNING(m_LogChannel, "Input Texture: [%s] Height is not a multiple of 4", FileName.c_str());
+                }
             }
             else
             {
