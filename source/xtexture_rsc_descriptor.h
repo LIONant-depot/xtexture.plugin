@@ -124,14 +124,14 @@ namespace xtexture_rsc
                                                                                                        "vec3 Normal;\n"
                                                                                                        "Normal.rg = texture(uSamplerNormal, In.UV).gr;\n"
                                                                                                        "Normal.xy = Normal.rg * 2.0 - 1.0;\n"
-                                                                                                       "Normal.z  = sqrt(1.0 - dot(Normal.xy, Normal.xy));")
-    , xproperty::settings::enum_item("RGBA_BC3_A8",         compression_format_tangent_normal::RGBA_BC3_A8, "When compressing a normal map only 2 components of the normal will in fact be saved."
+                                                                                                       "Normal.z  = sqrt(1.0 - min( 1, dot(Normal.xy, Normal.xy)));")
+    , xproperty::settings::enum_item("RGBA_BC3",            compression_format_tangent_normal::RGBA_BC3_A8, "When compressing a normal map only 2 components of the normal will in fact be saved."
                                                                                                             "Even if BC3 in back has 4 channels, due to the type of compression is always preferable to do 2."
                                                                                                             "to decompress this format in your shader you will need to do the following:\n"
                                                                                                             "vec3 Normal;\n"
                                                                                                             "Normal.rg = texture(uSamplerNormal, In.UV).ag;\n"
                                                                                                             "Normal.xy = Normal.rg * 2.0 - 1.0;\n"
-                                                                                                            "Normal.z  = sqrt(1.0 - dot(Normal.xy, Normal.xy));")
+                                                                                                            "Normal.z  = sqrt(1.0 - min(1,dot(Normal.xy, Normal.xy)));")
     , xproperty::settings::enum_item("RGBA_BC7",            compression_format_tangent_normal::RGBA_BC7)
     , xproperty::settings::enum_item("RGBA_SUPER_COMPRESS", compression_format_tangent_normal::RGBA_SUPER_COMPRESS)
     };
@@ -550,6 +550,7 @@ namespace xtexture_rsc
         float                       m_TilableWidthPercentage    { 0.1f };
         float                       m_TilableHeightPercentage   { 0.1f };
         bool                        m_bNormalMapFlipY           {false};
+        bool                        m_bNormalizeNormals         {true};
 
         virtual void SetupFromSource(std::string_view FileName)
         {
@@ -844,6 +845,16 @@ namespace xtexture_rsc
                 return Flags;
             } 
             >>
+        , obj_member < "Normalize Normals"
+            , &descriptor::m_bNormalizeNormals
+            , member_dynamic_flags < +[](const descriptor& O)
+            {
+                xproperty::flags::type Flags{};
+                Flags.m_bDontShow = O.m_UsageType != usage_type::TANGENT_NORMAL;
+                return Flags;
+            } >
+            , member_help<"Normalize the normals from the image before compression"
+            >>
         , obj_member < "Normal Flip Y"
             , &descriptor::m_bNormalMapFlipY
             , member_dynamic_flags < +[](const descriptor& O)
@@ -854,6 +865,9 @@ namespace xtexture_rsc
             } >
             , member_help<"Flips the Y in the normal map making it compatible with OpenGL or DX"
             >>
+
+
+
         )
     };
     XPROPERTY_VREG(descriptor)

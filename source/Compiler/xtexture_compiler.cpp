@@ -91,6 +91,16 @@ struct implementation final : xtexture_compiler::instance
         m_FinalBitmap.setWrapMode(m_Bitmaps[0].getWrapMode());
 
         //
+        // Upgrade formats for Normals maps when required
+        //
+        if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::TANGENT_NORMAL)
+        {
+            // These two formats require special decoding...
+            if (m_FinalBitmap.getFormat() == xcore::bitmap::format::BC3_8RGBA) m_FinalBitmap.setFormat(xcore::bitmap::format::BC3_81Y0X_NORMAL);
+            else if (m_FinalBitmap.getFormat() == xcore::bitmap::format::BC5_8RG) m_FinalBitmap.setFormat(xcore::bitmap::format::BC5_8YX_NORMAL);
+        }
+
+        //
         // Serialize Final xBitmap
         //
         int Count = 0;
@@ -208,6 +218,17 @@ struct implementation final : xtexture_compiler::instance
                     for (auto& E : B.getMip<xcore::icolor>(0))
                     {
                         E.m_G = 255 - E.m_G;
+                    }
+                }
+            }
+
+            if (m_Descriptor.m_bNormalizeNormals)
+            {
+                for (auto& B : m_Bitmaps)
+                {
+                    for (auto& E : B.getMip<xcore::icolor>(0))
+                    {
+                        E.setupFromNormal(E.getNormal().NormalizeSafe());
                     }
                 }
             }
@@ -1103,19 +1124,19 @@ struct implementation final : xtexture_compiler::instance
         // Convert from Mipset to xcore::bitmap
         //
         static constexpr auto DescriptorBitmapFormatToxBitmap = []() consteval ->auto
-            {
-                std::array< xcore::bitmap::format, static_cast<std::int32_t>(xtexture_rsc::compression_format::count_v) > Array = { xcore::bitmap::format::XCOLOR_END };
-                Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_BC1)]             = xcore::bitmap::format::BC1_4RGB;
-                Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC1_A1)]         = xcore::bitmap::format::BC1_4RGBA1;
-                Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC3_A8)]         = xcore::bitmap::format::BC3_8RGBA;
-                Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::R_BC4)]               = xcore::bitmap::format::BC4_4R;
-                Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RG_BC5)]              = xcore::bitmap::format::BC5_8RG;
-                Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_UHDR_BC6)]        = xcore::bitmap::format::BC6H_8RGB_FLOAT;
-                Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_SHDR_BC6)]        = xcore::bitmap::format::BC6H_8RGB_FLOAT;
-                Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC7)]            = xcore::bitmap::format::BC7_8RGBA;
-                Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_UNCOMPRESSED)]   = xcore::bitmap::format::XCOLOR;
-                return Array;
-            }();
+        {
+            std::array< xcore::bitmap::format, static_cast<std::int32_t>(xtexture_rsc::compression_format::count_v) > Array = { xcore::bitmap::format::XCOLOR_END };
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_BC1)]             = xcore::bitmap::format::BC1_4RGB;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC1_A1)]         = xcore::bitmap::format::BC1_4RGBA1;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC3_A8)]         = xcore::bitmap::format::BC3_8RGBA;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::R_BC4)]               = xcore::bitmap::format::BC4_4R;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RG_BC5)]              = xcore::bitmap::format::BC5_8RG;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_UHDR_BC6)]        = xcore::bitmap::format::BC6H_8RGB_FLOAT;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_SHDR_BC6)]        = xcore::bitmap::format::BC6H_8RGB_FLOAT;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC7)]            = xcore::bitmap::format::BC7_8RGBA;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_UNCOMPRESSED)]   = xcore::bitmap::format::XCOLOR;
+            return Array;
+        }();
 
         if (DescriptorBitmapFormatToxBitmap[static_cast<std::int32_t>(m_Descriptor.m_Compression)] == xcore::bitmap::format::XCOLOR_END)
             throw(std::runtime_error("Unable to convert the texture to xcore::bitmap"));
