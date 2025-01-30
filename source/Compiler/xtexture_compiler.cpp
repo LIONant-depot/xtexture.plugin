@@ -290,26 +290,22 @@ struct implementation final : xtexture_compiler::instance
         //
         constexpr auto DecompressTexture = []( CMP_Texture& texture)
         {
-            if (texture.format >= CMP_FORMAT::CMP_FORMAT_BC1 && texture.format <= CMP_FORMAT::CMP_FORMAT_BC7) 
-            {
-                CMP_Texture decompressedTexture {};
-                decompressedTexture.dwSize   = sizeof(CMP_Texture);
-                decompressedTexture.format   = CMP_FORMAT_ARGB_8888;
-                decompressedTexture.dwWidth  = texture.dwWidth;
-                decompressedTexture.dwHeight = texture.dwHeight;
-                decompressedTexture.dwDataSize = 4 * texture.dwWidth * texture.dwHeight;
-                decompressedTexture.pData    = new CMP_BYTE[decompressedTexture.dwDataSize];
+            CMP_Texture decompressedTexture {};
+            decompressedTexture.dwSize   = sizeof(CMP_Texture);
+            decompressedTexture.format   = CMP_FORMAT_ARGB_8888;
+            decompressedTexture.dwWidth  = texture.dwWidth;
+            decompressedTexture.dwHeight = texture.dwHeight;
+            decompressedTexture.dwDataSize = 4 * texture.dwWidth * texture.dwHeight;
+            decompressedTexture.pData    = new CMP_BYTE[decompressedTexture.dwDataSize];
 
-                CMP_ERROR result = CMP_ConvertTexture(&texture, &decompressedTexture, nullptr, nullptr);
-                if (result == CMP_OK) 
-                {
-                    std::swap(texture, decompressedTexture);
-                    delete[] decompressedTexture.pData;
-                    return true;
-                }
-                return false;
+            CMP_ERROR result = CMP_ConvertTexture(&texture, &decompressedTexture, nullptr, nullptr);
+            if (result == CMP_OK) 
+            {
+                std::swap(texture, decompressedTexture);
+                delete[] decompressedTexture.pData;
+                return true;
             }
-            return true; // If the format is already uncompressed, no need to decompress
+            return false;
         };
 
         //
