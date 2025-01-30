@@ -309,51 +309,35 @@ struct implementation final : xtexture_compiler::instance
         };
 
         //
-        // Convert to xcore::bitmap
-        //
-        constexpr auto ConvertToXCoreBitmap = [](const CMP_Texture & texture, xcore::bitmap & bitmap)
-        {
-            xcore::bitmap::format format = xcore::bitmap::format::R8G8B8A8;
-
-            if (texture.dwDataSize == 4 * texture.dwWidth * texture.dwHeight)
-            {
-                format = xcore::bitmap::format::R8G8B8A8;
-            }
-            else
-            {
-                return false; // Unsupported format
-            }
-
-            bitmap.CreateBitmap(texture.dwWidth, texture.dwHeight);
-
-            std::memcpy(bitmap.getMip<std::byte>(0).data(), texture.pData, texture.dwDataSize);
-
-            return true;
-        };
-
-        //
         // load the dds file
         //
-        CMP_MipSet MipSetIn;
-        memset(&MipSetIn, 0, sizeof(CMP_MipSet));
-        auto cmp_status = CMP_LoadTexture(FilePath.data(), &MipSetIn);
-        if (cmp_status != CMP_OK)
+        CMP_MipSet MipSetIn {};
+        if (auto cmp_status = CMP_LoadTexture(FilePath.data(), &MipSetIn); cmp_status != CMP_OK)
         {
             throw(std::runtime_error(std::format("Unable to load the DDS file. [BROKEN_LINK] {}", FilePath.data())));
         }
 
+        //
+        // Convert it to a freendly format for the compiler
+        //
         CMP_Texture Texture {};
         ConvertMipSetToTexture(MipSetIn, Texture);
-
         if ( DecompressTexture(Texture) == false )
         {
             throw(std::runtime_error(std::format("Failed to the DDS unable to decompress the texture", FilePath.data())));
         }
 
-        if ( false == ConvertToXCoreBitmap(Texture, Bitmap) )
-        {
-            throw(std::runtime_error(std::format("Failed to the DDS file there was not conversion to xcore::bitmap", FilePath.data())));
-        }
+        //
+        // Convert to xcore::bitmap
+        //
+        Bitmap.CreateBitmap(Texture.dwWidth, Texture.dwHeight);
+        std::memcpy(Bitmap.getMip<std::byte>(0).data(), Texture.pData, Texture.dwDataSize);
+
+        //
+        // Free the memory and call it a day...
+        //
+        delete[] Texture.pData;
+        CMP_FreeMipSet(&MipSetIn);
     }
 
     //---------------------------------------------------------------------------------------------
