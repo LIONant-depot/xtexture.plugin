@@ -266,12 +266,112 @@ struct implementation final : xtexture_compiler::instance
 
     //---------------------------------------------------------------------------------------------
 
+    void LoadDDS( const std::string_view FilePath, xcore::bitmap& Bitmap )
+    {
+        //
+        // Function to convert CMP_MipSet to CMP_Texture
+        //
+        constexpr auto ConvertMipSetToTexture = [](const CMP_MipSet & mipSetIn, CMP_Texture & texture)
+        {
+            // Assuming the topmost mip level (level 0)
+            auto mipLevel = mipSetIn.m_pMipLevelTable[0];
+
+            texture.dwSize      = sizeof(CMP_Texture);
+            texture.dwWidth     = mipSetIn.m_nWidth;
+            texture.dwHeight    = mipSetIn.m_nHeight;
+            texture.format      = mipSetIn.m_format;
+            texture.dwDataSize  = mipLevel->m_dwLinearSize;
+            texture.pData       = new CMP_BYTE[texture.dwDataSize];
+            std::memcpy(texture.pData, mipLevel->m_pbData, texture.dwDataSize);
+        };
+
+        //
+        // DecompressTexture
+        //
+        constexpr auto DecompressTexture = []( CMP_Texture& texture)
+        {
+            if (texture.format >= CMP_FORMAT::CMP_FORMAT_BC1 && texture.format <= CMP_FORMAT::CMP_FORMAT_BC7) 
+            {
+                CMP_Texture decompressedTexture {};
+                decompressedTexture.dwSize   = sizeof(CMP_Texture);
+                decompressedTexture.format   = CMP_FORMAT_ARGB_8888;
+                decompressedTexture.dwWidth  = texture.dwWidth;
+                decompressedTexture.dwHeight = texture.dwHeight;
+                decompressedTexture.dwDataSize = 4 * texture.dwWidth * texture.dwHeight;
+                decompressedTexture.pData    = new CMP_BYTE[decompressedTexture.dwDataSize];
+
+                CMP_ERROR result = CMP_ConvertTexture(&texture, &decompressedTexture, nullptr, nullptr);
+                if (result == CMP_OK) 
+                {
+                    std::swap(texture, decompressedTexture);
+                    delete[] decompressedTexture.pData;
+                    return true;
+                }
+                return false;
+            }
+            return true; // If the format is already uncompressed, no need to decompress
+        };
+
+        //
+        // Convert to xcore::bitmap
+        //
+        constexpr auto ConvertToXCoreBitmap = [](const CMP_Texture & texture, xcore::bitmap & bitmap)
+        {
+            xcore::bitmap::format format = xcore::bitmap::format::R8G8B8A8;
+
+            if (texture.dwDataSize == 4 * texture.dwWidth * texture.dwHeight)
+            {
+                format = xcore::bitmap::format::R8G8B8A8;
+            }
+            else
+            {
+                return false; // Unsupported format
+            }
+
+            bitmap.CreateBitmap(texture.dwWidth, texture.dwHeight);
+
+            std::memcpy(bitmap.getMip<std::byte>(0).data(), texture.pData, texture.dwDataSize);
+
+            return true;
+        };
+
+        //
+        // load the dds file
+        //
+        CMP_MipSet MipSetIn;
+        memset(&MipSetIn, 0, sizeof(CMP_MipSet));
+        auto cmp_status = CMP_LoadTexture(FilePath.data(), &MipSetIn);
+        if (cmp_status != CMP_OK)
+        {
+            throw(std::runtime_error(std::format("Unable to load the DDS file. [BROKEN_LINK] {}", FilePath.data())));
+        }
+
+        CMP_Texture Texture {};
+        ConvertMipSetToTexture(MipSetIn, Texture);
+
+        if ( DecompressTexture(Texture) == false )
+        {
+            throw(std::runtime_error(std::format("Failed to the DDS unable to decompress the texture", FilePath.data())));
+        }
+
+        if ( false == ConvertToXCoreBitmap(Texture, Bitmap) )
+        {
+            throw(std::runtime_error(std::format("Failed to the DDS file there was not conversion to xcore::bitmap", FilePath.data())));
+        }
+    }
+
+    //---------------------------------------------------------------------------------------------
+
     void LoadTexture( xcore::bitmap& Bitmap, const xcore::cstring& FilePath )
     {
-        if( xcore::string::FindStrI( FilePath, ".dds" ) == 0 )
+        if( xcore::string::FindStrI( FilePath, ".dds" ) != -1 )
         {
-            if( auto Err = xbmp::tools::loader::LoadDSS( Bitmap, FilePath ); Err )
-                throw( std::runtime_error( std::format( "{}, [BROKEN_LINK] {}", xbmp::tools::getErrorMsg(Err), FilePath.c_str() )) );
+            // Load and decompress the texture into a bitmap
+            LoadDDS(FilePath.c_str(), Bitmap);
+
+            // The version below does not decompress the texture... 
+            //if( auto Err = xbmp::tools::loader::LoadDSS( Bitmap, FilePath ); Err )
+            //    throw( std::runtime_error( std::format( "{}, [BROKEN_LINK] {}", xbmp::tools::getErrorMsg(Err), FilePath.c_str() )) );
         }
         else
         {
