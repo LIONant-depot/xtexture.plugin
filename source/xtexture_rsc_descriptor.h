@@ -541,6 +541,7 @@ namespace xtexture_rsc
         float                       m_Quality                   { 0.5f };
         bool                        m_bSRGB                     { true };
         bool                        m_bGenerateMips             { true };
+        bool                        m_bMinSizeIsOne             { true };
         bool                        m_bFillAveColorByAlpha      { false };
         std::uint8_t                m_AlphaThreshold            { 128 };
         mipmap_filter               m_MipmapFilter              { mipmap_filter::BOX };
@@ -767,26 +768,42 @@ namespace xtexture_rsc
                           "Normal maps, Roughness, AO, etc... Basically mathematical textures not meant for the "
                           "Humans to be seems."
             >>
-        , obj_member<"GenerateMips"
-            , &descriptor::m_bGenerateMips
-            , member_help<"This property indicates whether the texture should be treated as sRGB, "
-                             "which is a standard color space for images. If set to true, the texture "
-                             "will be treated as sRGB, ensuring colors look correct on different screens. "
-                             "It's like making sure your colors look right on any device."
-            >>
-        , obj_member<"Mipmap Filter"
-            , &descriptor::m_MipmapFilter
-            , member_enum_span<mipmap_filter_v>
-            , member_dynamic_flags < +[](const descriptor& O)
-            {
-                xproperty::flags::type Flags{};
-                Flags.m_bDontShow = O.m_bGenerateMips == false;
-                return Flags;
-            }>
-            , member_help<"This property specifies the filter to be used for generating mipmaps. "
-                             "Different filters can affect the quality and performance of the mipmaps. "
-                             "It's like choosing the best way to create smaller versions of your picture."
-            >>
+        , obj_scope<"Mipmaps"
+            , obj_member<"GenerateMips"
+                , &descriptor::m_bGenerateMips
+                , member_help<"This property indicates whether the texture should be treated as sRGB, "
+                                 "which is a standard color space for images. If set to true, the texture "
+                                 "will be treated as sRGB, ensuring colors look correct on different screens. "
+                                 "It's like making sure your colors look right on any device."
+                >>
+            , obj_member<"Mipmap Filter"
+                , &descriptor::m_MipmapFilter
+                , member_enum_span<mipmap_filter_v>
+                , member_dynamic_flags < +[](const descriptor& O)
+                {
+                    xproperty::flags::type Flags{};
+                    Flags.m_bDontShow = O.m_bGenerateMips == false;
+                    return Flags;
+                }>
+                , member_help<"This property specifies the filter to be used for generating mipmaps. "
+                                 "Different filters can affect the quality and performance of the mipmaps. "
+                                 "It's like choosing the best way to create smaller versions of your picture."
+                >>
+            , obj_member<"MinSizeIsOne"
+                , &descriptor::m_bMinSizeIsOne
+                , member_dynamic_flags < +[](const descriptor& O)
+                {
+                    xproperty::flags::type Flags{};
+                    Flags.m_bDontShow = O.m_bGenerateMips == false;
+                    return Flags;
+                }>
+                , member_help<"Ask the mipmap generator to compute down to 1x1 size if enable. If it is disable, "
+                                 "then it is up to the compressor to decide how small to go. There are pros and const "
+                                 "as always:\nKeeping 1x1 sizes:\n"
+                                 "Pros: More standard\n"
+                                 "Cons: A bit more memory usage (more diskspace, less performance, less memory)\n"
+                >>
+            >
         , obj_member<"FillAveColorByAlpha"
             , &descriptor::m_bFillAveColorByAlpha
             , member_dynamic_flags < +[](const descriptor& O)

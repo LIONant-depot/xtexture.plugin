@@ -7,23 +7,24 @@
 // New Types
 < s32:d u32:g s16:C u16:H s8:c u8:h f32:f f64:F string:s u64:G s64:D bool:c enum:s >
 
-[ xProperties : 17 ]
-{ Name:s                                             Value:?                                }
-//-------------------------------------------------  --------------------------------------
-  "Texture/Usage"                                    ;enum   "TANGENT_NORMAL"              
-  "Texture/Wrap Mode U"                              ;enum   "WRAP"                        
-  "Texture/Wrap Mode V"                              ;enum   "WRAP"                        
-  "Texture/InputType"                                ;enum   "SINGLE_INPUT"                
-  "Texture/Input/Filename"                           ;string "Assets\normal_map_raisen.dds"
-  "Texture/Compression"                              ;enum   "RG_BC5"                      
-  "Texture/Quality"                                  ;f32    #3F800000                     
-  "Texture/SRGB"                                     ;bool   0                             
-  "Texture/GenerateMips"                             ;bool   1                             
-  "Texture/Mipmap Filter"                            ;enum   "BOX"                         
-  "Texture/FillAveColorByAlpha"                      ;bool   0                             
-  "Texture/AlphaThreshold"                           ;u8     #80                           
-  "Texture/Tillable Filter/Tillable Filter"          ;bool   1                             
-  "Texture/Tillable Filter/Width Blend Percentage"   ;f32    #3C61FC74                     
-  "Texture/Tillable Filter/Height Blend Percentage"  ;f32    #3C8D3DD6                     
-  "Texture/Normalize Normals"                        ;bool   1                             
-  "Texture/Normal Flip Y"                            ;bool   0                             
+[ xProperties : 18 ]
+{ Name:s                                             Value:?                            }
+//-------------------------------------------------  ----------------------------------
+  "Texture/Usage"                                    ;enum   "TANGENT_NORMAL"          
+  "Texture/Wrap Mode U"                              ;enum   "CLAMP_TO_EDGE"           
+  "Texture/Wrap Mode V"                              ;enum   "CLAMP_TO_EDGE"           
+  "Texture/InputType"                                ;enum   "SINGLE_INPUT"            
+  "Texture/Input/Filename"                           ;string "Assets\TestNormalMap.png"
+  "Texture/Compression"                              ;enum   "RGBA_BC7"                
+  "Texture/Quality"                                  ;f32    #3F800000                 
+  "Texture/SRGB"                                     ;bool   0                         
+  "Texture/Mipmaps/GenerateMips"                     ;bool   1                         
+  "Texture/Mipmaps/Mipmap Filter"                    ;enum   "BOX"                     
+  "Texture/Mipmaps/MinSizeIsOne"                     ;bool   1                         
+  "Texture/FillAveColorByAlpha"                      ;bool   0                         
+  "Texture/AlphaThreshold"                           ;u8     #80                       
+  "Texture/Tillable Filter/Tillable Filter"          ;bool   0                         
+  "Texture/Tillable Filter/Width Blend Percentage"   ;f32    #3C61FC74                 
+  "Texture/Tillable Filter/Height Blend Percentage"  ;f32    #3C8D3DD6                 
+  "Texture/Normalize Normals"                        ;bool   1                         
+  "Texture/Normal Flip Y"                            ;bool   0                         

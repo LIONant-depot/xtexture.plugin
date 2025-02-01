@@ -1090,7 +1090,7 @@ struct implementation final : xtexture_compiler::instance
                 CFilterParam.dwMipFilterOptions &= ~CMP_D3DX_FILTER_SRGB;
 
 
-            CFilterParam.nMinSize           = (m_Descriptor.m_bGenerateMips==false) ? std::max(MipSet.m_nHeight, MipSet.m_nWidth) : CMP_CalcMaxMipLevel(MipSet.m_nHeight, MipSet.m_nWidth, false);
+            CFilterParam.nMinSize           = (m_Descriptor.m_bGenerateMips==false) ? std::max(MipSet.m_nHeight, MipSet.m_nWidth) : CMP_CalcMaxMipLevel(MipSet.m_nHeight, MipSet.m_nWidth, m_Descriptor.m_bMinSizeIsOne);
             CFilterParam.fGammaCorrection   = 1.0f;
 
             // This line below does not seem to change anything... 
