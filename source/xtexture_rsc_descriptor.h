@@ -541,7 +541,7 @@ namespace xtexture_rsc
         float                       m_Quality                   { 0.5f };
         bool                        m_bSRGB                     { true };
         bool                        m_bGenerateMips             { true };
-        bool                        m_bMinSizeIsOne             { true };
+        int                         m_MipCustomMinSize          {1};
         bool                        m_bFillAveColorByAlpha      { false };
         std::uint8_t                m_AlphaThreshold            { 128 };
         mipmap_filter               m_MipmapFilter              { mipmap_filter::BOX };
@@ -789,19 +789,16 @@ namespace xtexture_rsc
                                  "Different filters can affect the quality and performance of the mipmaps. "
                                  "It's like choosing the best way to create smaller versions of your picture."
                 >>
-            , obj_member<"MinSizeIsOne"
-                , &descriptor::m_bMinSizeIsOne
+            , obj_member<"MinSize"
+                , &descriptor::m_MipCustomMinSize
+                , member_ui<int>::drag_bar<0.5f,1>
                 , member_dynamic_flags < +[](const descriptor& O)
                 {
                     xproperty::flags::type Flags{};
                     Flags.m_bDontShow = O.m_bGenerateMips == false;
                     return Flags;
                 }>
-                , member_help<"Ask the mipmap generator to compute down to 1x1 size if enable. If it is disable, "
-                                 "then it is up to the compressor to decide how small to go. There are pros and const "
-                                 "as always:\nKeeping 1x1 sizes:\n"
-                                 "Pros: More standard\n"
-                                 "Cons: A bit more memory usage (more diskspace, less performance, less memory)\n"
+                , member_help<"This is the minimum size that the mips can reach any lower won't be created"
                 >>
             >
         , obj_member<"FillAveColorByAlpha"

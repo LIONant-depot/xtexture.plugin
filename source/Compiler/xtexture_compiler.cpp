@@ -266,7 +266,7 @@ struct implementation final : xtexture_compiler::instance
 
     //---------------------------------------------------------------------------------------------
 
-    void LoadDDS( const std::string_view FilePath, xcore::bitmap& Bitmap )
+    void LoadImageByCompressonator( const std::string_view FilePath, xcore::bitmap& Bitmap )
     {
         //
         // Function to convert CMP_MipSet to CMP_Texture
@@ -298,23 +298,21 @@ struct implementation final : xtexture_compiler::instance
             decompressedTexture.dwDataSize = 4 * texture.dwWidth * texture.dwHeight;
             decompressedTexture.pData    = new CMP_BYTE[decompressedTexture.dwDataSize];
 
-            CMP_ERROR result = CMP_ConvertTexture(&texture, &decompressedTexture, nullptr, nullptr);
-            if (result == CMP_OK) 
-            {
-                std::swap(texture, decompressedTexture);
-                delete[] decompressedTexture.pData;
-                return true;
-            }
-            return false;
+            if (auto result = CMP_ConvertTexture(&texture, &decompressedTexture, nullptr, nullptr); result != CMP_OK)
+                return false;
+
+            std::swap(texture, decompressedTexture);
+            delete[] decompressedTexture.pData;
+            return true;
         };
 
         //
-        // load the dds file
+        // load image file
         //
         CMP_MipSet MipSetIn {};
-        if (auto cmp_status = CMP_LoadTexture(FilePath.data(), &MipSetIn); cmp_status != CMP_OK)
+        if (auto result = CMP_LoadTexture(FilePath.data(), &MipSetIn); result != CMP_OK)
         {
-            throw(std::runtime_error(std::format("Unable to load the DDS file. [BROKEN_LINK] {}", FilePath.data())));
+            throw(std::runtime_error(std::format("Unable to load image file. [BROKEN_LINK] {}", FilePath.data())));
         }
 
         //
@@ -324,7 +322,7 @@ struct implementation final : xtexture_compiler::instance
         ConvertMipSetToTexture(MipSetIn, Texture);
         if ( DecompressTexture(Texture) == false )
         {
-            throw(std::runtime_error(std::format("Failed to the DDS unable to decompress the texture", FilePath.data())));
+            throw(std::runtime_error(std::format("Failed to the image unable to decompress the texture {}", FilePath.data())));
         }
 
         //
@@ -344,19 +342,21 @@ struct implementation final : xtexture_compiler::instance
 
     void LoadTexture( xcore::bitmap& Bitmap, const xcore::cstring& FilePath )
     {
-        if( xcore::string::FindStrI( FilePath, ".dds" ) != -1 )
-        {
-            // Load and decompress the texture into a bitmap
-            LoadDDS(FilePath.c_str(), Bitmap);
-
-            // The version below does not decompress the texture... 
-            //if( auto Err = xbmp::tools::loader::LoadDSS( Bitmap, FilePath ); Err )
-            //    throw( std::runtime_error( std::format( "{}, [BROKEN_LINK] {}", xbmp::tools::getErrorMsg(Err), FilePath.c_str() )) );
-        }
-        else
+        // let xbmp tools deal with the common formats
+        if (   xcore::string::FindStrI(FilePath, ".jpeg") != -1
+            || xcore::string::FindStrI(FilePath, ".jpg")  != -1
+            || xcore::string::FindStrI(FilePath, ".tga")  != -1
+            || xcore::string::FindStrI(FilePath, ".png")  != -1 
+            || xcore::string::FindStrI(FilePath, ".bmp")  != -1
+            || xcore::string::FindStrI(FilePath, ".psd")  != -1 )
         {
             if( auto Err = xbmp::tools::loader::LoadSTDImage( Bitmap, FilePath ); Err )
                 throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", xbmp::tools::getErrorMsg(Err), FilePath.c_str())));
+        }
+        else
+        {
+            // Let Compressonator deal with all other formats...
+            LoadImageByCompressonator(FilePath.c_str(), Bitmap);
         }
     }
 
@@ -1068,16 +1068,18 @@ struct implementation final : xtexture_compiler::instance
         {
             CMP_CFilterParams   CFilterParam  = {};
 
+            CFilterParam.dwMipFilterOptions = 0;
+            CFilterParam.nFilterType        = 1;    // Using D3DX options (Seems like it requires the GPU to actually run the filters)
+
             switch (m_Descriptor.m_MipmapFilter)
             {
-            case xtexture_rsc::mipmap_filter::NONE:      CFilterParam.nFilterType = CMP_D3DX_FILTER_NONE;       break;
-            case xtexture_rsc::mipmap_filter::POINT:     CFilterParam.nFilterType = CMP_D3DX_FILTER_POINT;      break;
-            case xtexture_rsc::mipmap_filter::LINEAR:    CFilterParam.nFilterType = CMP_D3DX_FILTER_LINEAR;     break;
-            case xtexture_rsc::mipmap_filter::TRIANGLE:  CFilterParam.nFilterType = CMP_D3DX_FILTER_TRIANGLE;   break;
-            case xtexture_rsc::mipmap_filter::BOX:       CFilterParam.nFilterType = CMP_D3DX_FILTER_BOX;        break;
-            }
+            case xtexture_rsc::mipmap_filter::NONE:      CFilterParam.dwMipFilterOptions = CFilterParam.dwMipFilterOptions & 0xFFFFFFE0u | CMP_D3DX_FILTER_NONE;       break;
+            case xtexture_rsc::mipmap_filter::POINT:     CFilterParam.dwMipFilterOptions = CFilterParam.dwMipFilterOptions & 0xFFFFFFE0u | CMP_D3DX_FILTER_POINT;      break;
+            case xtexture_rsc::mipmap_filter::LINEAR:    CFilterParam.dwMipFilterOptions = CFilterParam.dwMipFilterOptions & 0xFFFFFFE0u | CMP_D3DX_FILTER_LINEAR;     break;
+            case xtexture_rsc::mipmap_filter::TRIANGLE:  CFilterParam.dwMipFilterOptions = CFilterParam.dwMipFilterOptions & 0xFFFFFFE0u | CMP_D3DX_FILTER_TRIANGLE;   break;
+            case xtexture_rsc::mipmap_filter::BOX:       CFilterParam.dwMipFilterOptions = CFilterParam.dwMipFilterOptions & 0xFFFFFFE0u | CMP_D3DX_FILTER_BOX;        break;
+            }                                                                            
 
-            CFilterParam.dwMipFilterOptions = 0;
             if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::MIRROR || m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::MIRROR ) 
                 CFilterParam.dwMipFilterOptions |= CMP_D3DX_FILTER_MIRROR;
             else
@@ -1089,8 +1091,7 @@ struct implementation final : xtexture_compiler::instance
             else
                 CFilterParam.dwMipFilterOptions &= ~CMP_D3DX_FILTER_SRGB;
 
-
-            CFilterParam.nMinSize           = (m_Descriptor.m_bGenerateMips==false) ? std::max(MipSet.m_nHeight, MipSet.m_nWidth) : CMP_CalcMaxMipLevel(MipSet.m_nHeight, MipSet.m_nWidth, m_Descriptor.m_bMinSizeIsOne);
+            CFilterParam.nMinSize           = (m_Descriptor.m_bGenerateMips==false) ? std::max(MipSet.m_nHeight, MipSet.m_nWidth) : (m_Descriptor.m_MipCustomMinSize*2-1);//CMP_CalcMaxMipLevel(MipSet.m_nHeight, MipSet.m_nWidth, true));
             CFilterParam.fGammaCorrection   = 1.0f;
 
             // This line below does not seem to change anything... 
