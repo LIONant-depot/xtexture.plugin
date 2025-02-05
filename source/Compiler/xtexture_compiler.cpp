@@ -576,7 +576,7 @@ struct implementation final : xtexture_compiler::instance
         //
         if ( m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR )
         {
-            if (Bitmap.getFormat() == xcore::bitmap::format::R32G32B32_FLOAT)
+            if (Bitmap.getFormat() == xcore::bitmap::format::R32G32B32A32_FLOAT)
             {
                 // Make sure it has the right wrap mode
                 SetTheRightWrapMode();
@@ -600,17 +600,20 @@ struct implementation final : xtexture_compiler::instance
         {
             if( Bitmap.getFormat() != xcore::bitmap::format::R8G8B8 
              && Bitmap.getFormat() != xcore::bitmap::format::R5G6B5
-             && Bitmap.getFormat() != xcore::bitmap::format::R32G32B32A32_FLOAT)
+             && Bitmap.getFormat() != xcore::bitmap::format::R32G32B32_FLOAT)
                 throw(std::runtime_error("Source texture has a strange format"));
 
-            if ( Bitmap.getFormat() == xcore::bitmap::format::R32G32B32A32_FLOAT )
+            const auto  nPixels      = Bitmap.getHeight() * Bitmap.getWidth();
+            const auto  FrameSize    = nPixels * 4;
+            const auto  DataSize     = 1 + FrameSize;
+            auto        Data         = std::make_unique<float[]>(DataSize);
+            auto*       pData        = &Data[1];
+
+            Data[0] = 0;
+
+            if ( Bitmap.getFormat() == xcore::bitmap::format::R32G32B32_FLOAT )
             {
                 const auto* pBitmapData  = Bitmap.getMip<float>(0).data();
-                const auto  nPixels      = Bitmap.getHeight() * Bitmap.getWidth();
-                auto        Data         = std::make_unique<float[]>(1 + nPixels * 3);
-                auto*       pData        = &Data[1];
-
-                Data[0] = 0;
 
                 // Copy all the pixels over
                 for( auto i=0u; i<nPixels; ++i)
@@ -628,37 +631,19 @@ struct implementation final : xtexture_compiler::instance
                     pData++; pBitmapData++;
 
                     // A
-                    pBitmapData++;
+                    *pData = 1;
+                    pData++;
                 }
-
-                //
-                // Setup the bitmap again
-                //
-                Bitmap.setup
-                ( Bitmap.getWidth()
-                , Bitmap.getHeight()
-                , xcore::bitmap::format::R32G32B32_FLOAT
-                , sizeof(float) * (nPixels * 3)
-                , { reinterpret_cast<std::byte*>(Data.release()), sizeof(float) * (1 + nPixels * 3) }
-                , true
-                , 1
-                , 1
-                );
             }
             else
             {
                 //
                 // Integer conversions to float
                 //
-                const auto          nPixels         = Bitmap.getHeight() * Bitmap.getWidth();
                 const auto          ColorFmt        = xcore::color::format{ static_cast<xcore::color::format::type>(Bitmap.getFormat()) };
                 const auto&         Descriptor      = ColorFmt.getDescriptor();
                 const auto          BytesPerPixel   = Descriptor.m_TB / 8;
                 const std::byte*    pBitmapData     = Bitmap.getMip<std::byte>(0).data();
-                auto                Data            = std::make_unique<float[]>( 1 + nPixels * 3 );
-                auto*               pData           = &Data[1];
-
-                Data[0] = 0;
 
                 for (auto i = 0u; i < nPixels; ++i)
                 {
@@ -674,23 +659,26 @@ struct implementation final : xtexture_compiler::instance
                     *pData = static_cast<float>(Color.m_B) / 0xff;
                     pData++;
 
+                    *pData = static_cast<float>(Color.m_A) / 0xff;
+                    pData++;
+
                     pBitmapData += BytesPerPixel;
                 }
-
-                //
-                // Setup the bitmap again
-                //
-                Bitmap.setup
-                ( Bitmap.getWidth()
-                , Bitmap.getHeight()
-                , xcore::bitmap::format::R32G32B32_FLOAT
-                , sizeof(float) * (nPixels * 3)
-                , { reinterpret_cast<std::byte*>(Data.release()), sizeof(float) * (1 + nPixels * 3) }
-                , true
-                , 1
-                , 1
-                );
             }
+
+            //
+            // Setup the bitmap
+            //
+            Bitmap.setup
+            ( Bitmap.getWidth()
+            , Bitmap.getHeight()
+            , xcore::bitmap::format::R32G32B32A32_FLOAT
+            , sizeof(float) * FrameSize
+            , { reinterpret_cast<std::byte*>(Data.release()), sizeof(float) * DataSize }
+            , true
+            , 1
+            , 1
+            );
         }
         else
         {
@@ -788,12 +776,13 @@ struct implementation final : xtexture_compiler::instance
 
         auto HandleMix = [&](xcore::bitmap& Dest, const xtexture_rsc::mix_source& MixSrc)
         {
+
             //
             // Prepare the destination bitmap
             //
             if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR)
             {
-                auto framesize = sizeof(xcore::vector3d)* m_Bitmaps[0].getWidth()* m_Bitmaps[0].getHeight();
+                auto framesize = sizeof(xcore::vector4)* m_Bitmaps[0].getWidth()* m_Bitmaps[0].getHeight();
                 auto datasize  = framesize + sizeof(std::uint32_t);
                 auto pdata     = new std::byte[datasize];
                 pdata[0] = pdata[1] = pdata[2] = pdata[3] = std::byte{0u};
@@ -801,7 +790,7 @@ struct implementation final : xtexture_compiler::instance
                 Dest.setup
                 ( m_Bitmaps[0].getWidth()
                 , m_Bitmaps[0].getHeight()
-                , xcore::bitmap::format::R32G32B32_FLOAT
+                , xcore::bitmap::format::R32G32B32A32_FLOAT
                 , framesize
                 , { pdata, datasize }
                 , true
@@ -817,86 +806,17 @@ struct implementation final : xtexture_compiler::instance
             //
             // Do the actual mixing...
             //
-            for (auto& E : MixSrc.m_Inputs)
+            auto Mixing = [&]<typename T_COLOR>(T_COLOR*)
             {
-                xcore::bitmap& Src = m_Bitmaps[ m_BitmapHash[E.m_FileName] ];
-
-                if ( m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR)
+                for (auto& E : MixSrc.m_Inputs)
                 {
+                    xcore::bitmap& Src = m_Bitmaps[ m_BitmapHash[E.m_FileName] ];
+
                     for (int y = 0, end_y = Src.getHeight(); y < end_y; ++y)
                     for (int x = 0, end_x = Src.getWidth();  x < end_x; ++x)
                     {
-                              xcore::vector3d  D = Dest.getMip<xcore::vector3d>(0)[y * Src.getWidth() + x];
-                        const xcore::vector3d  S = Src.getMip<xcore::vector3d>(0) [y * Src.getWidth() + x];
-
-                        if (E.m_CopyFrom == xtexture_rsc::compositing::A)
-                        {
-                                 if (E.m_CopyTo == xtexture_rsc::compositing::R) D.m_X = 1.0f;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::G) D.m_Y = 1.0f;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::B) D.m_Z = 1.0f;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::RGB)  { D.m_X = 1.0f; D.m_Y = 1.0f; D.m_Z = 1.0f; }
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::RGBA) { D.m_X = 1.0f; D.m_Y = 1.0f; D.m_Z = 1.0f; }
-                        }
-                        else if (E.m_CopyFrom == xtexture_rsc::compositing::R)
-                        {
-                                 if (E.m_CopyTo == xtexture_rsc::compositing::R) D.m_X = S.m_X;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::G) D.m_Y = S.m_X;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::B) D.m_Z = S.m_X;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::RGB) {  D.m_X = S.m_X; D.m_Y = S.m_X; D.m_Z = S.m_X; }
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::RGBA) { D.m_X = S.m_X; D.m_Y = S.m_X; D.m_Z = S.m_X; }
-                        }
-                        else if (E.m_CopyFrom == xtexture_rsc::compositing::G)
-                        {
-                                 if (E.m_CopyTo == xtexture_rsc::compositing::R) D.m_X = S.m_Y;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::G) D.m_Y = S.m_Y;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::B) D.m_Z = S.m_Y;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::RGB) { D.m_X = S.m_Y; D.m_Y = S.m_Y; D.m_Z = S.m_Y; }
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::RGBA) { D.m_X = S.m_Y; D.m_Y = S.m_Y; D.m_Z = S.m_Y; }
-                        }
-                        else if (E.m_CopyFrom == xtexture_rsc::compositing::B)
-                        {
-                                 if (E.m_CopyTo == xtexture_rsc::compositing::R) D.m_X = S.m_Z;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::G) D.m_Y = S.m_Z;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::B) D.m_Z = S.m_Z;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::RGB)  { D.m_X = S.m_Z; D.m_Y = S.m_Z; D.m_Z = S.m_Z; }
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::RGBA) { D.m_X = S.m_Z; D.m_Y = S.m_Z; D.m_Z = S.m_Z; }
-                        }
-                        else if (E.m_CopyFrom == xtexture_rsc::compositing::RGBA)
-                        {
-                                 if (E.m_CopyTo == xtexture_rsc::compositing::RGB)  { D.m_X = S.m_X; D.m_Y = S.m_Y; D.m_Z = S.m_Z; }
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::RGBA) { D.m_X = S.m_X; D.m_Y = S.m_Y; D.m_Z = S.m_Z; }
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::R) D.m_X = S.m_X;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::G) D.m_Y = S.m_Y;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::B) D.m_Z = S.m_Z;
-                            else assert(false);
-                        }
-                        else if (E.m_CopyFrom == xtexture_rsc::compositing::RGB)
-                        {
-                                 if (E.m_CopyTo == xtexture_rsc::compositing::RGBA) { D.m_X = S.m_X; D.m_Y = S.m_Y; D.m_Z = S.m_Z; }
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::RGB)  { D.m_X = S.m_X; D.m_Y = S.m_Y; D.m_Z = S.m_Z; }
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::R) D.m_X = S.m_X;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::G) D.m_Y = S.m_Y;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::B) D.m_Z = S.m_Z;
-                            else throw(std::runtime_error("It does not have alpha information to copy from"));
-                        }
-                        else
-                        {
-                            assert(false);
-                        }
-
-                        //
-                        // Set the destination pixel
-                        //
-                        Dest.getMip<xcore::vector3d>(0)[y * Src.getWidth() + x] = D;
-                    }
-                }
-                else
-                {
-                    for (int y = 0, end_y = Src.getHeight(); y < end_y; ++y)
-                    for (int x = 0, end_x = Src.getWidth();  x < end_x; ++x)
-                    {
-                              xcore::icolor D = Dest.getMip<xcore::icolor>(0)[y * Src.getWidth() + x];
-                        const xcore::icolor S = Src.getMip<xcore::icolor>(0) [y * Src.getWidth() + x];
+                              T_COLOR D = Dest.getMip<T_COLOR>(0)[y * Src.getWidth() + x];
+                        const T_COLOR S = Src.getMip<T_COLOR>(0) [y * Src.getWidth() + x];
 
                         if (E.m_CopyFrom == xtexture_rsc::compositing::A)
                         {
@@ -961,10 +881,14 @@ struct implementation final : xtexture_compiler::instance
                         //
                         // Set the destination pixel
                         //
-                        Dest.getMip<xcore::icolor>(0)[y * Src.getWidth() + x] = D;
+                        Dest.getMip<T_COLOR>(0)[y * Src.getWidth() + x] = D;
                     }
                 }
-            }
+            };
+
+           if( m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR) Mixing((xcore::fcolor*)nullptr);
+           else                                                                 Mixing((xcore::icolor*)nullptr);
+            
         };
 
         std::visit([&]<typename T>(T & Input)
@@ -1087,8 +1011,6 @@ struct implementation final : xtexture_compiler::instance
         {
             Params.m_pImages[i][0] = m_Bitmaps[i].getMip<std::uint32_t>(0).data();
         }
-
-        
 
         // If we are doing colors we can use perceptual compression otherwise we can not
         if (m_Descriptor.m_bSRGB )
@@ -1478,56 +1400,28 @@ struct implementation final : xtexture_compiler::instance
         //
         if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR)
         {
-            auto nPixels             = MipSet.m_nWidth * MipSet.m_nHeight;
-            std::uint16_t* pDestHalf = reinterpret_cast<std::uint16_t*>(MipSet.pData);
-            const float*   pSrc      = m_Bitmaps[0].getMip<float>(0).data();
+            auto            nPixels   = MipSet.m_nWidth * MipSet.m_nHeight;
+            auto*           pDestHalf = reinterpret_cast<std::uint16_t*>(MipSet.pData);
+            const float*    pSrc      = m_Bitmaps[0].getMip<float>(0).data();
 
-            // When floating point is unsigned (BC6H_UF)
-            if ( m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGB_UHDR_BC6 )
+            // UF16(unsigned float), 5 exponent bits + 11 mantissa bits
+            for( int i=0; i<nPixels; ++i)
             {
-                // UF16(unsigned float), 5 exponent bits + 11 mantissa bits
-                for( int i=0; i<nPixels; ++i)
-                {
-                    // R
-                    *pDestHalf = floatToSF16(*pSrc); // half(*pSrc).bits();
-                    pDestHalf++; pSrc++;
+                // R
+                *pDestHalf = half(*pSrc).bits();
+                pDestHalf++; pSrc++;
 
-                    // G
-                    *pDestHalf = floatToSF16(*pSrc); // half(*pSrc).bits();
-                    pDestHalf++; pSrc++;
+                // G
+                *pDestHalf = half(*pSrc).bits();
+                pDestHalf++; pSrc++;
 
-                    // B
-                    *pDestHalf = floatToSF16(*pSrc); // half(*pSrc).bits();
-                    pDestHalf++; pSrc++;
+                // B
+                *pDestHalf = half(*pSrc).bits();
+                pDestHalf++; pSrc++;
 
-                    // A
-                    *pDestHalf = floatToSF16(1.0f); // half(*pSrc).bits();
-                    pDestHalf++; 
-                }
-            }
-            else
-            {
-                assert( m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGB_SHDR_BC6 );
-
-                // SF16 (signed float)	1 sign bit + 5 exponent bits + 10 mantissa bits
-                for (int i = 0; i < nPixels; ++i)
-                {
-                    // R (we must correct for the negative values)
-                    *pDestHalf = floatToSF16(*pSrc); // half(*pSrc * 0.5 + 0.5).bits();
-                    pDestHalf++; pSrc++;
-
-                    // G
-                    *pDestHalf = floatToSF16(*pSrc);  //half(*pSrc * 0.5 + 0.5).bits();
-                    pDestHalf++; pSrc++;
-
-                    // B
-                    *pDestHalf = floatToSF16(*pSrc);  //half(*pSrc * 0.5 + 0.5).bits();   // * 2 - 1
-                    pDestHalf++; pSrc++;
-
-                    // A
-                    *pDestHalf = floatToSF16(1.0f);
-                    pDestHalf++;
-                }
+                // A
+                *pDestHalf = half(*pSrc).bits();
+                pDestHalf++; pSrc++;
             }
         }
         else
@@ -1738,7 +1632,9 @@ struct implementation final : xtexture_compiler::instance
             m_FinalBitmap.setup
             (  static_cast<std::uint32_t>(MipSetCompressed.m_nWidth)
              , static_cast<std::uint32_t>(MipSetCompressed.m_nHeight)
-             , DescriptorBitmapFormatToxBitmap[static_cast<std::int32_t>(m_Descriptor.m_Compression)]
+             , m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR ? (m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_UNCOMPRESSED ? xcore::bitmap::format::R16G16B16A16_FLOAT 
+                                                                                                                                                                    : DescriptorBitmapFormatToxBitmap[static_cast<std::int32_t>(m_Descriptor.m_Compression)])
+                                                                               : DescriptorBitmapFormatToxBitmap[static_cast<std::int32_t>(m_Descriptor.m_Compression)]
              , static_cast<std::uint64_t>(TotalTexelByteSize)
              , { reinterpret_cast<std::byte*>(TextureData.release()), static_cast<std::uint64_t>(MipTableSize + TotalTexelByteSize) }
              , true
@@ -1755,8 +1651,7 @@ struct implementation final : xtexture_compiler::instance
             if (m_Descriptor.m_bSRGB) MipSetCompressed.m_dwFourCC = CMP_MAKEFOURCC('D', 'X', '1', '0');
             auto filename = xcore::string::Fmt("%s\\FinalImage.dds", m_ResourceLogPath.data());
 
-            CMP_ERROR cmp_status = CMP_SaveTexture(filename, &MipSetCompressed);
-            if (cmp_status != CMP_OK)
+            if (auto cmp_status = CMP_SaveTexture(filename, &MipSetCompressed); cmp_status != CMP_OK)
                 throw(std::runtime_error("Unable to export the texture"));
 
             //  

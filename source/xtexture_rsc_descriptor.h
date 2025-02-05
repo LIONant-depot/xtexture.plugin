@@ -69,14 +69,14 @@ namespace xtexture_rsc
 
     enum class compression_format_hdr_color : std::uint8_t
     { RGBA_UNCOMPRESSED     = compression_format::RGBA_UNCOMPRESSED
-    , RGB_SHDR_BC6          = compression_format::RGB_SHDR_BC6
     , RGB_UHDR_BC6          = compression_format::RGB_UHDR_BC6
+    , RGB_SHDR_BC6          = compression_format::RGB_SHDR_BC6
     };
 
     static constexpr auto compression_format_hdr_color_v = std::array
     { xproperty::settings::enum_item("RGBA_UNCOMPRESSED",   compression_format_hdr_color::RGBA_UNCOMPRESSED, compression_format_uncompressed_help_v)
-    , xproperty::settings::enum_item("RGB_SHDR_BC6",        compression_format_hdr_color::RGB_SHDR_BC6)
     , xproperty::settings::enum_item("RGB_UHDR_BC6",        compression_format_hdr_color::RGB_UHDR_BC6)
+    , xproperty::settings::enum_item("RGB_SHDR_BC6",        compression_format_hdr_color::RGB_SHDR_BC6)
     };
 
     enum class compression_format_color : std::uint8_t
