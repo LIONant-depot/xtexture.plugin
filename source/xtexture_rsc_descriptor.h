@@ -499,6 +499,7 @@ namespace xtexture_rsc
     { CLAMP_TO_EDGE
     , WRAP
     , MIRROR
+    , ENUM_COUNT
     };
 
     static constexpr auto wrap_type_v = std::array

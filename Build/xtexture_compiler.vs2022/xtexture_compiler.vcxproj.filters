@@ -64,6 +64,9 @@
     <Filter Include="Dependencies\compressonator\cmp_core\Shaders">
       <UniqueIdentifier>{866d4f91-875e-434a-81f9-c32950e01986}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Dependencies\compressonator\_pluins\exr">
+      <UniqueIdentifier>{3a340054-e5cd-40f2-bb31-df93126e0799}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_arealist.cpp">
@@ -728,6 +731,9 @@
     </ClCompile>
     <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_sdk\bcn.cpp">
       <Filter>Dependencies\compressonator\_pluins\bc1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\cimage\exr\exr.cpp">
+      <Filter>Dependencies\compressonator\_pluins\exr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1690,6 +1696,9 @@
     </ClInclude>
     <ClInclude Include="..\..\dependencies\xbmp_tools\src\xbmp_tools_filters.h">
       <Filter>Dependencies\xBitmapTools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\cimage\exr\exr.h">
+      <Filter>Dependencies\compressonator\_pluins\exr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -89,8 +89,8 @@ struct implementation final : xtexture_compiler::instance
         //
         m_FinalBitmap.setColorSpace( m_Descriptor.m_bSRGB ? xcore::bitmap::color_space::SRGB : xcore::bitmap::color_space::LINEAR);
         m_FinalBitmap.setCubemap(m_bCubeMap);
-        m_FinalBitmap.setSigned( m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGB_SHDR_BC6);
-        m_FinalBitmap.setWrapMode(m_Bitmaps[0].getWrapMode());
+        m_FinalBitmap.setUWrapMode(m_Bitmaps[0].getUWrapMode());
+        m_FinalBitmap.setVWrapMode(m_Bitmaps[0].getVWrapMode());
 
         //
         // Upgrade formats for Normals maps when required
@@ -98,8 +98,8 @@ struct implementation final : xtexture_compiler::instance
         if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::TANGENT_NORMAL)
         {
             // These two formats require special decoding...
-            if (m_FinalBitmap.getFormat() == xcore::bitmap::format::BC3_8RGBA) m_FinalBitmap.setFormat(xcore::bitmap::format::BC3_81Y0X_NORMAL);
-            else if (m_FinalBitmap.getFormat() == xcore::bitmap::format::BC5_8RG) m_FinalBitmap.setFormat(xcore::bitmap::format::BC5_8YX_NORMAL);
+                 if (m_FinalBitmap.getFormat() == xcore::bitmap::format::BC3_8RGBA) m_FinalBitmap.setFormat(xcore::bitmap::format::BC3_81Y0X_NORMAL);
+            else if (m_FinalBitmap.getFormat() == xcore::bitmap::format::BC5_8RG)   m_FinalBitmap.setFormat(xcore::bitmap::format::BC5_8YX_NORMAL);
         }
 
         //
@@ -529,46 +529,19 @@ struct implementation final : xtexture_compiler::instance
         //
         auto SetTheRightWrapMode = [&]()
         {
-            xcore::bitmap::wrap_mode Mode;
-            if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::CLAMP_TO_EDGE && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::CLAMP_TO_EDGE)
+            static constexpr auto Table = []() consteval
             {
-                Mode = xcore::bitmap::wrap_mode::UV_BOTH_CLAMP_TO_EDGE;
-            }
-            else if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::CLAMP_TO_EDGE && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::WRAP)
-            {
-                Mode = xcore::bitmap::wrap_mode::UV_UCLAMP_VWRAP;
-            }
-            else if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::WRAP && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::CLAMP_TO_EDGE)
-            {
-                Mode = xcore::bitmap::wrap_mode::UV_UWRAP_VCLAMP;
-            }
-            else if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::WRAP && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::WRAP)
-            {
-                Mode = xcore::bitmap::wrap_mode::UV_BOTH_WRAP;
-            }
-            else if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::MIRROR && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::CLAMP_TO_EDGE)
-            {
-                Mode = xcore::bitmap::wrap_mode::UV_UMIRROR_VCLAMP;
-            }
-            else if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::CLAMP_TO_EDGE && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::MIRROR)
-            {
-                Mode = xcore::bitmap::wrap_mode::UV_UCLAMP_VMIRROR;
-            }
-            else if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::MIRROR && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::MIRROR)
-            {
-                Mode = xcore::bitmap::wrap_mode::UV_BOTH_MIRROR;
-            }
-            else if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::MIRROR && m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::WRAP)
-            {
-                Mode = xcore::bitmap::wrap_mode::UV_UMIRROR_VWRAP;
-            }
-            else
-            {
-                // We do not support any other mode...
-                assert(false);
-            }
+                std::array<xcore::bitmap::wrap_mode, (int)xtexture_rsc::wrap_type::ENUM_COUNT > WrapTable = { xcore::bitmap::wrap_mode::ENUM_COUNT };
 
-            Bitmap.setWrapMode(Mode);
+                WrapTable[(int)xtexture_rsc::wrap_type::CLAMP_TO_EDGE]  = xcore::bitmap::wrap_mode::CLAMP_TO_EDGE;
+                WrapTable[(int)xtexture_rsc::wrap_type::WRAP]           = xcore::bitmap::wrap_mode::WRAP;
+                WrapTable[(int)xtexture_rsc::wrap_type::MIRROR]         = xcore::bitmap::wrap_mode::MIRROR;
+
+                return WrapTable;
+            }();
+
+            Bitmap.setUWrapMode( Table[(int)m_Descriptor.m_UWrap] );
+            Bitmap.setVWrapMode( Table[(int)m_Descriptor.m_VWrap] );
         };
 
         //
@@ -1175,6 +1148,7 @@ struct implementation final : xtexture_compiler::instance
     }
 
     // Function to convert a float to an unsigned half-precision float (UF16)
+    // UF16(unsigned float), 5 exponent bits + 11 mantissa bits
     uint16_t floatToUF16(float value)
     {
         // Interpret the float as an unsigned 32-bit integer
@@ -1231,6 +1205,7 @@ struct implementation final : xtexture_compiler::instance
         return uf16;
     }
 
+    // UF16(unsigned float), 1 signed bit + 5 exponent bits + 10 mantissa bits
     uint16_t floatToSF16(float value)
     {
         // Interpret the float as an unsigned 32-bit integer
@@ -1404,7 +1379,6 @@ struct implementation final : xtexture_compiler::instance
             auto*           pDestHalf = reinterpret_cast<std::uint16_t*>(MipSet.pData);
             const float*    pSrc      = m_Bitmaps[0].getMip<float>(0).data();
 
-            // UF16(unsigned float), 5 exponent bits + 11 mantissa bits
             for( int i=0; i<nPixels; ++i)
             {
                 // R
@@ -1587,8 +1561,8 @@ struct implementation final : xtexture_compiler::instance
             Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC3_A8)]         = xcore::bitmap::format::BC3_8RGBA;
             Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::R_BC4)]               = xcore::bitmap::format::BC4_4R;
             Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RG_BC5)]              = xcore::bitmap::format::BC5_8RG;
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_UHDR_BC6)]        = xcore::bitmap::format::BC6H_8RGB_FLOAT;
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_SHDR_BC6)]        = xcore::bitmap::format::BC6H_8RGB_FLOAT;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_UHDR_BC6)]        = xcore::bitmap::format::BC6H_8RGB_UFLOAT;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_SHDR_BC6)]        = xcore::bitmap::format::BC6H_8RGB_SFLOAT;
             Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC7)]            = xcore::bitmap::format::BC7_8RGBA;
             Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_UNCOMPRESSED)]   = xcore::bitmap::format::XCOLOR;
             return Array;
