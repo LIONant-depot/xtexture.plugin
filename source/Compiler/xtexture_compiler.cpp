@@ -361,17 +361,34 @@ struct implementation final : xtexture_compiler::instance
             || xcore::string::FindStrI(FilePath, ".png")  != -1 
             || xcore::string::FindStrI(FilePath, ".bmp")  != -1
             || xcore::string::FindStrI(FilePath, ".psd")  != -1
-            || xcore::string::FindStrI(FilePath, ".hdr")  != -1 )
+            || xcore::string::FindStrI(FilePath, ".hdr")  != -1
+            || xcore::string::FindStrI(FilePath, ".exr") != -1)
         {
             if ( m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR )
             {
-                if (auto Err = xbmp::tools::loader::LoadHDRSTDImage(Bitmap, FilePath); Err)
-                    throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", xbmp::tools::getErrorMsg(Err), FilePath.c_str())));
+                if (xcore::string::FindStrI(FilePath, ".exr") != -1)
+                {
+                    if (auto Err = xbmp::tools::loader::LoadHDREXRImage(Bitmap, FilePath); Err)
+                        throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", xbmp::tools::getErrorMsg(Err), FilePath.c_str())));
+                }
+                else 
+                {
+                    if (auto Err = xbmp::tools::loader::LoadHDRSTDImage(Bitmap, FilePath); Err)
+                        throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", xbmp::tools::getErrorMsg(Err), FilePath.c_str())));
+                }
             }
             else
             {
-                if (auto Err = xbmp::tools::loader::LoadSTDImage(Bitmap, FilePath); Err)
-                    throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", xbmp::tools::getErrorMsg(Err), FilePath.c_str())));
+                if (xcore::string::FindStrI(FilePath, ".exr") != -1)
+                {
+                    if (auto Err = xbmp::tools::loader::LoadEXRImage(Bitmap, FilePath); Err)
+                        throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", xbmp::tools::getErrorMsg(Err), FilePath.c_str())));
+                }
+                else
+                {
+                    if (auto Err = xbmp::tools::loader::LoadSTDImage(Bitmap, FilePath); Err)
+                        throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", xbmp::tools::getErrorMsg(Err), FilePath.c_str())));
+                }
             }
         }
         else

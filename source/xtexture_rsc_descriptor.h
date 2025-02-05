@@ -772,7 +772,7 @@ namespace xtexture_rsc
             , &descriptor::m_bSRGB
             , member_dynamic_flags<+[](const descriptor& O)
             { xproperty::flags::type Flags{};
-                Flags.m_bDontShow = O.m_UsageType == usage_type::HDR_COLOR;
+                Flags.m_bShowReadOnly = O.m_UsageType == usage_type::HDR_COLOR;
                 return Flags;
             }>
             , member_help<"Tell the system that the image is Gamma and that the mips and other functions "
