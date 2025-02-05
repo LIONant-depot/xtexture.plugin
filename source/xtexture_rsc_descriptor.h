@@ -596,6 +596,14 @@ namespace xtexture_rsc
                     Errors.push_back("BC5 does not support gamma You must set SRGB flag to false");
                 }
             }
+
+            if ( m_UsageType == xtexture_rsc::usage_type::HDR_COLOR )
+            {
+                if (m_bSRGB)
+                {
+                    Errors.push_back("HDR formats does not support gamma You must set SRGB flag to false");
+                }
+            }
         }
 
         XPROPERTY_VDEF( "Texture", descriptor
@@ -615,7 +623,7 @@ namespace xtexture_rsc
                     {
                     case usage_type::COLOR:             O.m_Compression = compression_format::RGB_BC1;      O.m_bSRGB = true;  O.m_bFillAveColorByAlpha = false; break;
                     case usage_type::COLOR_AND_ALPHA:   O.m_Compression = compression_format::RGBA_BC1_A1;  O.m_bSRGB = true;  O.m_bFillAveColorByAlpha = true;  break;
-                    case usage_type::HDR_COLOR:         O.m_Compression = compression_format::RGB_UHDR_BC6; O.m_bSRGB = true;  O.m_bFillAveColorByAlpha = false; break;
+                    case usage_type::HDR_COLOR:         O.m_Compression = compression_format::RGB_UHDR_BC6; O.m_bSRGB = false; O.m_bFillAveColorByAlpha = false; break;
                     case usage_type::INTENSITY:         O.m_Compression = compression_format::RGB_BC1;      O.m_bSRGB = false; O.m_bFillAveColorByAlpha = false; break;
                     case usage_type::TANGENT_NORMAL:    O.m_Compression = compression_format::RG_BC5;       O.m_bSRGB = false; O.m_bFillAveColorByAlpha = false; break;
                     default: assert(false);
@@ -761,6 +769,11 @@ namespace xtexture_rsc
             >>
         , obj_member<"SRGB"
             , &descriptor::m_bSRGB
+            , member_dynamic_flags<+[](const descriptor& O)
+            { xproperty::flags::type Flags{};
+                Flags.m_bDontShow = O.m_UsageType == usage_type::HDR_COLOR;
+                return Flags;
+            }>
             , member_help<"Tell the system that the image is Gamma and that the mips and other functions "
                           "should convert to linear before doing anything to its data. However the RAW data "
                           "can still be store in the linear range. If you don't enable this the texture will be "

@@ -89,6 +89,7 @@ struct implementation final : xtexture_compiler::instance
         //
         m_FinalBitmap.setColorSpace( m_Descriptor.m_bSRGB ? xcore::bitmap::color_space::SRGB : xcore::bitmap::color_space::LINEAR);
         m_FinalBitmap.setCubemap(m_bCubeMap);
+        m_FinalBitmap.setSigned( m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGB_SHDR_BC6);
         m_FinalBitmap.setWrapMode(m_Bitmaps[0].getWrapMode());
 
         //
@@ -1185,6 +1186,186 @@ struct implementation final : xtexture_compiler::instance
             throw(std::runtime_error(xbmp::tools::getErrorMsg(Err)));
     }
 
+
+    // https://stackoverflow.com/questions/76799117/how-to-convert-a-float-to-a-half-type-and-the-other-way-around-in-c
+#include "immintrin.h"
+
+    uint32_t float_as_uint32(float a)
+    {
+        uint32_t r;
+        memcpy(&r, &a, sizeof r);
+        return r;
+    }
+
+    uint16_t float2half_rn(float a)
+    {
+        uint32_t ia = float_as_uint32(a);
+        uint16_t ir;
+
+        ir = (ia >> 16) & 0x8000;
+        if ((ia & 0x7f800000) == 0x7f800000) {
+            if ((ia & 0x7fffffff) == 0x7f800000) {
+                ir |= 0x7c00; /* infinity */
+            }
+            else {
+                ir |= 0x7e00 | ((ia >> (24 - 11)) & 0x1ff); /* NaN, quietened */
+            }
+        }
+        else if ((ia & 0x7f800000) >= 0x33000000) {
+            int shift = (int)((ia >> 23) & 0xff) - 127;
+            if (shift > 15) {
+                ir |= 0x7c00; /* infinity */
+            }
+            else {
+                ia = (ia & 0x007fffff) | 0x00800000; /* extract mantissa */
+                if (shift < -14) { /* denormal */
+                    ir |= ia >> (-1 - shift);
+                    ia = ia << (32 - (-1 - shift));
+                }
+                else { /* normal */
+                    ir |= ia >> (24 - 11);
+                    ia = ia << (32 - (24 - 11));
+                    ir = ir + ((14 + shift) << 10);
+                }
+                /* IEEE-754 round to nearest of even */
+                if ((ia > 0x80000000) || ((ia == 0x80000000) && (ir & 1))) {
+                    ir++;
+                }
+            }
+        }
+        return ir;
+    }
+
+    uint16_t float2half_rn_ref(float a)
+    {
+        __m128 pa = _mm_set_ps1(a);
+        __m128i r16 = _mm_cvtps_ph(pa, _MM_FROUND_TO_NEAREST_INT);
+        uint16_t res;
+        memcpy(&res, &r16, sizeof res);
+        return res;
+    }
+
+    float uint32_as_float(uint32_t a)
+    {
+        float r;
+        memcpy(&r, &a, sizeof r);
+        return r;
+    }
+
+    // Function to convert a float to an unsigned half-precision float (UF16)
+    uint16_t floatToUF16(float value)
+    {
+        // Interpret the float as an unsigned 32-bit integer
+        uint32_t floatBits;
+        std::memcpy(&floatBits, &value, sizeof(float));
+
+        // Extract the sign, exponent, and mantissa from the float
+        uint32_t sign     = (floatBits >> 31) & 0x1;
+        uint32_t exponent = (floatBits >> 23) & 0xFF;
+        uint32_t mantissa = floatBits & 0x7FFFFF;
+
+        // Adjust the exponent from float to UF16
+        int32_t newExponent = static_cast<int32_t>(exponent) - 127 + 15;
+
+        // Handle special cases
+        if (exponent == 0xFF) // NaN or Infinity
+        {
+            newExponent = 0x1F;
+            if (mantissa != 0) // NaN
+            {
+                mantissa = 0x3FF;
+            }
+            else // Infinity
+            {
+                mantissa = 0;
+            }
+        }
+        else if (newExponent <= 0) // Underflow to zero or denormalized number
+        {
+            if (newExponent < -10)
+            {
+                newExponent = 0;
+                mantissa = 0;
+            }
+            else
+            {
+                mantissa = (mantissa | 0x800000) >> (1 - newExponent);
+                newExponent = 0;
+            }
+        }
+        else if (newExponent >= 0x1F) // Overflow to infinity
+        {
+            newExponent = 0x1F;
+            mantissa = 0;
+        }
+        else // Normalized number
+        {
+            mantissa >>= 12;
+        }
+
+        // Combine the sign, exponent, and mantissa into the UF16 format
+        uint16_t uf16 = ((newExponent&31) << 11) | (mantissa & 0x7FF);
+
+        return uf16;
+    }
+
+    uint16_t floatToSF16(float value)
+    {
+        // Interpret the float as an unsigned 32-bit integer
+        uint32_t floatBits;
+        std::memcpy(&floatBits, &value, sizeof(float));
+
+        // Extract the sign, exponent, and mantissa from the float
+        uint32_t sign = (floatBits >> 31) & 0x1;
+        uint32_t exponent = (floatBits >> 23) & 0xFF;
+        uint32_t mantissa = floatBits & 0x7FFFFF;
+
+        // Adjust the exponent from float to SF16
+        int32_t newExponent = static_cast<int32_t>(exponent) - 127 + 15;
+
+        // Handle special cases
+        if (exponent == 0xFF) // NaN or Infinity
+        {
+            newExponent = 0x1F;
+            if (mantissa != 0) // NaN
+            {
+                mantissa = 0x3FF;
+            }
+            else // Infinity
+            {
+                mantissa = 0;
+            }
+        }
+        else if (newExponent <= 0) // Underflow to zero or denormalized number
+        {
+            if (newExponent < -10)
+            {
+                newExponent = 0;
+                mantissa = 0;
+            }
+            else
+            {
+                mantissa = (mantissa | 0x800000) >> (1 - newExponent);
+                newExponent = 0;
+            }
+        }
+        else if (newExponent >= 0x1F) // Overflow to infinity
+        {
+            newExponent = 0x1F;
+            mantissa = 0;
+        }
+        else // Normalized number
+        {
+            mantissa >>= 13;
+        }
+
+        // Combine the sign, exponent, and mantissa into the SF16 format
+        uint16_t sf16 = (sign << 15) | (newExponent << 10) | (mantissa & 0x3FF);
+
+        return sf16;
+    }
+
+
     //---------------------------------------------------------------------------------------------
 
     void UseCompressonator(void)
@@ -1284,6 +1465,7 @@ struct implementation final : xtexture_compiler::instance
         MipSet.m_nBlockWidth        = 0;
         MipSet.m_nBlockHeight       = 0;
         MipSet.m_nBlockDepth        = 0;
+        MipSet.m_isSigned           = m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGB_SHDR_BC6 ? true : false;
         MipSet.m_nChannels          = ChannelConversionTable[static_cast<std::int32_t>(m_Descriptor.m_Compression)];
         MipSet.dwWidth              = MipSet.m_nWidth;
         MipSet.dwHeight             = MipSet.m_nHeight;
@@ -1300,23 +1482,52 @@ struct implementation final : xtexture_compiler::instance
             std::uint16_t* pDestHalf = reinterpret_cast<std::uint16_t*>(MipSet.pData);
             const float*   pSrc      = m_Bitmaps[0].getMip<float>(0).data();
 
-            for( int i=0; i<nPixels; ++i)
+            // When floating point is unsigned (BC6H_UF)
+            if ( m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGB_UHDR_BC6 )
             {
-                // R
-                *pDestHalf = half(*pSrc).bits();
-                pDestHalf++; pSrc++;
+                // UF16(unsigned float), 5 exponent bits + 11 mantissa bits
+                for( int i=0; i<nPixels; ++i)
+                {
+                    // R
+                    *pDestHalf = floatToSF16(*pSrc); // half(*pSrc).bits();
+                    pDestHalf++; pSrc++;
 
-                // G
-                *pDestHalf = half(*pSrc).bits();
-                pDestHalf++; pSrc++;
+                    // G
+                    *pDestHalf = floatToSF16(*pSrc); // half(*pSrc).bits();
+                    pDestHalf++; pSrc++;
 
-                // B
-                *pDestHalf = half(*pSrc).bits();
-                pDestHalf++; pSrc++;
+                    // B
+                    *pDestHalf = floatToSF16(*pSrc); // half(*pSrc).bits();
+                    pDestHalf++; pSrc++;
 
-                // A
-                *pDestHalf = half(1).bits();
-                pDestHalf++; 
+                    // A
+                    *pDestHalf = floatToSF16(1.0f); // half(*pSrc).bits();
+                    pDestHalf++; 
+                }
+            }
+            else
+            {
+                assert( m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGB_SHDR_BC6 );
+
+                // SF16 (signed float)	1 sign bit + 5 exponent bits + 10 mantissa bits
+                for (int i = 0; i < nPixels; ++i)
+                {
+                    // R (we must correct for the negative values)
+                    *pDestHalf = floatToSF16(*pSrc); // half(*pSrc * 0.5 + 0.5).bits();
+                    pDestHalf++; pSrc++;
+
+                    // G
+                    *pDestHalf = floatToSF16(*pSrc);  //half(*pSrc * 0.5 + 0.5).bits();
+                    pDestHalf++; pSrc++;
+
+                    // B
+                    *pDestHalf = floatToSF16(*pSrc);  //half(*pSrc * 0.5 + 0.5).bits();   // * 2 - 1
+                    pDestHalf++; pSrc++;
+
+                    // A
+                    *pDestHalf = floatToSF16(1.0f);
+                    pDestHalf++;
+                }
             }
         }
         else
