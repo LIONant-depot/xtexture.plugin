@@ -553,6 +553,9 @@ namespace xtexture_rsc
         float                       m_TilableHeightPercentage   { 0.1f };
         bool                        m_bNormalMapFlipY           {false};
         bool                        m_bNormalizeNormals         {true};
+        bool                        m_bConvertToCubeMap         {false};
+        std::uint32_t               m_ToCubeMapFaceResolution   { 1024 };
+        bool                        m_ToCubeMapUseBilinear      { true };
 
         virtual void SetupFromSource(std::string_view FileName)
         {
@@ -577,11 +580,6 @@ namespace xtexture_rsc
                 }
             }
 
-            if (m_UWrap == xtexture_rsc::wrap_type::WRAP && m_VWrap == xtexture_rsc::wrap_type::MIRROR)
-            {
-                Errors.push_back("Sorry but (U set to wrap and V set to mirror) is the only combination that we do not support");
-            }
-
             if(m_bTillableFilter)
             {
                 if (m_UWrap != wrap_type::WRAP || m_VWrap != wrap_type::WRAP)
@@ -604,6 +602,12 @@ namespace xtexture_rsc
                 {
                     Errors.push_back("HDR formats does not support gamma You must set SRGB flag to false");
                 }
+            }
+
+            if ( m_bConvertToCubeMap )
+            {
+                if (m_UWrap != m_VWrap) Errors.push_back("You must set the UWrap and VWrap to the same value for cube maps");
+                if (m_UWrap != wrap_type::WRAP) Errors.push_back("Cube maps needs to the the wrapping mode to wrap");
             }
         }
 
@@ -894,8 +898,41 @@ namespace xtexture_rsc
             , member_help<"Flips the Y in the normal map making it compatible with OpenGL or DX"
             >>
 
-
-
+        , obj_scope < "CubeMap"
+            , obj_member < "Convert To CubeMap"
+                , &descriptor::m_bConvertToCubeMap
+                , member_help<"Convert the input image to a cube map"
+                >>
+            , obj_member< "Face Size"
+                , &descriptor::m_ToCubeMapFaceResolution
+                , member_ui<std::uint32_t>::drag_bar<128, 4096>
+                , member_dynamic_flags < +[](const descriptor& O)
+                {
+                    xproperty::flags::type Flags{};
+                    Flags.m_bDontShow = O.m_bConvertToCubeMap == false;
+                    return Flags;
+                } >
+                , member_help< "The resolution of the face of the cube map. The higher the resolution, the more detail the cube map will have. "
+                               "It's like choosing the size of the faces of the cube map."
+                >>
+            , obj_member< "Use Bilinear"
+                , &descriptor::m_ToCubeMapUseBilinear
+                , member_dynamic_flags < +[](const descriptor& O)
+                {
+                    xproperty::flags::type Flags{};
+                    Flags.m_bDontShow = O.m_bConvertToCubeMap == false;
+                    return Flags;
+                } >
+                , member_help< "Use bilinear filtering when converting the cube map. Bilinear filtering is a method of smoothing pixel that are stretched."
+                >>
+            , member_dynamic_flags < +[](const descriptor& O)
+                {
+                    xproperty::flags::type Flags{};
+                    Flags.m_bDontShow = (O.m_InputVariant.index() != static_cast<std::size_t>(variant_enum::SINGLE_INPUT)
+                                        && O.m_InputVariant.index() != static_cast<std::size_t>(variant_enum::MIX_SOURCE));
+                    return Flags;
+                } 
+                >>
         )
     };
     XPROPERTY_VREG(descriptor)

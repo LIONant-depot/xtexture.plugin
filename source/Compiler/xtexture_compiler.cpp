@@ -81,25 +81,8 @@ struct implementation final : xtexture_compiler::instance
         else
         {
             XLOG_CHANNEL_INFO(m_LogChannel, "using Compressonator as the compression compiler");
+            UseCompressonatorHDRFriendlyFormat();
             UseCompressonator();
-        }
-
-        //
-        // Make sure the final xbitmap has all the basics setup
-        //
-        m_FinalBitmap.setColorSpace( m_Descriptor.m_bSRGB ? xcore::bitmap::color_space::SRGB : xcore::bitmap::color_space::LINEAR);
-        m_FinalBitmap.setCubemap(m_bCubeMap);
-        m_FinalBitmap.setUWrapMode(m_Bitmaps[0].getUWrapMode());
-        m_FinalBitmap.setVWrapMode(m_Bitmaps[0].getVWrapMode());
-
-        //
-        // Upgrade formats for Normals maps when required
-        //
-        if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::TANGENT_NORMAL)
-        {
-            // These two formats require special decoding...
-                 if (m_FinalBitmap.getFormat() == xcore::bitmap::format::BC3_8RGBA) m_FinalBitmap.setFormat(xcore::bitmap::format::BC3_81Y0X_NORMAL);
-            else if (m_FinalBitmap.getFormat() == xcore::bitmap::format::BC5_8RG)   m_FinalBitmap.setFormat(xcore::bitmap::format::BC5_8YX_NORMAL);
         }
 
         //
@@ -274,6 +257,76 @@ struct implementation final : xtexture_compiler::instance
                 }
             }
         }
+
+        //
+        // Simplify / collapse all the inputs into our final bitmap[0]
+        //
+        if ( m_Descriptor.m_bConvertToCubeMap && 
+                  ( m_Descriptor.m_InputVariant.index() == static_cast<std::size_t>(xtexture_rsc::variant_enum::MIX_SOURCE) 
+                 || m_Descriptor.m_InputVariant.index() == static_cast<std::size_t>(xtexture_rsc::variant_enum::SINGLE_INPUT) ))
+         {
+             if ( m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR )
+             {
+                 xcore::bitmap Bitmap;
+                 xbmp::tools::filters::ConvertToCubeMapHDR(Bitmap, m_Bitmaps[0], m_Descriptor.m_ToCubeMapFaceResolution, m_Descriptor.m_ToCubeMapUseBilinear);
+                 m_Bitmaps[0] = std::move(Bitmap);
+
+                 m_bCubeMap = true;
+             }
+             else 
+             {
+                 xcore::bitmap Bitmap;
+                 xbmp::tools::filters::ConvertToCubeMap(Bitmap, m_Bitmaps[0], m_Descriptor.m_ToCubeMapFaceResolution, m_Descriptor.m_ToCubeMapUseBilinear );
+                 m_Bitmaps[0] = std::move(Bitmap);
+
+                 m_bCubeMap = true;
+             }
+         }
+        else if( m_Descriptor.m_InputVariant.index() == static_cast<std::size_t>(xtexture_rsc::variant_enum::CUBE_INPUT) 
+              || m_Descriptor.m_InputVariant.index() == static_cast<std::size_t>(xtexture_rsc::variant_enum::CUBE_INPUT_MIX) )
+        {
+            assert(m_Bitmaps.size() == 6);
+
+            xcore::bitmap Bitmap;
+
+            auto FaceSize  = m_Bitmaps[0].getFaceSize();
+            auto FrameSize = FaceSize * 6;
+            auto TotalSize = FrameSize*1 + sizeof(int);
+            auto pData     = new std::byte[TotalSize];
+
+            pData[0] = pData[1] = pData[2] = pData[3] = std::byte{0};
+
+            Bitmap.setup
+            ( m_Bitmaps[0].getWidth()
+            , m_Bitmaps[0].getHeight()
+            , m_Bitmaps[0].getFormat()
+            , FaceSize
+            , { pData, TotalSize }
+            , true
+            , 1
+            , 1
+            , true
+            );
+
+            // Copy all the cube faces to the destination bitmap
+            for (int i = 0; i != 6; ++i)
+            {
+                const auto& B = m_Bitmaps[i];
+                const auto  S = B.getMip<std::byte>(0);
+                auto        D = Bitmap.getMip<std::byte>(0, i);
+                std::memcpy(D.data(), S.data(), FaceSize);
+            }
+
+            // Free all the bitmaps...
+            m_Bitmaps.clear();
+
+            // Set out final input bitmap
+            m_Bitmaps.push_back(std::move(Bitmap));
+
+            // yes we are a cube map...
+            m_bCubeMap = true;
+        }
+
     }
 
     //---------------------------------------------------------------------------------------------
@@ -537,9 +590,8 @@ struct implementation final : xtexture_compiler::instance
     }
 
     //---------------------------------------------------------------------------------------------
-    // TODO: Must be able to handle HDR images at some point...
-    // We normalize the bitmaps so we can treat them all the same way
-    void NormalizeBitmap( xcore::bitmap& Bitmap )
+
+    void StandardizeBitmap( xcore::bitmap& Bitmap )
     {
         //
         // Set all the wrapping properly
@@ -594,8 +646,8 @@ struct implementation final : xtexture_compiler::instance
                 throw(std::runtime_error("Source texture has a strange format"));
 
             const auto  nPixels      = Bitmap.getHeight() * Bitmap.getWidth();
-            const auto  FrameSize    = nPixels * 4;
-            const auto  DataSize     = 1 + FrameSize;
+            const auto  FaceSize     = nPixels * 4;
+            const auto  DataSize     = 1 + FaceSize;
             auto        Data         = std::make_unique<float[]>(DataSize);
             auto*       pData        = &Data[1];
 
@@ -663,7 +715,7 @@ struct implementation final : xtexture_compiler::instance
             ( Bitmap.getWidth()
             , Bitmap.getHeight()
             , xcore::bitmap::format::R32G32B32A32_FLOAT
-            , sizeof(float) * FrameSize
+            , sizeof(float) * FaceSize
             , { reinterpret_cast<std::byte*>(Data.release()), sizeof(float) * DataSize }
             , true
             , 1
@@ -754,7 +806,7 @@ struct implementation final : xtexture_compiler::instance
             //
             // Make sure to convert all textures to the same format... RGBA
             //
-            NormalizeBitmap(m_Bitmaps[BitmapIndex]);
+            StandardizeBitmap(m_Bitmaps[BitmapIndex]);
         }
     }
 
@@ -772,8 +824,8 @@ struct implementation final : xtexture_compiler::instance
             //
             if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR)
             {
-                auto framesize = sizeof(xcore::vector4)* m_Bitmaps[0].getWidth()* m_Bitmaps[0].getHeight();
-                auto datasize  = framesize + sizeof(std::uint32_t);
+                auto faceSize = sizeof(xcore::vector4)* m_Bitmaps[0].getWidth()* m_Bitmaps[0].getHeight();
+                auto datasize  = faceSize + sizeof(std::uint32_t);
                 auto pdata     = new std::byte[datasize];
                 pdata[0] = pdata[1] = pdata[2] = pdata[3] = std::byte{0u};
 
@@ -781,7 +833,7 @@ struct implementation final : xtexture_compiler::instance
                 ( m_Bitmaps[0].getWidth()
                 , m_Bitmaps[0].getHeight()
                 , xcore::bitmap::format::R32G32B32A32_FLOAT
-                , framesize
+                , faceSize
                 , { pdata, datasize }
                 , true
                 , 1
@@ -1279,6 +1331,66 @@ struct implementation final : xtexture_compiler::instance
         return sf16;
     }
 
+    //---------------------------------------------------------------------------------------------
+
+    void UseCompressonatorHDRFriendlyFormat()
+    {
+        // If we are not dealing with HDR formats then we can skip this step
+        if (m_Descriptor.m_UsageType != xtexture_rsc::usage_type::HDR_COLOR) return;
+
+        xcore::bitmap HDRHalfBitmap;
+
+        auto FullColorDataSize = m_Bitmaps[0].getDataSize();
+        auto HalfColorDataSize = (FullColorDataSize - sizeof(int))/2 + sizeof(int);
+        auto FaceSize          = m_Bitmaps[0].getFaceSize()/2;
+        auto pData             = new std::byte[HalfColorDataSize];
+
+        pData[0] = pData[1] = pData[2] = pData[3] = std::byte{ 0u };
+
+        HDRHalfBitmap.setup
+        ( m_Bitmaps[0].getWidth()
+        , m_Bitmaps[0].getHeight()
+        , xcore::bitmap::format::R16G16B16A16_FLOAT
+        , FaceSize
+        , { pData, HalfColorDataSize }
+        , true
+        , 1
+        , m_Bitmaps[0].getFrameCount()
+        , m_Bitmaps[0].isCubemap()
+        );
+
+        struct half_color
+        {
+            std::uint16_t m_R;
+            std::uint16_t m_G;
+            std::uint16_t m_B;
+            std::uint16_t m_A;
+        };
+
+        for( auto iFrame = 0, FrameCount = HDRHalfBitmap.getFrameCount(); iFrame < FrameCount; ++iFrame)
+        {
+            for (auto iFace = 0, FaceCount = HDRHalfBitmap.getFaceCount(); iFace < FaceCount; ++iFace)
+            {
+                const auto SrcFullColor  = m_Bitmaps[0].getMip<xcore::fcolor>(0, iFace, iFrame);
+                      auto DestHalfColor = HDRHalfBitmap.getMip<half_color>(0, iFace, iFrame);
+                for ( auto i=0u; i< SrcFullColor.size(); ++i )
+                {
+                    auto& D = DestHalfColor[i];
+                    auto& S = SrcFullColor[i];
+
+                    D.m_R = half(S.m_R).bits();
+                    D.m_G = half(S.m_G).bits();
+                    D.m_B = half(S.m_B).bits();
+                    D.m_A = half(S.m_A).bits();
+                }
+            }
+        }
+
+        // Set the final bitmap
+        HDRHalfBitmap.setUWrapMode( m_Bitmaps[0].getUWrapMode() );
+        HDRHalfBitmap.setVWrapMode( m_Bitmaps[0].getVWrapMode() );
+        m_Bitmaps[0] = std::move(HDRHalfBitmap);
+    }
 
     //---------------------------------------------------------------------------------------------
 
@@ -1349,7 +1461,7 @@ struct implementation final : xtexture_compiler::instance
         //
         // Setup the mip tables
         //
-        constexpr auto max_mip_levels_v = 40;
+        constexpr auto max_mip_levels_v = 20 * 6;
         CMP_MipLevel** MipLevelTable = new CMP_MipLevel*[max_mip_levels_v] {};
         for (int i = 0; i < max_mip_levels_v; ++i) MipLevelTable[i] = new CMP_MipLevel();
 
@@ -1361,16 +1473,16 @@ struct implementation final : xtexture_compiler::instance
 
         MipSet.m_nWidth             = static_cast<CMP_INT>(m_Bitmaps[0].getWidth());
         MipSet.m_nHeight            = static_cast<CMP_INT>(m_Bitmaps[0].getHeight());
-        MipSet.m_nDepth             = 1;
+        MipSet.m_nDepth             = m_Bitmaps[0].isCubemap() ? 6 : 1;
         MipSet.m_format             = m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR ? CMP_FORMAT::CMP_FORMAT_RGBA_16F : CMP_FORMAT::CMP_FORMAT_ARGB_8888;
         MipSet.m_ChannelFormat      = m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR ? CF_Float16 : CF_8bit;
         MipSet.m_TextureDataType    = m_Descriptor.m_UsageType == xtexture_rsc::usage_type::TANGENT_NORMAL ? TextureDataType::TDT_NORMAL_MAP : DataTypeConversionTable[static_cast<std::int32_t>(m_Descriptor.m_Compression)];
-        MipSet.m_TextureType        = m_bCubeMap ? TT_CubeMap : TT_2D;
+        MipSet.m_TextureType        = m_Bitmaps[0].isCubemap() ? TT_CubeMap : TT_2D;
         MipSet.m_Flags              = 0;
-        MipSet.m_CubeFaceMask       = m_bCubeMap ? 0x3f : 0; // MS_CF_All
+        MipSet.m_CubeFaceMask       = m_Bitmaps[0].isCubemap() ? 0x3f : 0; // MS_CF_All
         MipSet.m_dwFourCC           = 0;
         MipSet.m_dwFourCC2          = 0;
-        MipSet.m_nMaxMipLevels      = static_cast<CMP_INT>(max_mip_levels_v);
+        MipSet.m_nMaxMipLevels      = m_Bitmaps[0].isCubemap() ? static_cast<CMP_INT>(max_mip_levels_v/6) : static_cast<CMP_INT>(max_mip_levels_v);
         MipSet.m_nMipLevels         = 1;
         MipSet.m_transcodeFormat    = CMP_FORMAT::CMP_FORMAT_Unknown;
         MipSet.m_compressed         = false;
@@ -1383,43 +1495,22 @@ struct implementation final : xtexture_compiler::instance
         MipSet.m_nChannels          = ChannelConversionTable[static_cast<std::int32_t>(m_Descriptor.m_Compression)];
         MipSet.dwWidth              = MipSet.m_nWidth;
         MipSet.dwHeight             = MipSet.m_nHeight;
-        MipSet.dwDataSize           = m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR ? static_cast<CMP_DWORD>(MipSet.m_nWidth * MipSet.m_nHeight * MipSet.m_nChannels * sizeof(std::uint16_t))
-                                                                                                      : static_cast<CMP_DWORD>(m_Bitmaps[0].getFaceSize());
+        MipSet.dwDataSize           = static_cast<CMP_DWORD>(m_Bitmaps[0].getFaceSize());
         MipSet.pData                = new CMP_BYTE[MipSet.dwDataSize];
 
         //
-        // If we do HDR less convert to f16 as Compressonator can not handle f32
+        // If we do HDR let us convert to f16 as Compressonator can not handle f32
         //
-        if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR)
+        memcpy(MipSet.pData, reinterpret_cast<CMP_BYTE*>(m_Bitmaps[0].getMip<std::byte>(0).data()), MipSet.dwDataSize);
+
+        for( int i=1; i< MipSet.m_nDepth; ++i )
         {
-            auto            nPixels   = MipSet.m_nWidth * MipSet.m_nHeight;
-            auto*           pDestHalf = reinterpret_cast<std::uint16_t*>(MipSet.pData);
-            const float*    pSrc      = m_Bitmaps[0].getMip<float>(0).data();
-
-            for( int i=0; i<nPixels; ++i)
-            {
-                // R
-                *pDestHalf = half(*pSrc).bits();
-                pDestHalf++; pSrc++;
-
-                // G
-                *pDestHalf = half(*pSrc).bits();
-                pDestHalf++; pSrc++;
-
-                // B
-                *pDestHalf = half(*pSrc).bits();
-                pDestHalf++; pSrc++;
-
-                // A
-                *pDestHalf = half(*pSrc).bits();
-                pDestHalf++; pSrc++;
-            }
+            MipLevelTable[i]->m_nWidth          = MipSet.dwWidth;
+            MipLevelTable[i]->m_nHeight         = MipSet.m_nHeight;
+            MipLevelTable[i]->m_dwLinearSize    = MipSet.dwDataSize;
+            MipLevelTable[i]->m_pbData          = new CMP_BYTE[MipSet.dwDataSize];
+            memcpy(MipLevelTable[i]->m_pbData, reinterpret_cast<CMP_BYTE*>(m_Bitmaps[0].getMip<std::byte>(0, i).data()), MipSet.dwDataSize);
         }
-        else
-        {
-            memcpy(MipSet.pData, reinterpret_cast<CMP_BYTE*>(m_Bitmaps[0].getMip<std::byte>(0).data()), MipSet.dwDataSize);
-        }
-        
 
         MipLevelTable[0]->m_nWidth       = MipSet.dwWidth;
         MipLevelTable[0]->m_nHeight      = MipSet.dwHeight;
@@ -1512,10 +1603,6 @@ struct implementation final : xtexture_compiler::instance
                 KernelOps.bc15.channelWeights[2] = 0.0820f; // Blue
             }
 
-
-            KernelOps.useSRGBFrames = m_Descriptor.m_bSRGB;
-            
-
             //
             // Compress the texture
             //
@@ -1530,12 +1617,16 @@ struct implementation final : xtexture_compiler::instance
                 static int   s_nMipMaps;
                 static int   s_Updates;
                 static base* s_pBase;
-                s_nMipMaps       = MipSet.m_nMipLevels;
+                static float s_total;
+
+                s_nMipMaps       = MipSet.m_nMipLevels * (m_Bitmaps[0].isCubemap() ? 6 : 1);
                 s_ActualProgress = 0;
                 s_Updates        = 0;
                 s_pBase          = this;
+                s_total          = 0;
                 memset(&MipSetCompressed, 0, sizeof(CMP_MipSet));
-                CMP_ERROR cmp_status = CMP_ProcessTexture(&MipSet, &MipSetCompressed, KernelOps, [](CMP_FLOAT fProgress, CMP_DWORD_PTR, CMP_DWORD_PTR) ->bool
+
+                if ( auto Status = CMP_ProcessTexture(&MipSet, &MipSetCompressed, KernelOps, [](CMP_FLOAT fProgress, CMP_DWORD_PTR, CMP_DWORD_PTR) ->bool
                 {
                     if (fProgress >= 100) 
                     {
@@ -1551,86 +1642,18 @@ struct implementation final : xtexture_compiler::instance
                     if ((s_Updates%20)==0)
                     {
                         float t       =  (fProgress / 100.f) / static_cast<float>(s_nMipMaps);
-                        float total   =  (s_ActualProgress / static_cast<float>(s_nMipMaps)) + t;
-                        s_pBase->displayProgressBar( "Compression", total );
+                        s_total       =  (s_ActualProgress / static_cast<float>(s_nMipMaps)) + t;
+                        s_pBase->displayProgressBar( "Compression", s_total);
                     }
 
                     return CMP_OK;
-                });
+                    }); Status != CMP_OK) throw(std::runtime_error("Unable to compress the texture"));
 
-                // Flush to the new line
-                if (cmp_status != CMP_OK)
-                    throw(std::runtime_error("Unable to compress the texture"));
+                // Make sure that we have reach 100%
+                if (s_total<1)s_pBase->displayProgressBar("Compression", 1);
 
                 CMP_FreeMipSet(&MipSet);
             }
-        }
-
-
-        //
-        // Convert from Mipset to xcore::bitmap
-        //
-        static constexpr auto DescriptorBitmapFormatToxBitmap = []() consteval ->auto
-        {
-            std::array< xcore::bitmap::format, static_cast<std::int32_t>(xtexture_rsc::compression_format::count_v) > Array = { xcore::bitmap::format::XCOLOR_END };
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_BC1)]             = xcore::bitmap::format::BC1_4RGB;
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC1_A1)]         = xcore::bitmap::format::BC1_4RGBA1;
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC3_A8)]         = xcore::bitmap::format::BC3_8RGBA;
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::R_BC4)]               = xcore::bitmap::format::BC4_4R;
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RG_BC5)]              = xcore::bitmap::format::BC5_8RG;
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_UHDR_BC6)]        = xcore::bitmap::format::BC6H_8RGB_UFLOAT;
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_SHDR_BC6)]        = xcore::bitmap::format::BC6H_8RGB_SFLOAT;
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC7)]            = xcore::bitmap::format::BC7_8RGBA;
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_UNCOMPRESSED)]   = xcore::bitmap::format::XCOLOR;
-            return Array;
-        }();
-
-        if (DescriptorBitmapFormatToxBitmap[static_cast<std::int32_t>(m_Descriptor.m_Compression)] == xcore::bitmap::format::XCOLOR_END)
-            throw(std::runtime_error("Unable to convert the texture to xcore::bitmap"));
-
-        //
-        // Set up the Final xBitmap
-        //
-        {
-            // Compute total memory require for the texture
-            std::uint32_t TotalTexelByteSize = 0;
-            for ( int i=0; i< MipSetCompressed.m_nMipLevels; ++i )
-            {
-                TotalTexelByteSize += MipSetCompressed.m_pMipLevelTable[i]->m_dwLinearSize;
-            }
-            const auto MipTableSize = sizeof(xcore::bitmap::mip) * MipSetCompressed.m_nMipLevels;
-            std::unique_ptr<std::byte[]> TextureData = std::make_unique<std::byte[]>(MipTableSize + TotalTexelByteSize);
-
-            // Copy the data to the texture
-            {
-                auto pTextureData   = MipTableSize + TextureData.get();
-                auto pMipTable      = reinterpret_cast<xcore::bitmap::mip*>(TextureData.get());
-                auto PrevOffset     = 0u;
-
-                for (int i = 0; i < MipSetCompressed.m_nMipLevels; ++i)
-                {
-                    // Handle copying the mip data
-                    const auto& Mip = *MipSetCompressed.m_pMipLevelTable[i];
-                    memcpy(pTextureData, Mip.m_pbData, Mip.m_dwLinearSize);
-                    pTextureData += Mip.m_dwLinearSize;
-
-                    // Handle the mip table
-                    pMipTable[i].m_Offset = static_cast<int>(PrevOffset);
-                    PrevOffset += Mip.m_dwLinearSize;
-                }
-            }
-
-            m_FinalBitmap.setup
-            (  static_cast<std::uint32_t>(MipSetCompressed.m_nWidth)
-             , static_cast<std::uint32_t>(MipSetCompressed.m_nHeight)
-             , m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR ? (m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_UNCOMPRESSED ? xcore::bitmap::format::R16G16B16A16_FLOAT 
-                                                                                                                                                                    : DescriptorBitmapFormatToxBitmap[static_cast<std::int32_t>(m_Descriptor.m_Compression)])
-                                                                               : DescriptorBitmapFormatToxBitmap[static_cast<std::int32_t>(m_Descriptor.m_Compression)]
-             , static_cast<std::uint64_t>(TotalTexelByteSize)
-             , { reinterpret_cast<std::byte*>(TextureData.release()), static_cast<std::uint64_t>(MipTableSize + TotalTexelByteSize) }
-             , true
-             , MipSetCompressed.m_nMipLevels
-             , 1 );
         }
 
         //
@@ -1676,6 +1699,123 @@ struct implementation final : xtexture_compiler::instance
                         throw(std::runtime_error("Unable to reload the Debug dds..."));
 
                     fclose(fp);
+                }
+            }
+        }
+
+        //
+        // Convert from Mipset to xcore::bitmap
+        //
+        static constexpr auto DescriptorBitmapFormatToxBitmap = []() consteval ->auto
+        {
+            std::array< xcore::bitmap::format, static_cast<std::int32_t>(xtexture_rsc::compression_format::count_v) > Array = { xcore::bitmap::format::XCOLOR_END };
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_BC1)]             = xcore::bitmap::format::BC1_4RGB;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC1_A1)]         = xcore::bitmap::format::BC1_4RGBA1;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC3_A8)]         = xcore::bitmap::format::BC3_8RGBA;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::R_BC4)]               = xcore::bitmap::format::BC4_4R;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RG_BC5)]              = xcore::bitmap::format::BC5_8RG;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_UHDR_BC6)]        = xcore::bitmap::format::BC6H_8RGB_UFLOAT;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_SHDR_BC6)]        = xcore::bitmap::format::BC6H_8RGB_SFLOAT;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC7)]            = xcore::bitmap::format::BC7_8RGBA;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_UNCOMPRESSED)]   = xcore::bitmap::format::XCOLOR;
+            return Array;
+        }();
+
+        if (DescriptorBitmapFormatToxBitmap[static_cast<std::int32_t>(m_Descriptor.m_Compression)] == xcore::bitmap::format::XCOLOR_END)
+            throw(std::runtime_error("Unable to convert the texture to xcore::bitmap"));
+
+        //
+        // Set up the Final xBitmap
+        //
+        {
+            //
+            // Set up the actual Final xBitmap
+            //
+            {
+                const auto CompressTotalMips = MipSetCompressed.m_nMipLevels * m_Bitmaps[0].getFaceCount();
+
+                // Compute total memory require for the texture
+                std::uint32_t TotalTexelByteSize = 0;
+                for ( int i=0; i< CompressTotalMips; i ++ )
+                {
+                    TotalTexelByteSize += MipSetCompressed.m_pMipLevelTable[i]->m_dwLinearSize;
+                }
+
+                std::uint32_t FaceTexelByteSize = 0;
+                for (int i = 0; i < CompressTotalMips; i += m_Bitmaps[0].getFaceCount())
+                {
+                    FaceTexelByteSize += MipSetCompressed.m_pMipLevelTable[i]->m_dwLinearSize;
+                }
+
+                xassert( auto total = FaceTexelByteSize * m_Bitmaps[0].getFaceCount(); total  == TotalTexelByteSize );
+
+                const auto MipTableSize = sizeof(xcore::bitmap::mip) * MipSetCompressed.m_nMipLevels;
+                std::unique_ptr<std::byte[]> TextureData = std::make_unique<std::byte[]>(MipTableSize + TotalTexelByteSize);
+
+                // Set the mip table as well
+                {
+                    auto            pMipTable = reinterpret_cast<xcore::bitmap::mip*>(TextureData.get());
+                    int             CurOffset = 0;
+                    for (int i = 0, j=0; i < CompressTotalMips; i+= m_Bitmaps[0].getFaceCount(), j++ )
+                    {
+                        // Handle copying the mip data
+                        const auto& Mip = *MipSetCompressed.m_pMipLevelTable[i];
+
+                        // Handle the mip table
+                        pMipTable[j].m_Offset = CurOffset;
+
+                        // Update the trackers
+                        CurOffset += Mip.m_dwLinearSize;
+                    }
+                }
+
+                //
+                // Set the final data structure
+                //
+                m_FinalBitmap.setup
+                ( static_cast<std::uint32_t>(MipSetCompressed.m_nWidth)
+                , static_cast<std::uint32_t>(MipSetCompressed.m_nHeight)
+                , m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_UNCOMPRESSED ? m_Bitmaps[0].getFormat() : DescriptorBitmapFormatToxBitmap[static_cast<std::int32_t>(m_Descriptor.m_Compression)]
+                , static_cast<std::uint64_t>(TotalTexelByteSize / (m_Bitmaps[0].isCubemap()?6:1))
+                , { reinterpret_cast<std::byte*>(TextureData.release()), static_cast<std::uint64_t>(MipTableSize + TotalTexelByteSize) }
+                , true
+                , MipSetCompressed.m_nMipLevels
+                , 1
+                , m_Bitmaps[0].isCubemap()
+                );
+
+                //
+                // Make sure the final xbitmap has all the basics setup
+                //
+                m_FinalBitmap.setColorSpace(m_Descriptor.m_bSRGB ? xcore::bitmap::color_space::SRGB : xcore::bitmap::color_space::LINEAR);
+                m_FinalBitmap.setUWrapMode(m_Bitmaps[0].getUWrapMode());
+                m_FinalBitmap.setVWrapMode(m_Bitmaps[0].getVWrapMode());
+
+                //
+                // Upgrade formats for Normals maps when required
+                //
+                if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::TANGENT_NORMAL)
+                {
+                    // These two formats require special decoding...
+                         if (m_FinalBitmap.getFormat() == xcore::bitmap::format::BC3_8RGBA) m_FinalBitmap.setFormat(xcore::bitmap::format::BC3_81Y0X_NORMAL);
+                    else if (m_FinalBitmap.getFormat() == xcore::bitmap::format::BC5_8RG)   m_FinalBitmap.setFormat(xcore::bitmap::format::BC5_8YX_NORMAL);
+                }
+            }
+
+            //
+            // Copy the actual data to our final bitmap
+            //
+            for ( int iFace =0; iFace < m_FinalBitmap.getFaceCount(); iFace++ )
+            {
+                for( int iMip = 0; iMip < m_FinalBitmap.getMipCount(); iMip++  )
+                {
+                    auto  xBmpData = m_FinalBitmap.getMip<std::byte>(iMip, iFace);
+                    auto& ComPress = *MipSetCompressed.m_pMipLevelTable[iMip * m_FinalBitmap.getFaceCount() + iFace ];
+
+                    assert( ComPress.m_dwLinearSize == xBmpData.size() );
+
+                    // Handle copying the mip data
+                    memcpy(xBmpData.data(), ComPress.m_pbData, ComPress.m_dwLinearSize);
                 }
             }
         }
