@@ -320,31 +320,31 @@ namespace xtexture_rsc
 
     struct cube_input
     {
-        std::string m_FileNameLeft;
-        std::string m_FileNameBack;
         std::string m_FileNameRight;
-        std::string m_FileNameDown;
+        std::string m_FileNameLeft;
         std::string m_FileNameUp;
+        std::string m_FileNameDown;
         std::string m_FileNameForward;
+        std::string m_FileNameBack;
 
         void Validate( std::vector<std::string>& Errors ) const noexcept
         {
-            if(m_FileNameLeft.empty())      Errors.push_back("You forgot to fill the FileName Left");
-            if(m_FileNameBack.empty())      Errors.push_back("You forgot to fill the FileName Back");
-            if(m_FileNameRight.empty())     Errors.push_back("You forgot to fill the FileName Right");
-            if(m_FileNameDown.empty())      Errors.push_back("You forgot to fill the FileName Down");
-            if(m_FileNameUp.empty())        Errors.push_back("You forgot to fill the FileName Up");
-            if(m_FileNameForward.empty())   Errors.push_back("You forgot to fill the FileName Forward");
+            if (m_FileNameRight.empty())        Errors.push_back("You forgot to fill the FileName Right");
+            if (m_FileNameLeft.empty())         Errors.push_back("You forgot to fill the FileName Left");
+            if (m_FileNameUp.empty())           Errors.push_back("You forgot to fill the FileName Up");
+            if (m_FileNameDown.empty())         Errors.push_back("You forgot to fill the FileName Down");
+            if (m_FileNameForward.empty())      Errors.push_back("You forgot to fill the FileName Forward");
+            if (m_FileNameBack.empty())         Errors.push_back("You forgot to fill the FileName Back");
         }
 
         XPROPERTY_DEF
         ("cube_input", cube_input
-            , obj_member<"Filename Left Face", &cube_input::m_FileNameLeft, member_ui<std::string>::file_dialog<image_filter_v, true, 1> >
-            , obj_member<"Filename Back Face", &cube_input::m_FileNameBack, member_ui<std::string>::file_dialog<image_filter_v, true, 1> >
-            , obj_member<"Filename Right Face", &cube_input::m_FileNameRight, member_ui<std::string>::file_dialog<image_filter_v, true, 1> >
-            , obj_member<"Filename Down Face", &cube_input::m_FileNameDown, member_ui<std::string>::file_dialog<image_filter_v, true, 1> >
-            , obj_member<"Filename Up Face", &cube_input::m_FileNameUp, member_ui<std::string>::file_dialog<image_filter_v, true, 1> >
-            , obj_member<"Filename Forward Face", &cube_input::m_FileNameForward, member_ui<std::string>::file_dialog<image_filter_v, true, 1> >
+        , obj_member<"Filename Right Face",     &cube_input::m_FileNameRight, member_ui<std::string>::file_dialog<image_filter_v, true, 1> >
+        , obj_member<"Filename Left Face",      &cube_input::m_FileNameLeft, member_ui<std::string>::file_dialog<image_filter_v, true, 1> >
+        , obj_member<"Filename Up Face",        &cube_input::m_FileNameUp, member_ui<std::string>::file_dialog<image_filter_v, true, 1> >
+        , obj_member<"Filename Down Face",      &cube_input::m_FileNameDown, member_ui<std::string>::file_dialog<image_filter_v, true, 1> >
+        , obj_member<"Filename Forward Face",   &cube_input::m_FileNameForward, member_ui<std::string>::file_dialog<image_filter_v, true, 1> >
+        , obj_member<"Filename Back Face",      &cube_input::m_FileNameBack, member_ui<std::string>::file_dialog<image_filter_v, true, 1> >
         )
     };
 
@@ -384,12 +384,12 @@ namespace xtexture_rsc
 
     struct cube_input_mix
     {
-        mix_source m_Left;
-        mix_source m_Back;
         mix_source m_Right;
-        mix_source m_Down;
+        mix_source m_Left;
         mix_source m_Up;
+        mix_source m_Down;
         mix_source m_Forward;
+        mix_source m_Back;
 
         void Validate(std::vector<std::string>& Errors) const noexcept
         {
@@ -409,22 +409,22 @@ namespace xtexture_rsc
                 }
             };
 
-            Function(Errors, "Left", m_Left);
-            Function(Errors, "Back", m_Back);
-            Function(Errors, "Right", m_Right);
-            Function(Errors, "Down", m_Down);
-            Function(Errors, "Up", m_Up);
+            Function(Errors, "Right",   m_Right);
+            Function(Errors, "Left",    m_Left);
+            Function(Errors, "Up",      m_Up);
+            Function(Errors, "Down",    m_Down);
             Function(Errors, "Forward", m_Forward);
+            Function(Errors, "Back",    m_Back);
         }
 
         XPROPERTY_DEF
         ("cube_input_mix", cube_input_mix
-        , obj_member<"Left Face",   &cube_input_mix::m_Left >
-        , obj_member<"Back Face",   &cube_input_mix::m_Back >
         , obj_member<"Right Face",  &cube_input_mix::m_Right >
-        , obj_member<"Down Face",   &cube_input_mix::m_Down >
+        , obj_member<"Left Face",   &cube_input_mix::m_Left >
         , obj_member<"Up Face",     &cube_input_mix::m_Up >
-        , obj_member<"Forward Face", &cube_input_mix::m_Forward >
+        , obj_member<"Down Face",   &cube_input_mix::m_Down >
+        , obj_member<"Forward Face",&cube_input_mix::m_Forward >
+        , obj_member<"Back Face",   &cube_input_mix::m_Back >
         )
     };
 
@@ -766,6 +766,17 @@ namespace xtexture_rsc
                           "file size. It's like choosing between different ways to save your picture "
                           "to make it smaller without losing too much quality."
             >>
+        , obj_member<"AlphaThreshold"
+            , &descriptor::m_AlphaThreshold 
+            , member_dynamic_flags < +[](const descriptor& O)
+            {
+                xproperty::flags::type Flags{};
+                Flags.m_bDontShow = !(O.m_UsageType == usage_type::COLOR_AND_ALPHA && O.m_Compression == compression_format::RGBA_BC1_A1);
+                return Flags;
+            }>
+            , member_help<"Specifies the alpha threshold value, which determines how transparent parts of the texture are "
+                             "handled.It's like setting a cutoff point for what is considered see-through in your picture."
+            >>
         , obj_member<"Quality"
             , &descriptor::m_Quality
             , member_ui<float>::scroll_bar<0, 1>
@@ -819,30 +830,30 @@ namespace xtexture_rsc
                 , member_help<"This is the minimum size that the mips can reach any lower won't be created"
                 >>
             >
-        , obj_member<"FillAveColorByAlpha"
-            , &descriptor::m_bFillAveColorByAlpha
-            , member_dynamic_flags < +[](const descriptor& O)
-            {
-                xproperty::flags::type Flags{};
-                Flags.m_bDontShow = O.m_UsageType != usage_type::COLOR_AND_ALPHA && O.m_UsageType != usage_type::INTENSITY;
-                return Flags;
-            }>
-            , member_help<"This property indicates whether the average color should be filled by the alpha channel. "
-                            "It's used when the texture has transparency or is an intensity map. It's like using the "
-                            "transparency information to fill in the average color of the texture."
-            >>
-        , obj_member<"AlphaThreshold"
-            , &descriptor::m_AlphaThreshold 
-            , member_dynamic_flags < +[](const descriptor& O)
-            {
-                xproperty::flags::type Flags{};
-                Flags.m_bDontShow = !(O.m_UsageType == usage_type::COLOR_AND_ALPHA && (O.m_bFillAveColorByAlpha || O.m_Compression == compression_format::RGBA_BC1_A1));
-                return Flags;
-            }>
-            , member_help<"Specifies the alpha threshold value, which determines how transparent parts of the texture are "
-                             "handled.It's like setting a cutoff point for what is considered see-through in your picture."
-            >>
-
+        , obj_scope< "FillAveColorByAlpha"
+            , obj_member<"FillAveColorByAlpha"
+                , &descriptor::m_bFillAveColorByAlpha
+                , member_dynamic_flags < +[](const descriptor& O)
+                {
+                    xproperty::flags::type Flags{};
+                    Flags.m_bDontShow = O.m_UsageType != usage_type::COLOR_AND_ALPHA && O.m_UsageType != usage_type::INTENSITY;
+                    return Flags;
+                }>
+                , member_help<"This property indicates whether the average color should be filled by the alpha channel. "
+                                "It's used when the texture has transparency or is an intensity map. It's like using the "
+                                "transparency information to fill in the average color of the texture."
+                >>
+            , obj_member<"AlphaThreshold"
+                , &descriptor::m_AlphaThreshold 
+                , member_dynamic_flags < +[](const descriptor& O)
+                {
+                    xproperty::flags::type Flags{};
+                    Flags.m_bDontShow = !(O.m_UsageType == usage_type::COLOR_AND_ALPHA && O.m_bFillAveColorByAlpha) || O.m_Compression == compression_format::RGBA_BC1_A1;
+                    return Flags;
+                }>
+                , member_help<"Specifies the alpha threshold value of alpha to start filling the average color"
+                >>
+            >
         , obj_scope< "Tillable Filter"
             , obj_member<"Tillable Filter"
                 , &descriptor::m_bTillableFilter

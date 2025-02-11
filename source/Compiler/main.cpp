@@ -9,7 +9,7 @@ int main( int argc, const char* argv[] )
     //
     // This is just for debugging
     //
-    if constexpr (false)
+    if constexpr (!false)
     {
         static const char* pDebugArgs[] = 
         { "TextureCompiler"
