@@ -22,7 +22,7 @@
   "Texture/Input/Filename Back Face"                 ;string "Assets\Cubemap\qwantani_sunset_4k_5.hdr"
   "Texture/Compression"                              ;enum   "RGB_UHDR_BC6"                           
   "Texture/AlphaThreshold"                           ;u8     #80                                      
-  "Texture/Quality"                                  ;f32    #0                                       
+  "Texture/Quality"                                  ;f32    #3F800000                                
   "Texture/SRGB"                                     ;bool   0                                        
   "Texture/Mipmaps/GenerateMips"                     ;bool   1                                        
   "Texture/Mipmaps/Mipmap Filter"                    ;enum   "BOX"                                    

@@ -9,7 +9,7 @@ int main( int argc, const char* argv[] )
     //
     // This is just for debugging
     //
-    if constexpr (!false)
+    if constexpr (false)
     {
         static const char* pDebugArgs[] = 
         { "TextureCompiler"
@@ -18,7 +18,7 @@ int main( int argc, const char* argv[] )
         , "-DEBUG"
         , "D1"
         , "-DESCRIPTOR"
-        , "Descriptors\\Texture\\A9\\EF\\34DBB69E8762EFA9.desc"
+        , "Descriptors\\Texture\\2D\\99\\FF18EF0BF5AD992D.desc" //"\\A9\\EF\\34DBB69E8762EFA9.desc" 
         , "-OUTPUT"
         , "D:\\LIONant\\xGPU\\dependencies\\xtexture.plugin\\bin\\example.lion_project\\Cache\\Resources\\Platforms"
         };

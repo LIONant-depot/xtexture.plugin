@@ -1,0 +1,34 @@
+
+[ DescriptorVersion ]
+{ Major:d  Minor:d }
+//-------  -------
+     1        0   
+
+// New Types
+< s32:d u32:g s16:C u16:H s8:c u8:h f32:f f64:F string:s u64:G s64:D bool:c enum:s >
+
+[ xProperties : 22 ]
+{ Name:s                                             Value:?                                                                         }
+//-------------------------------------------------  -------------------------------------------------------------------------------
+  "Texture/Usage"                                    ;enum   "COLOR_AND_ALPHA"                                                      
+  "Texture/Wrap Mode U"                              ;enum   "CLAMP_TO_EDGE"                                                        
+  "Texture/Wrap Mode V"                              ;enum   "CLAMP_TO_EDGE"                                                        
+  "Texture/InputType"                                ;enum   "SINGLE_INPUT"                                                         
+  "Texture/Input/Filename"                           ;string "Assets\alpha_metallix_sprite_sheet_by_superretroclassic81_dg70mww.png"
+  "Texture/Compression"                              ;enum   "RGBA_BC1_A1"                                                          
+  "Texture/AlphaThreshold"                           ;u8     #80                                                                    
+  "Texture/Quality"                                  ;f32    #3F800000                                                              
+  "Texture/SRGB"                                     ;bool   1                                                                      
+  "Texture/Mipmaps/GenerateMips"                     ;bool   1                                                                      
+  "Texture/Mipmaps/Mipmap Filter"                    ;enum   "BOX"                                                                  
+  "Texture/Mipmaps/MinSize"                          ;s32    1                                                                      
+  "Texture/FillAveColorByAlpha/FillAveColorByAlpha"  ;bool   1                                                                      
+  "Texture/FillAveColorByAlpha/AlphaThreshold"       ;u8     #80                                                                    
+  "Texture/Tillable Filter/Tillable Filter"          ;bool   0                                                                      
+  "Texture/Tillable Filter/Width Blend Percentage"   ;f32    #3DCCCCCD                                                              
+  "Texture/Tillable Filter/Height Blend Percentage"  ;f32    #3DCCCCCD                                                              
+  "Texture/Normalize Normals"                        ;bool   1                                                                      
+  "Texture/Normal Flip Y"                            ;bool   0                                                                      
+  "Texture/CubeMap/Convert To CubeMap"               ;bool   0                                                                      
+  "Texture/CubeMap/Face Size"                        ;u32    #400                                                                   
+  "Texture/CubeMap/Use Bilinear"                     ;bool   1                                                                      

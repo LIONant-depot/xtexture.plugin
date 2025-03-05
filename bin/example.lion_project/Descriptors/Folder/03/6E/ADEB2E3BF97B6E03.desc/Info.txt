@@ -10,7 +10,7 @@
 [ xProperties : 4 ]
 { Name:s                        Value:?                   }
 //----------------------------  -------------------------
-  "Info/Name"                   ;string "Orb"            
+  "Info/Name"                   ;string "Root" 
   "Info/RscLinks[]"             ;s64    0                
-  "Info/Details/GUID/Instance"  ;u64    #34DBB69E8762EFA9
-  "Info/Details/GUID/Type"      ;u64    #FADD7E5CD1246A93
+  "Info/Details/GUID/Instance"  ;u64    #ADEB2E3BF97B6E03
+  "Info/Details/GUID/Type"      ;u64    #a75b88f48d4ba5a9   

@@ -833,12 +833,6 @@ namespace xtexture_rsc
         , obj_scope< "FillAveColorByAlpha"
             , obj_member<"FillAveColorByAlpha"
                 , &descriptor::m_bFillAveColorByAlpha
-                , member_dynamic_flags < +[](const descriptor& O)
-                {
-                    xproperty::flags::type Flags{};
-                    Flags.m_bDontShow = O.m_UsageType != usage_type::COLOR_AND_ALPHA && O.m_UsageType != usage_type::INTENSITY;
-                    return Flags;
-                }>
                 , member_help<"This property indicates whether the average color should be filled by the alpha channel. "
                                 "It's used when the texture has transparency or is an intensity map. It's like using the "
                                 "transparency information to fill in the average color of the texture."
@@ -853,7 +847,13 @@ namespace xtexture_rsc
                 }>
                 , member_help<"Specifies the alpha threshold value of alpha to start filling the average color"
                 >>
-            >
+            , member_dynamic_flags < +[](const descriptor& O)
+            {
+                xproperty::flags::type Flags{};
+                Flags.m_bDontShow = O.m_UsageType != usage_type::COLOR_AND_ALPHA && O.m_UsageType != usage_type::INTENSITY;
+                return Flags;
+            }
+            >>
         , obj_scope< "Tillable Filter"
             , obj_member<"Tillable Filter"
                 , &descriptor::m_bTillableFilter
@@ -968,9 +968,9 @@ namespace xtexture_rsc
             return std::make_unique<descriptor>();
         };
 
-        std::uint64_t ResourceTypeGUID( void ) const noexcept override
+        xresource::type_guid ResourceTypeGUID( void ) const noexcept override
         {
-            return full_guid_v.m_Instance.m_Value;
+            return {full_guid_v.m_Instance.m_Value};
         }
 
         const char* ResourceTypeName( void ) const noexcept override
