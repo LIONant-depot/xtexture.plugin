@@ -25,12 +25,12 @@ struct implementation final : xtexture_compiler::instance
     bool                                            m_bCubeMap;
 
     //---------------------------------------------------------------------------------------------
-
+/*
     xcore::guid::rcfull<> getResourcePipelineFullGuid() const noexcept override
     {
         return xtexture_rsc::full_guid_v;
     }
-
+*/
     //---------------------------------------------------------------------------------------------
 
     xcore::err onCompile(void) override
@@ -479,6 +479,9 @@ struct implementation final : xtexture_compiler::instance
             else
             {
                 m_BitmapHash[Str] = -1;
+
+                // Add string to our dependency list...
+                m_Dependencies.m_Assets.push_back(Str);
             }
         };
 
@@ -1838,7 +1841,7 @@ struct implementation final : xtexture_compiler::instance
         //
         // We serialize the final image as a xbmp because the file size is usually half the size of a DDS file
         //
-        auto FinalPath = xcore::string::Fmt("%s.xbmp", FilePath.data());
+        auto FinalPath = xcore::string::Fmt("%s", FilePath.data());
 
         if (auto Err = m_FinalBitmap.SerializeSave(xcore::string::To<wchar_t>(FinalPath), false); Err)
             throw(std::runtime_error(Err.getCode().m_pString));

@@ -4,10 +4,9 @@
 
 namespace xtexture_rsc
 {
-    static constexpr xcore::guid::rcfull<> full_guid_v
-    { .m_Type = xcore::guid::rctype<>           { "resource.pipeline", "plugin" }
-    , .m_Instance = xcore::guid::rcinstance<>   { "xtexture" }
-    };
+    // While this should be just a type... it also happens to be an instance... the instance of the texture_plugin
+    // So while generating the type guid we must treat it as an instance.
+    inline static constexpr auto resource_type_guid_v = xresource::type_guid(xresource::guid_generator::Instance64FromString("texture"));
 
     enum class compression_format : std::uint8_t
     { RGBA_UNCOMPRESSED     // 32bpp
@@ -970,7 +969,7 @@ namespace xtexture_rsc
 
         xresource::type_guid ResourceTypeGUID( void ) const noexcept override
         {
-            return {full_guid_v.m_Instance.m_Value};
+            return resource_type_guid_v;
         }
 
         const char* ResourceTypeName( void ) const noexcept override

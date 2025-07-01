@@ -8,7 +8,7 @@ namespace xrsc
     // While this should be just a type... it also happens to be an instance... the instance of the texture_plugin
     // So while generating the type guid we must treat it as an instance.
     inline static constexpr auto    texture_type_guid_v = xresource::type_guid(xresource::guid_generator::Instance64FromString("texture"));
-    using                           xgpu_texture        = xresource::def_guid<texture_type_guid_v>;
+    using                           texture_ref         = xresource::def_guid<texture_type_guid_v>;
 }
 
 template<>

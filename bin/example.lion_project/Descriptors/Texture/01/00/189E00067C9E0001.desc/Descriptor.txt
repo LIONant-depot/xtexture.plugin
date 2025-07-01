@@ -1,0 +1,39 @@
+
+[ DescriptorVersion ]
+{ Major:d  Minor:d }
+//-------  -------
+     1        0   
+
+// New Types
+< s32:d u32:g s16:C u16:H s8:c u8:h f32:f f64:F string:s u64:G s64:D bool:c enum:s >
+
+[ xProperties : 27 ]
+{ Name:s                                             Value:?                                           }
+//-------------------------------------------------  -------------------------------------------------
+  "Texture/Usage"                                    ;enum   "HDR_COLOR"                              
+  "Texture/Wrap Mode U"                              ;enum   "CLAMP_TO_EDGE"                          
+  "Texture/Wrap Mode V"                              ;enum   "CLAMP_TO_EDGE"                          
+  "Texture/InputType"                                ;enum   "CUBE_INPUT"                             
+  "Texture/Input/Filename Right Face"                ;string "Assets\Cubemap\qwantani_sunset_4k_0.hdr"
+  "Texture/Input/Filename Left Face"                 ;string "Assets\Cubemap\qwantani_sunset_4k_1.hdr"
+  "Texture/Input/Filename Up Face"                   ;string "Assets\Cubemap\qwantani_sunset_4k_2.hdr"
+  "Texture/Input/Filename Down Face"                 ;string "Assets\Cubemap\qwantani_sunset_4k_3.hdr"
+  "Texture/Input/Filename Forward Face"              ;string "Assets\Cubemap\qwantani_sunset_4k_4.hdr"
+  "Texture/Input/Filename Back Face"                 ;string "Assets\Cubemap\qwantani_sunset_4k_5.hdr"
+  "Texture/Compression"                              ;enum   "RGB_UHDR_BC6"                           
+  "Texture/AlphaThreshold"                           ;u8     #80                                      
+  "Texture/Quality"                                  ;f32    #3F000000                                
+  "Texture/SRGB"                                     ;bool   0                                        
+  "Texture/Mipmaps/GenerateMips"                     ;bool   1                                        
+  "Texture/Mipmaps/Mipmap Filter"                    ;enum   "BOX"                                    
+  "Texture/Mipmaps/MinSize"                          ;s32    1                                        
+  "Texture/FillAveColorByAlpha/FillAveColorByAlpha"  ;bool   0                                        
+  "Texture/FillAveColorByAlpha/AlphaThreshold"       ;u8     #80                                      
+  "Texture/Tillable Filter/Tillable Filter"          ;bool   0                                        
+  "Texture/Tillable Filter/Width Blend Percentage"   ;f32    #3DCCCCCD                                
+  "Texture/Tillable Filter/Height Blend Percentage"  ;f32    #3DCCCCCD                                
+  "Texture/Normalize Normals"                        ;bool   1                                        
+  "Texture/Normal Flip Y"                            ;bool   0                                        
+  "Texture/CubeMap/Convert To CubeMap"               ;bool   0                                        
+  "Texture/CubeMap/Face Size"                        ;u32    #400                                     
+  "Texture/CubeMap/Use Bilinear"                     ;bool   1                                        

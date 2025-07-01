@@ -1,0 +1,19 @@
+
+[ DescriptorVersion ]
+{ Major:d  Minor:d }
+//-------  -------
+     1        0   
+
+// New Types
+< s32:d u32:g s16:C u16:H s8:c u8:h f32:f f64:F string:s u64:G s64:D bool:c enum:s >
+
+[ xProperties : 7 ]
+{ Name:s                                 Value:?                                            }
+//-------------------------------------  --------------------------------------------------
+  "Info/Name"                            ;string "bricks"                                  
+  "Info/Comment"                         ;string "Example on how to make a texture tilable"
+  "Info/Details/GUID/Instance"           ;u64    #189EDF8BF1940033                         
+  "Info/Details/GUID/Type"               ;u64    #6701D481518BD833                         
+  "Info/Details/RscLinks[]"              ;s64    1                                         
+  "Info/Details/RscLinks[G:0]/Instance"  ;u64    #1828CA93A2DC0027                         
+  "Info/Details/RscLinks[G:0]/Type"      ;u64    #C4D90C5F0CC43021                         

@@ -1,0 +1,18 @@
+
+[ DescriptorVersion ]
+{ Major:d  Minor:d }
+//-------  -------
+     1        0   
+
+// New Types
+< s32:d u32:g s16:C u16:H s8:c u8:h f32:f f64:F string:s u64:G s64:D bool:c enum:s >
+
+[ xProperties : 6 ]
+{ Name:s                                 Value:?                   }
+//-------------------------------------  -------------------------
+  "Info/Name"                            ;string "Trash"          
+  "Info/Details/GUID/Instance"           ;u64    #1               
+  "Info/Details/GUID/Type"               ;u64    #C4D90C5F0CC43021
+  "Info/Details/RscLinks[]"              ;s64    1                
+  "Info/Details/RscLinks[G:0]/Instance"  ;u64    #ADEB2E3BF97B6E03
+  "Info/Details/RscLinks[G:0]/Type"      ;u64    #C4D90C5F0CC43021

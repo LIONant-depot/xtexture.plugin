@@ -18,7 +18,7 @@ int main( int argc, const char* argv[] )
         , "-DEBUG"
         , "D1"
         , "-DESCRIPTOR"
-        , "Descriptors\\Texture\\2D\\99\\FF18EF0BF5AD992D.desc" //"\\A9\\EF\\34DBB69E8762EFA9.desc" 
+        , "Descriptors\\Texture\\D7\\00\\189E8EEFD88400D7.desc" 
         , "-OUTPUT"
         , "D:\\LIONant\\xGPU\\dependencies\\xtexture.plugin\\bin\\example.lion_project\\Cache\\Resources\\Platforms"
         };
