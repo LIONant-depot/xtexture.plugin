@@ -36,8 +36,10 @@ xresource::loader< xrsc::texture_type_guid_v >::data_type* xresource::loader< xr
 
 //------------------------------------------------------------------
 
-void xresource::loader< xrsc::texture_type_guid_v >::Destroy(xresource::mgr& Mgr, data_type&& Data, const full_guid& GUID)
+void xresource::loader< xrsc::texture_type_guid_v >::Destroy(xresource::mgr& Mgr, data_type& Data, const full_guid& GUID)
 {
-    // Because we are moving a xgpu::texture... it should result in an automatic release once the variable goes out of scope...
+    auto& UserData = Mgr.getUserData<resource_mgr_user_data>();
+    UserData.m_Device.Destroy( std::move(Data) );
+    delete &Data;
 }
 
