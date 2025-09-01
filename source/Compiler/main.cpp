@@ -4,12 +4,10 @@
 
 int main( int argc, const char* argv[] )
 {
-    xcore::Init("xtexture_compiler");
-
     //
     // This is just for debugging
     //
-    if constexpr (false)
+    if constexpr (!false)
     {
         static const char* pDebugArgs[] = 
         { "TextureCompiler"
@@ -37,8 +35,15 @@ int main( int argc, const char* argv[] )
     //
     if( auto Err = TextureCompilerPipeline->Parse( argc, argv ); Err )
     {
-        printf( "%s\nERROR: Fail to compile\n", Err.getCode().m_pString );
-        return Err.getCode().m_RawState;
+        Err.ForEachInChain( [&](xerr Error)
+        {
+            auto Hint   = Err.getHint();
+            auto String = std::format("Error: {}\n", Err.getMessage());
+            printf("%s", String.c_str());
+            if (Hint.empty() == false ) 
+                printf("Hint: %s\n", Hint.data() );
+        });
+        return 1;
     }
 
     //
@@ -46,8 +51,15 @@ int main( int argc, const char* argv[] )
     //
     if( auto Err = TextureCompilerPipeline->Compile(); Err )
     {
-        printf("%s\nERROR: Fail to compile(2)\n", Err.getCode().m_pString);
-        return Err.getCode().m_RawState;
+        Err.ForEachInChain([&](xerr Error)
+        {
+            auto Hint   = Err.getHint();
+            auto String = std::format("Error: {}\n", Err.getMessage());
+            printf("%s", String.c_str());
+            if (Hint.empty() == false ) 
+                printf("Hint: %s\n", Hint.data() );
+        });
+        return 1;
     }
 
     return 0;

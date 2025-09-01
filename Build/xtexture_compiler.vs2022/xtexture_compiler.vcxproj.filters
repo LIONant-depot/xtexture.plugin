@@ -1,1730 +1,1058 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Dependencies">
-      <UniqueIdentifier>{9e3d421f-a3ed-4da7-9a69-dac199b4e5bb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Dependencies\xCore">
-      <UniqueIdentifier>{da01953a-30de-474a-bf6c-60377bdd4bc1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Dependencies\Crunch">
-      <UniqueIdentifier>{258711cc-6048-485a-8d80-0e860e1ef227}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Dependencies\Crunch\Cpp">
-      <UniqueIdentifier>{3bde9eff-05da-4068-8cdc-54c7b542be87}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Dependencies\Crunch\H">
-      <UniqueIdentifier>{12910230-0df0-42d9-81a1-f3b40bf6d182}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Settings">
-      <UniqueIdentifier>{55d40c14-f29f-44e4-94ce-91d2e224e01e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Dependencies\xBitmapTools">
-      <UniqueIdentifier>{4263a9c5-3166-409c-9d48-116b35e2e739}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Runtime">
-      <UniqueIdentifier>{04f251d0-1693-4995-b8a3-0ba4d905a755}</UniqueIdentifier>
-    </Filter>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\source\Compiler\main.cpp">
+      <Filter>Texture_Compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\xcompression\source\xcompression.cpp">
+      <Filter>dependencies\xcore\xcompression</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\xfile\source\xfile.cpp">
+      <Filter>dependencies\xcore\xfile</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\xserializer\source\xserializer.cpp">
+      <Filter>dependencies\xcore\xserializer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\xtextfile\source\xtextfile.cpp">
+      <Filter>dependencies\xcore\xtextfile</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\xresource_pipeline_v2\source\xresource_pipeline.cpp">
+      <Filter>dependencies\xcore\xresource_pipeline_v2</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\xbitmap\source\xbitmap.cpp">
+      <Filter>dependencies\xcore\xbitmap</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\xbmp_tools\src\xbmp_tools.cpp">
+      <Filter>dependencies\xcore\xbmp_tools</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\xstrtool\source\xstrtool.cpp">
+      <Filter>dependencies\xcore\xstrtool</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crnlib.cpp">
+      <Filter>dependencies\Crunch\crunch</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_arealist.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_assert.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_checksum.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_colorized_console.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_command_line_params.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_comp.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_console.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_core.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_data_stream.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_dds_comp.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_decomp.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_dxt.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_dxt_endpoint_refiner.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_dxt_fast.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_dxt_hc.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_dxt_hc_common.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_dxt_image.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_dxt1.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_dxt5a.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_dynamic_string.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_etc.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_file_utils.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_find_files.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_hash.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_hash_map.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_huffman_codes.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_image_utils.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_jpgd.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_jpge.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_ktx_texture.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_lzma_codec.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_math.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_mem.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_miniz.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_mipmapped_texture.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_zeng.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_pixel_format.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_platform.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_prefix_coding.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_qdxt1.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_qdxt5.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_rand.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_resample_filters.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_resampler.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_rg_etc1.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_ryg_dxt.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_sparse_bit_array.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_stb_image.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_strutils.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_symbol_codec.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_texture_comp.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_texture_conversion.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_texture_file_types.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_threaded_resampler.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_threading_pthreads.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_threading_win32.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_timer.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_utils.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_value.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\crn_vector.cpp">
+      <Filter>dependencies\Crunch\crunch\crn</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\lzma_7zBuf.cpp">
+      <Filter>dependencies\Crunch\crunch\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\lzma_7zBuf2.cpp">
+      <Filter>dependencies\Crunch\crunch\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\lzma_7zCrc.cpp">
+      <Filter>dependencies\Crunch\crunch\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\lzma_7zFile.cpp">
+      <Filter>dependencies\Crunch\crunch\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\lzma_7zStream.cpp">
+      <Filter>dependencies\Crunch\crunch\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\lzma_Alloc.cpp">
+      <Filter>dependencies\Crunch\crunch\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\lzma_Bcj2.cpp">
+      <Filter>dependencies\Crunch\crunch\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\lzma_Bra.cpp">
+      <Filter>dependencies\Crunch\crunch\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\lzma_Bra86.cpp">
+      <Filter>dependencies\Crunch\crunch\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\lzma_BraIA64.cpp">
+      <Filter>dependencies\Crunch\crunch\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\lzma_LzFind.cpp">
+      <Filter>dependencies\Crunch\crunch\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\lzma_LzFindMt.cpp">
+      <Filter>dependencies\Crunch\crunch\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\lzma_LzmaDec.cpp">
+      <Filter>dependencies\Crunch\crunch\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\lzma_LzmaEnc.cpp">
+      <Filter>dependencies\Crunch\crunch\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\lzma_LzmaLib.cpp">
+      <Filter>dependencies\Crunch\crunch\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\crunch\crnlib\lzma_Threads.cpp">
+      <Filter>dependencies\Crunch\crunch\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_libs\cmp_math\cmp_math_common.cpp">
+      <Filter>dependencies\compressonator\applications\_libs</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_libs\cmp_math\cpu_extensions.cpp">
+      <Filter>dependencies\compressonator\applications\_libs</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_libs\cmp_math\jmlfuncs.cpp">
+      <Filter>dependencies\compressonator\applications\_libs</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\ccmp_encode\hpc\ccpu_hpc.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\ccmp_encode</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\ccmp_encode\hpc\cmp_hpc.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\ccmp_encode</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\ccmp_encode\hpc\compute_cpu_hpc.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\ccmp_encode</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\ccmp_sdk\bc1\bc1.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\ccmp_sdk</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\ccmp_sdk\bc2\bc2.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\ccmp_sdk</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\ccmp_sdk\bc3\bc3.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\ccmp_sdk</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\ccmp_sdk\bc4\bc4.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\ccmp_sdk</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\ccmp_sdk\bc5\bc5.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\ccmp_sdk</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\ccmp_sdk\bc6\bc6h.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\ccmp_sdk</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\ccmp_sdk\bc7\bc7.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\ccmp_sdk</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\ccmp_sdk\bcn.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\ccmp_sdk</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\cimage\dds\dds.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\cimage\dds</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\cimage\dds\dds_dx10.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\cimage\dds</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\cimage\dds\dds_file.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\cimage\dds</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\cimage\dds\dds_helpers.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\cimage\dds</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\common\atiformats.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\common</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\common\cmp_fileio.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\common</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\common\codec_common.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\common</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\common\cpu_timing.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\common</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\common\format_conversion.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\common</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\common\mipstoqimage.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\common</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\common\misc.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\common</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\common\pluginmanager.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\common</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\common\tc_plugininternal.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\common</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\common\texture_utils.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\common</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\common\userinterface.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\common</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\applications\_plugins\common\utilfuncs.cpp">
+      <Filter>dependencies\compressonator\applications\_plugins\common</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\apc\apc_decode.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\apc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\apc\apc_encode.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\apc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\apc\codec_apc.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\apc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\astc\arm\mathlib.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\astc\arm\softfloat.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\atc\codec_atc.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\atc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\atc\codec_atc_rgb.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\atc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\atc\codec_atc_rgba_explicit.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\atc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\atc\codec_atc_rgba_interpolated.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\atc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\ati\codec_ati1n.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\ati</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\ati\codec_ati2n.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\ati</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\ati\codec_ati2n_dxt5.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\ati</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\ati\codec_ati_tc.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\ati</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\ati\compressonatori_tc.c">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\ati</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\ati\compressonatorxcodec.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\ati</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\basis\codec_basis.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\basis</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_decode.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\bc6h</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_definitions.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\bc6h</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_encode.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\bc6h</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_library.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\bc6h</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_utils.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\bc6h</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\bc6h\codec_bc6h.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\bc6h</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\bc7\3dquant_vpc.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\bc7</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_decode.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\bc7</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_definitions.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\bc7</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_encode.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\bc7</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_library.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\bc7</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_partitions.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\bc7</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_utils.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\bc7</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\bc7\codec_bc7.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\bc7</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\bc7\reconstruct.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\bc7</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\bc7\shake.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\bc7</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\block\codec_block.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\block</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\block\codec_block_4x4.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\block</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\block\codec_block_8x8.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\block</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_block.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r16.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r16f.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r32.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r32f.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r8.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r8s.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg16.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg16f.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg32.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg32f.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg8.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg8s.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgb888.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgb888s.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgb9995ef.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba1010102.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba16.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba16f.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba2101010.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba32.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba32f.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba8888.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba8888s.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\common\codec.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\common</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\compress.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\common</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\compressonator.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\common</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\dxtc\codec_dxtc.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\dxtc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\dxtc\codec_dxtc_alpha.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\dxtc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\dxtc\codec_dxtc_rgba.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\dxtc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\dxtc\dxtc_v11_compress.c">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\dxtc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\dxtc\dxtc_v11_compress_asm.c">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\dxtc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt1.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\dxt</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt3.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\dxt</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\dxt</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_rbxg.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\dxt</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_rgxb.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\dxt</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_rxbg.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\dxt</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_swizzled.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\dxt</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_xgbr.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\dxt</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_xgxr.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\dxt</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_xrbg.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\dxt</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\etc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc2.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\etc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc2_rgb.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\etc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc2_rgba.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\etc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc2_rgba1.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\etc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc_rgb.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\etc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc_rgba_explicit.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\etc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc_rgba_interpolated.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\etc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\etc\etcpack\etcdec.cxx">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\etc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\etc\etcpack\etcimage.cxx">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\etc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\etc\etcpack\etcpack.cxx">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\etc</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\gt\codec_gt.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\gt</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\gt\gt_decode.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\gt</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_compressonatorlib\gt\gt_encode.cpp">
+      <Filter>dependencies\compressonator\cmp_compressonatorlib\gt</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_core\shaders\bc1_encode_kernel.cpp">
+      <Filter>dependencies\compressonator\cmp_core\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_core\shaders\bc2_encode_kernel.cpp">
+      <Filter>dependencies\compressonator\cmp_core\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_core\shaders\bc3_encode_kernel.cpp">
+      <Filter>dependencies\compressonator\cmp_core\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_core\shaders\bc4_encode_kernel.cpp">
+      <Filter>dependencies\compressonator\cmp_core\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_core\shaders\bc5_encode_kernel.cpp">
+      <Filter>dependencies\compressonator\cmp_core\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_core\shaders\bc6_encode_kernel.cpp">
+      <Filter>dependencies\compressonator\cmp_core\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_core\shaders\bc7_encode_kernel.cpp">
+      <Filter>dependencies\compressonator\cmp_core\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_core\shaders\brlg_encode_kernel.cpp">
+      <Filter>dependencies\compressonator\cmp_core\shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_core\source\cmp_core.cpp">
+      <Filter>dependencies\compressonator\cmp_core\source</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_core\source\core_simd_avx.cpp">
+      <Filter>dependencies\compressonator\cmp_core\source</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_core\source\core_simd_avx512.cpp">
+      <Filter>dependencies\compressonator\cmp_core\source</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_core\source\core_simd_sse.cpp">
+      <Filter>dependencies\compressonator\cmp_core\source</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_framework\common\cmp_boxfilter.cpp">
+      <Filter>dependencies\compressonator\cmp_framework\common</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_framework\common\cmp_mips.cpp">
+      <Filter>dependencies\compressonator\cmp_framework\common</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_framework\common\half\half.cpp">
+      <Filter>dependencies\compressonator\cmp_framework\common</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_framework\common\hdr_encode.cpp">
+      <Filter>dependencies\compressonator\cmp_framework\common</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\dependencies\compressonator\cmp_framework\compute_base.cpp">
+      <Filter>dependencies\compressonator\cmp_framework</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\LIONant\xtexture.plugin\source\Compiler\xtexture_compiler.cpp">
+      <Filter>dependencies\xcore\xtexture_comp</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xerr\source\xerr.h">
+      <Filter>dependencies\xcore\xerr</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xcompression\source\xcompression.h">
+      <Filter>dependencies\xcore\xcompression</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xfile\source\xfile.h">
+      <Filter>dependencies\xcore\xfile</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xserializer\source\xserializer.h">
+      <Filter>dependencies\xcore\xserializer</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xtextfile\source\xtextfile.h">
+      <Filter>dependencies\xcore\xtextfile</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xcmdline\source\xcmdline_parser.h">
+      <Filter>dependencies\xcore\xcmdline</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xresource\source\xresource_guid.h">
+      <Filter>dependencies\xcore\xresource</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xresource\source\xresource_guid_properties.h">
+      <Filter>dependencies\xcore\xresource</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xproperty\source\xproperty.h">
+      <Filter>dependencies\xcore\xproperty</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xproperty\source\sprop\property_sprop.h">
+      <Filter>dependencies\xcore\xproperty</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xproperty\source\sprop\property_sprop_collector.h">
+      <Filter>dependencies\xcore\xproperty</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xproperty\source\sprop\property_sprop_container.h">
+      <Filter>dependencies\xcore\xproperty</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xproperty\source\sprop\property_sprop_getset.h">
+      <Filter>dependencies\xcore\xproperty</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xproperty\source\examples\xcore_sprop_serializer\xcore_sprop_serializer.h">
+      <Filter>dependencies\xcore\xproperty</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xresource_pipeline_v2\source\xresource_pipeline_version.h">
+      <Filter>dependencies\xcore\xresource_pipeline_v2</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xresource_pipeline_v2\source\xresource_pipeline_tag.h">
+      <Filter>dependencies\xcore\xresource_pipeline_v2</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xresource_pipeline_v2\source\xresource_pipeline_info.h">
+      <Filter>dependencies\xcore\xresource_pipeline_v2</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xresource_pipeline_v2\source\xresource_pipeline_factory.h">
+      <Filter>dependencies\xcore\xresource_pipeline_v2</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xresource_pipeline_v2\source\xresource_pipeline_descriptor_base.h">
+      <Filter>dependencies\xcore\xresource_pipeline_v2</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xresource_pipeline_v2\source\xresource_pipeline_dependencies.h">
+      <Filter>dependencies\xcore\xresource_pipeline_v2</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xresource_pipeline_v2\source\xresource_pipeline_config.h">
+      <Filter>dependencies\xcore\xresource_pipeline_v2</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xresource_pipeline_v2\source\xresource_pipeline_compiler_base.h">
+      <Filter>dependencies\xcore\xresource_pipeline_v2</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xresource_pipeline_v2\source\xresource_pipeline.h">
+      <Filter>dependencies\xcore\xresource_pipeline_v2</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xbitmap\source\xbitmap.h">
+      <Filter>dependencies\xcore\xbitmap</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xbitmap\source\xcolor.h">
+      <Filter>dependencies\xcore\xbitmap</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\xmath.h">
+      <Filter>dependencies\xcore\xmath</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\xmath_basics.h">
+      <Filter>dependencies\xcore\xmath</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\xmath_flinear.h">
+      <Filter>dependencies\xcore\xmath</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\xmath_strong_typing_numerics.h">
+      <Filter>dependencies\xcore\xmath</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\xmath_functions.h">
+      <Filter>dependencies\xcore\xmath\Functions</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\xmath_trigonometry.h">
+      <Filter>dependencies\xcore\xmath\Trigonometry</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\xmath_radian3.h">
+      <Filter>dependencies\xcore\xmath\Trigonometry</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\xmath_fmat3.h">
+      <Filter>dependencies\xcore\xmath\Linear Algebra</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\xmath_fmat4.h">
+      <Filter>dependencies\xcore\xmath\Linear Algebra</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\xmath_fquat.h">
+      <Filter>dependencies\xcore\xmath\Linear Algebra</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\xmath_ftransform.h">
+      <Filter>dependencies\xcore\xmath\Linear Algebra</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\xmath_fvec2.h">
+      <Filter>dependencies\xcore\xmath\Linear Algebra</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\xmath_fvec3.h">
+      <Filter>dependencies\xcore\xmath\Linear Algebra</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\xmath_fvec4.h">
+      <Filter>dependencies\xcore\xmath\Linear Algebra</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\xmath_fvector.h">
+      <Filter>dependencies\xcore\xmath\Linear Algebra</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\implementation\xmath_fmat3_inline.h">
+      <Filter>dependencies\xcore\xmath\Implementation</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\implementation\xmath_fmat4_inline.h">
+      <Filter>dependencies\xcore\xmath\Implementation</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\implementation\xmath_fquat_inline.h">
+      <Filter>dependencies\xcore\xmath\Implementation</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\implementation\xmath_ftransform_inline.h">
+      <Filter>dependencies\xcore\xmath\Implementation</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\implementation\xmath_functions_inline.h">
+      <Filter>dependencies\xcore\xmath\Implementation</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\implementation\xmath_fvec2_inline.h">
+      <Filter>dependencies\xcore\xmath\Implementation</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\implementation\xmath_fvec3_inline.h">
+      <Filter>dependencies\xcore\xmath\Implementation</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\implementation\xmath_fvec4_inline.h">
+      <Filter>dependencies\xcore\xmath\Implementation</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\implementation\xmath_radian3_inline.h">
+      <Filter>dependencies\xcore\xmath\Implementation</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xmath\source\implementation\xmath_trigonometry_inline.h">
+      <Filter>dependencies\xcore\xmath\Implementation</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xbmp_tools\src\xbmp_tools.h">
+      <Filter>dependencies\xcore\xbmp_tools</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xbmp_tools\src\xbmp_tools_atlas.h">
+      <Filter>dependencies\xcore\xbmp_tools</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xbmp_tools\src\xbmp_tools_filters.h">
+      <Filter>dependencies\xcore\xbmp_tools</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xbmp_tools\src\xbmp_tools_loaders.h">
+      <Filter>dependencies\xcore\xbmp_tools</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xbmp_tools\src\xbmp_tools_writers.h">
+      <Filter>dependencies\xcore\xbmp_tools</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\dependencies\xstrtool\source\xstrtool.h">
+      <Filter>dependencies\xcore\xstrtool</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\source\xtexture_rsc_descriptor.h">
+      <Filter>dependencies\xcore\xtexture_comp</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\LIONant\xtexture.plugin\source\Compiler\xtexture_compiler.h">
+      <Filter>dependencies\xcore\xtexture_comp</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="D:\LIONant\xtexture.plugin\dependencies\xerr\README.md">
+      <Filter>dependencies\xcore\xerr</Filter>
+    </None>
+    <None Include="D:\LIONant\xtexture.plugin\dependencies\xcompression\README.md">
+      <Filter>dependencies\xcore\xcompression</Filter>
+    </None>
+    <None Include="D:\LIONant\xtexture.plugin\dependencies\xfile\README.md">
+      <Filter>dependencies\xcore\xfile</Filter>
+    </None>
+    <None Include="D:\LIONant\xtexture.plugin\dependencies\xserializer\README.md">
+      <Filter>dependencies\xcore\xserializer</Filter>
+    </None>
+    <None Include="D:\LIONant\xtexture.plugin\dependencies\xtextfile\README.md">
+      <Filter>dependencies\xcore\xtextfile</Filter>
+    </None>
+    <None Include="D:\LIONant\xtexture.plugin\dependencies\xcmdline\README.md">
+      <Filter>dependencies\xcore\xcmdline</Filter>
+    </None>
+    <None Include="D:\LIONant\xtexture.plugin\dependencies\xresource\README.md">
+      <Filter>dependencies\xcore\xresource</Filter>
+    </None>
+    <None Include="D:\LIONant\xtexture.plugin\dependencies\xproperty\README.md">
+      <Filter>dependencies\xcore\xproperty</Filter>
+    </None>
+    <None Include="D:\LIONant\xtexture.plugin\dependencies\xbitmap\README.md">
+      <Filter>dependencies\xcore\xbitmap</Filter>
+    </None>
+    <None Include="D:\LIONant\xtexture.plugin\dependencies\xmath\README.md">
+      <Filter>dependencies\xcore\xmath</Filter>
+    </None>
+    <None Include="D:\LIONant\xtexture.plugin\dependencies\xstrtool\README.md">
+      <Filter>dependencies\xcore\xstrtool</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
     <Filter Include="Texture_Compiler">
-      <UniqueIdentifier>{065154e9-713d-4cc3-8a15-962f25095379}</UniqueIdentifier>
+      <UniqueIdentifier>{7CF2C639-D1E4-32CE-A5FC-3F5A1E24A0AC}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\xResourcePipelineV2">
-      <UniqueIdentifier>{12e1a74a-ce14-46be-91c6-1d2338b209f7}</UniqueIdentifier>
+    <Filter Include="dependencies">
+      <UniqueIdentifier>{38CB9452-B2E9-3CB3-92B8-DCB793D3BD4E}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\xResourcePipelineV2\Documentation">
-      <UniqueIdentifier>{9a52f5d3-f4a1-49ea-b559-ed90880fcdd2}</UniqueIdentifier>
+    <Filter Include="dependencies\Crunch">
+      <UniqueIdentifier>{CC3D796A-8248-3B1A-9F9A-28B7D3B0FAC1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\compressonator">
-      <UniqueIdentifier>{b7f5f19d-a55f-4529-92fb-e08591ce0bce}</UniqueIdentifier>
+    <Filter Include="dependencies\Crunch\crunch">
+      <UniqueIdentifier>{BB869FB1-7B16-398D-B49F-FD154F348FAC}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\compressonator\cmp_compressonatorlib">
-      <UniqueIdentifier>{b6458e67-79dd-468e-877e-0a189255d2c6}</UniqueIdentifier>
+    <Filter Include="dependencies\Crunch\crunch\crn">
+      <UniqueIdentifier>{4493A356-2F56-3D67-90FD-740387483508}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\compressonator\Half">
-      <UniqueIdentifier>{97c281a3-a486-4a3f-b926-62478178d1ba}</UniqueIdentifier>
+    <Filter Include="dependencies\Crunch\crunch\lzma">
+      <UniqueIdentifier>{CA633615-5042-3B1E-AED0-F35321210F2F}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\compressonator\_pluins">
-      <UniqueIdentifier>{06f03f64-5fdf-418d-a6bd-78cfd8d9a560}</UniqueIdentifier>
+    <Filter Include="dependencies\compressonator">
+      <UniqueIdentifier>{505288A7-7346-3F17-925E-B5668A40FD34}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\compressonator\_pluins\dds">
-      <UniqueIdentifier>{bb76a6fc-294d-493c-82e9-e06c9101c0be}</UniqueIdentifier>
+    <Filter Include="dependencies\compressonator\applications">
+      <UniqueIdentifier>{0B7D95DD-414D-3AB1-9FF0-275692FAD20B}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\compressonator\_pluins\hpc">
-      <UniqueIdentifier>{cf91794b-7527-4656-b16e-7e2c76c1183b}</UniqueIdentifier>
+    <Filter Include="dependencies\compressonator\applications\_libs">
+      <UniqueIdentifier>{05C7CF89-3AD5-376E-A8A9-536C0E6F59C0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\compressonator\_pluins\bc1">
-      <UniqueIdentifier>{72600877-de87-43ae-ab4d-5c87608f7ba8}</UniqueIdentifier>
+    <Filter Include="dependencies\compressonator\applications\_plugins">
+      <UniqueIdentifier>{8D0E3936-590C-3605-B1F3-B86E95BA801B}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\compressonator\_cpu_ext">
-      <UniqueIdentifier>{71e15e5d-35bf-4419-a380-6241be13c65c}</UniqueIdentifier>
+    <Filter Include="dependencies\compressonator\applications\_plugins\ccmp_encode">
+      <UniqueIdentifier>{741CC84F-857A-3BE5-A55D-829AC96E4636}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\compressonator\cmp_core">
-      <UniqueIdentifier>{60e9b84c-0089-4277-89f5-9165955eb654}</UniqueIdentifier>
+    <Filter Include="dependencies\compressonator\applications\_plugins\ccmp_sdk">
+      <UniqueIdentifier>{128BC8E6-81BA-3E83-BC73-5344B51A3226}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\compressonator\cmp_core\Shaders">
-      <UniqueIdentifier>{866d4f91-875e-434a-81f9-c32950e01986}</UniqueIdentifier>
+    <Filter Include="dependencies\compressonator\applications\_plugins\cimage">
+      <UniqueIdentifier>{DAFFED44-1FB5-31BC-A783-04B149F97EE8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dependencies\compressonator\_pluins\exr">
-      <UniqueIdentifier>{3a340054-e5cd-40f2-bb31-df93126e0799}</UniqueIdentifier>
+    <Filter Include="dependencies\compressonator\applications\_plugins\cimage\dds">
+      <UniqueIdentifier>{16537AB7-D64A-338C-A70D-4C0682D25AE2}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_arealist.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_assert.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_checksum.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_colorized_console.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_command_line_params.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_comp.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_console.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_core.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_data_stream.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_dds_comp.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_decomp.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_dxt.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_dxt_endpoint_refiner.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_dxt_fast.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_dxt_hc.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_dxt_hc_common.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_dxt_image.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_dxt1.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_dxt5a.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_dynamic_string.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_etc.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_file_utils.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_find_files.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_hash.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_hash_map.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_huffman_codes.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_image_utils.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_jpgd.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_jpge.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_ktx_texture.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_lzma_codec.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_math.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_mem.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_miniz.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_mipmapped_texture.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_zeng.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_pixel_format.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_platform.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_prefix_coding.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_qdxt1.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_qdxt5.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_rand.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_resample_filters.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_resampler.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_rg_etc1.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_ryg_dxt.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_sparse_bit_array.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_stb_image.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_strutils.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_symbol_codec.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_texture_comp.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_texture_conversion.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_texture_file_types.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_threaded_resampler.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_threading_pthreads.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_threading_win32.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_timer.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_utils.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_value.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crn_vector.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\crnlib.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\lzma_7zBuf.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\lzma_7zBuf2.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\lzma_7zCrc.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\lzma_7zFile.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\lzma_7zStream.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\lzma_Alloc.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\lzma_Bcj2.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\lzma_Bra.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\lzma_Bra86.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\lzma_BraIA64.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\lzma_LzFind.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\lzma_LzFindMt.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\lzma_LzmaDec.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\lzma_LzmaEnc.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\lzma_LzmaLib.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\crunch\crnlib\lzma_Threads.cpp">
-      <Filter>Dependencies\Crunch\Cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\xbmp_tools\src\xbmp_tools.cpp">
-      <Filter>Dependencies\xBitmapTools</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\Compiler\main.cpp">
-      <Filter>Texture_Compiler</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\Compiler\xtexture_compiler.cpp">
-      <Filter>Texture_Compiler</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\xresource_pipeline_v2\source\xresource_pipeline.cpp">
-      <Filter>Dependencies\xResourcePipelineV2</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore.cpp">
-      <Filter>Dependencies\xCore</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\3dquant_vpc.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\apc\apc_decode.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\apc\apc_encode.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_decode.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_definitions.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_encode.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_library.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_utils.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_decode.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_definitions.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_encode.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_library.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_partitions.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_utils.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\common\codec.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\apc\codec_apc.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\atc\codec_atc.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\atc\codec_atc_rgb.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\atc\codec_atc_rgba_explicit.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\atc\codec_atc_rgba_interpolated.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\ati\codec_ati_tc.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\ati\codec_ati1n.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\ati\codec_ati2n.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\ati\codec_ati2n_dxt5.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\basis\codec_basis.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\codec_bc6h.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\codec_bc7.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\block\codec_block.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\block\codec_block_4x4.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\block\codec_block_8x8.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt1.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt3.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_rbxg.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_rgxb.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_rxbg.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_swizzled.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_xgbr.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_xgxr.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_xrbg.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxtc\codec_dxtc.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxtc\codec_dxtc_alpha.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxtc\codec_dxtc_rgba.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\gt\codec_gt.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_block.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r8.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r8s.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r16.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r16f.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r32.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r32f.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg8.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg8s.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg16.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg16f.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg32.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg32f.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgb888.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgb888s.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgb9995ef.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba16.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba16f.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba32.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba32f.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba8888.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba8888s.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba1010102.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba2101010.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\compress.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\compressonator.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\ati\compressonatori_tc.c">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\ati\compressonatorxcodec.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxtc\dxtc_v11_compress.c">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxtc\dxtc_v11_compress_asm.c">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\etcpack\etcdec.cxx">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\etcpack\etcimage.cxx">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\gt\gt_decode.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\gt\gt_encode.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\astc\arm\mathlib.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\reconstruct.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\shake.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\astc\arm\softfloat.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_framework\common\half\half.cpp">
-      <Filter>Dependencies\compressonator\Half</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_framework\common\hdr_encode.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_framework\common\cmp_boxfilter.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_framework\common\cmp_mips.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_framework\compute_base.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\codec_common.cpp">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\cpu_timing.cpp">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\format_conversion.cpp">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\mipstoqimage.cpp">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\misc.cpp">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\pluginmanager.cpp">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\tc_plugininternal.cpp">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\texture_utils.cpp">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\userinterface.cpp">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\utilfuncs.cpp">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\atiformats.cpp">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\common\cmp_fileio.cpp">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\cmp_math_common.cpp">
-      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\cpu_extensions.cpp">
-      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\jmlfuncs.cpp">
-      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_core\source\cmp_core.cpp">
-      <Filter>Dependencies\compressonator\cmp_core</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_core\source\core_simd_avx.cpp">
-      <Filter>Dependencies\compressonator\cmp_core</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_core\source\core_simd_avx512.cpp">
-      <Filter>Dependencies\compressonator\cmp_core</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_core\source\core_simd_sse.cpp">
-      <Filter>Dependencies\compressonator\cmp_core</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc2.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc2_rgb.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc2_rgba.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc2_rgba1.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc_rgb.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc_rgba_explicit.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\codec_etc_rgba_interpolated.cpp">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\etcpack\etcpack.cxx">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_core\shaders\bc1_encode_kernel.cpp">
-      <Filter>Dependencies\compressonator\cmp_core\Shaders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_core\shaders\bc2_encode_kernel.cpp">
-      <Filter>Dependencies\compressonator\cmp_core\Shaders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_core\shaders\bc3_encode_kernel.cpp">
-      <Filter>Dependencies\compressonator\cmp_core\Shaders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_core\shaders\bc4_encode_kernel.cpp">
-      <Filter>Dependencies\compressonator\cmp_core\Shaders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_core\shaders\bc5_encode_kernel.cpp">
-      <Filter>Dependencies\compressonator\cmp_core\Shaders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_core\shaders\bc6_encode_kernel.cpp">
-      <Filter>Dependencies\compressonator\cmp_core\Shaders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_core\shaders\bc7_encode_kernel.cpp">
-      <Filter>Dependencies\compressonator\cmp_core\Shaders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\cmp_core\shaders\brlg_encode_kernel.cpp">
-      <Filter>Dependencies\compressonator\cmp_core\Shaders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\cimage\dds\dds.cpp">
-      <Filter>Dependencies\compressonator\_pluins\dds</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\cimage\dds\dds_dx10.cpp">
-      <Filter>Dependencies\compressonator\_pluins\dds</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\cimage\dds\dds_file.cpp">
-      <Filter>Dependencies\compressonator\_pluins\dds</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\cimage\dds\dds_helpers.cpp">
-      <Filter>Dependencies\compressonator\_pluins\dds</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_encode\hpc\ccpu_hpc.cpp">
-      <Filter>Dependencies\compressonator\_pluins\hpc</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_encode\hpc\cmp_hpc.cpp">
-      <Filter>Dependencies\compressonator\_pluins\hpc</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_encode\hpc\compute_cpu_hpc.cpp">
-      <Filter>Dependencies\compressonator\_pluins\hpc</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_sdk\bc1\bc1.cpp">
-      <Filter>Dependencies\compressonator\_pluins\bc1</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_sdk\bc2\bc2.cpp">
-      <Filter>Dependencies\compressonator\_pluins\bc1</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_sdk\bc3\bc3.cpp">
-      <Filter>Dependencies\compressonator\_pluins\bc1</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_sdk\bc4\bc4.cpp">
-      <Filter>Dependencies\compressonator\_pluins\bc1</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_sdk\bc5\bc5.cpp">
-      <Filter>Dependencies\compressonator\_pluins\bc1</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_sdk\bc6\bc6h.cpp">
-      <Filter>Dependencies\compressonator\_pluins\bc1</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_sdk\bc7\bc7.cpp">
-      <Filter>Dependencies\compressonator\_pluins\bc1</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_sdk\bcn.cpp">
-      <Filter>Dependencies\compressonator\_pluins\bc1</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\compressonator\applications\_plugins\cimage\exr\exr.cpp">
-      <Filter>Dependencies\compressonator\_pluins\exr</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_arealist.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_assert.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_atomics.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_buffer_stream.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_cfile_stream.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_checksum.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_clusterizer.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_color.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_colorized_console.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_command_line_params.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_comp.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_console.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_core.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_data_stream.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_data_stream_serializer.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_dds_comp.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_dxt.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_dxt_endpoint_refiner.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_dxt_fast.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_dxt_hc.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_dxt_hc_common.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_dxt_image.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_dxt1.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_dxt5a.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_dynamic_stream.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_dynamic_string.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_etc.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_file_utils.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_find_files.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_freeimage_image_utils.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_hash.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_hash_map.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_helpers.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_huffman_codes.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_image.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_image_utils.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_intersect.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_jpgd.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_jpge.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_ktx_texture.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_lzma_codec.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_math.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_matrix.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_mem.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_miniz.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_mipmapped_texture.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_packed_uint.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_platform.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_prefix_coding.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_qdxt1.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_qdxt5.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_radix_sort.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_rand.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_ray.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_rect.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_resample_filters.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_resampler.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_rg_etc1.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_ryg_dxt.hpp">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_ryg_types.hpp">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_sparse_array.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_sparse_bit_array.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_strutils.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_symbol_codec.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_texture_comp.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_texture_conversion.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_texture_file_types.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_threaded_resampler.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_threaded_clusterizer.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_threading.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_threading_null.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_threading_pthreads.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_threading_win32.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_timer.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_traits.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_tree_clusterizer.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_types.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_utils.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_value.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_vec.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_vec_interval.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_vector.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_vector2d.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_winhdr.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_pixel_format.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\crn_zeng.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\lzham_timer.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\lzham_win32_threading.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\lzma_7zBuf.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\lzma_7zCrc.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\lzma_7zFile.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\lzma_7zVersion.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\lzma_Alloc.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\lzma_Bcj2.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\lzma_Bra.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\lzma_CpuArch.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\lzma_LzFind.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\lzma_LzHash.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\lzma_LzFindMt.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\lzma_LzmaDec.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\lzma_LzmaEnc.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\lzma_LzmaLib.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\lzma_Threads.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\lzma_Types.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\crunch\crnlib\lzma_MyVersion.h">
-      <Filter>Dependencies\Crunch\H</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xbmp_tools\src\xbmp_tools.h">
-      <Filter>Dependencies\xBitmapTools</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xbmp_tools\src\xbmp_tools_loaders.h">
-      <Filter>Dependencies\xBitmapTools</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xbmp_tools\src\xbmp_tools_writers.h">
-      <Filter>Dependencies\xBitmapTools</Filter>
-    </ClInclude>
-    <ClInclude Include="Settings\PropertyConfig.h">
-      <Filter>Settings</Filter>
-    </ClInclude>
-    <ClInclude Include="Settings\xcore_user_settings.h">
-      <Filter>Settings</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\Compiler\xtexture_compiler.h">
-      <Filter>Texture_Compiler</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\source\xresource_pipeline.h">
-      <Filter>Dependencies\xResourcePipelineV2</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\source\xresource_pipeline_compiler_base.h">
-      <Filter>Dependencies\xResourcePipelineV2</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\source\xresource_pipeline_config.h">
-      <Filter>Dependencies\xResourcePipelineV2</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\source\xresource_pipeline_dependencies.h">
-      <Filter>Dependencies\xResourcePipelineV2</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\source\xresource_pipeline_descriptor_base.h">
-      <Filter>Dependencies\xResourcePipelineV2</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\source\xresource_pipeline_info.h">
-      <Filter>Dependencies\xResourcePipelineV2</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\source\xresource_pipeline_tag.h">
-      <Filter>Dependencies\xResourcePipelineV2</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\xtexture_rsc_descriptor.h">
-      <Filter>Texture_Compiler</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_arglist.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_array.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_assert.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_bitmap.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_bits.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_cmdline.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_color.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_compression.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_context.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_crc.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_endian.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_error.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_event.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_file.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_function.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_global.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_guid.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_lock.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_lockless_pool.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_lockless_queues.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_log.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_math.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_math_matrix4.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_math_quaternion.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_math_radian3.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_math_shapes.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_math_transform.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_math_vector2.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_math_vector3.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_math_vector4.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_memory.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_profiler.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_ptr.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_random.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_rtti.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_scheduler_channel.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_scheduler_job.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_scheduler_system.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_scheduler_trigger.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_serializer.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_span.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_string.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_system_reg.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_target.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_textfile.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_types.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_unique_span.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_units.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\dependencies\xcore\src\xcore_vector.h">
-      <Filter>Dependencies\xCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\source\xresource_pipeline_factory.h">
-      <Filter>Dependencies\xResourcePipelineV2</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\source\Details\xresource_pipeline_factory_inline.h">
-      <Filter>Dependencies\xResourcePipelineV2</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xresource_pipeline_v2\source\xresource_pipeline_version.h">
-      <Filter>Dependencies\xResourcePipelineV2</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\3dquant_constants.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\3dquant_vpc.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\apc\apc_decode.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\apc\apc_definitions.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\apc\apc_encode.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_decode.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_definitions.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_encode.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_library.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\bc6h_utils.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_decode.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_definitions.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_encode.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_library.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_partitions.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\bc7_utils.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\common\codec.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\apc\codec_apc.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\atc\codec_atc.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\atc\codec_atc_rgb.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\atc\codec_atc_rgba_explicit.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\atc\codec_atc_rgba_interpolated.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\ati\codec_ati1n.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\ati\codec_ati2n.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\ati\codec_ati2n_dxt5.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\basis\codec_basis.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc6h\codec_bc6h.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\codec_bc7.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\block\codec_block.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\block\codec_block_4x4.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\block\codec_block_8x8.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt1.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt3.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_rbxg.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_rgxb.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_rxbg.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_swizzled.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_xgbr.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_xgxr.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxt\codec_dxt5_xrbg.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxtc\codec_dxtc.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\gt\codec_gt.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_block.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r8.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r8s.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r16.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r16f.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r32.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_r32f.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg8.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg8s.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg16.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg16f.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg32.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rg32f.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgb888.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgb888s.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgb9995ef.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba16.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba16f.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba32.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba32f.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba8888.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba8888s.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba1010102.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\buffer\codecbuffer_rgba2101010.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\common.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\common\compclient.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\common\compress.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\compressonator.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\ati\compressonator_tc.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\ati\compressonatorxcodec.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\common\debug.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxtc\dxtc_v11_compress.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\etcpack\etcimage.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\etcpack.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\etc\etcpack\etcpack_lib.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\gt\gt_decode.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\gt\gt_definitions.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\gt\gt_encode.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\astc\arm\mathlib.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\reconstruct.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\bc7\shake.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\astc\arm\softfloat.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\astc\arm\vectypes.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_compressonatorlib\version.h">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_framework\common\half\elut.h">
-      <Filter>Dependencies\compressonator\Half</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_framework\common\half\half.h">
-      <Filter>Dependencies\compressonator\Half</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_framework\common\half\halfexport.h">
-      <Filter>Dependencies\compressonator\Half</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_framework\common\half\halffunction.h">
-      <Filter>Dependencies\compressonator\Half</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_framework\common\half\halflimits.h">
-      <Filter>Dependencies\compressonator\Half</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_framework\common\half\tofloat.h">
-      <Filter>Dependencies\compressonator\Half</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\codec_common.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\common_kerneldef.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\cpu_timing.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\crc32.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\format_conversion.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\hpc_compress.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\mipstoqimage.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\misc.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\modeldata.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\namespacealias.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\pluginbase.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\plugininterface.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\pluginmanager.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\psnr.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\ssim.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\tc_pluginapi.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\tc_plugininternal.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\testreport.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\texture.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\texture_utils.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\textureio.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\userinterface.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\utilfuncs.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\vectypes.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\atiformats.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\cexr.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\cmdline.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\cmp_fileio.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\cmp_plugininterface.h">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\common\cmp_rapidxml.hpp">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\tootlepch.h">
-      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\cmp_intrinsics.h">
-      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\cmp_math_common.h">
-      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\cpu_extensions.h">
-      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\jml.h">
-      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\jmlfuncs.h">
-      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\jmlmatrix.h">
-      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\jmlscalar.h">
-      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\jmlssevec.h">
-      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\jmlvec2.h">
-      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\jmlvec3.h">
-      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_libs\cmp_math\jrtcommon.h">
-      <Filter>Dependencies\compressonator\_cpu_ext</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_core\source\cmp_core.h">
-      <Filter>Dependencies\compressonator\cmp_core</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_core\source\cmp_math_func.h">
-      <Filter>Dependencies\compressonator\cmp_core</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_core\source\cmp_math_vec4.h">
-      <Filter>Dependencies\compressonator\cmp_core</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\cmp_core\source\core_simd.h">
-      <Filter>Dependencies\compressonator\cmp_core</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\cimage\dds\dds_helpers.h">
-      <Filter>Dependencies\compressonator\_pluins\dds</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\cimage\dds\dds.h">
-      <Filter>Dependencies\compressonator\_pluins\dds</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\cimage\dds\dds_dx10.h">
-      <Filter>Dependencies\compressonator\_pluins\dds</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\cimage\dds\dds_file.h">
-      <Filter>Dependencies\compressonator\_pluins\dds</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_encode\hpc\compute_cpu_hpc.h">
-      <Filter>Dependencies\compressonator\_pluins\hpc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_encode\hpc\ccpu_hpc.h">
-      <Filter>Dependencies\compressonator\_pluins\hpc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\ccmp_encode\hpc\cmp_hpc.h">
-      <Filter>Dependencies\compressonator\_pluins\hpc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\xbmp_tools\src\xbmp_tools_filters.h">
-      <Filter>Dependencies\xBitmapTools</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\dependencies\compressonator\applications\_plugins\cimage\exr\exr.h">
-      <Filter>Dependencies\compressonator\_pluins\exr</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\dependencies\xresource_pipeline_v2\README.md">
-      <Filter>Dependencies\xResourcePipelineV2\Documentation</Filter>
-    </None>
-    <None Include="..\..\dependencies\xresource_pipeline_v2\documentation\Terminology.md">
-      <Filter>Dependencies\xResourcePipelineV2\Documentation</Filter>
-    </None>
-    <None Include="..\..\dependencies\xresource_pipeline_v2\documentation\FolderOrganization.md">
-      <Filter>Dependencies\xResourcePipelineV2\Documentation</Filter>
-    </None>
-    <None Include="..\..\dependencies\xresource_pipeline_v2\documentation\CommadLineParameters.md">
-      <Filter>Dependencies\xResourcePipelineV2\Documentation</Filter>
-    </None>
-    <None Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxtc\dxtc_v11_compress_64.asm">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </None>
-    <None Include="..\..\dependencies\compressonator\cmp_compressonatorlib\dxtc\dxtc_v11_compress_sse2.asm">
-      <Filter>Dependencies\compressonator\cmp_compressonatorlib</Filter>
-    </None>
-    <None Include="..\..\README.md" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="..\..\dependencies\compressonator\applications\_plugins\common\CMakeLists.txt">
-      <Filter>Dependencies\compressonator\_pluins</Filter>
-    </Text>
+    <Filter Include="dependencies\compressonator\applications\_plugins\common">
+      <UniqueIdentifier>{939B5E50-3C40-3C0D-A1C0-2FD78B34666C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\compressonator\cmp_compressonatorlib">
+      <UniqueIdentifier>{FBB27DB9-E052-328A-99C9-0749C3B23BB9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\compressonator\cmp_compressonatorlib\apc">
+      <UniqueIdentifier>{4769E1F4-365C-3325-9BE3-3064DADFAA96}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\compressonator\cmp_compressonatorlib\astc">
+      <UniqueIdentifier>{6D4AB3F3-FB73-30B6-8001-E9CE1CCB01E3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\compressonator\cmp_compressonatorlib\atc">
+      <UniqueIdentifier>{D57B1A75-91D2-3D6A-A817-5FF33D708ACC}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\compressonator\cmp_compressonatorlib\ati">
+      <UniqueIdentifier>{B00FE80F-8361-3A46-AEE8-37FED101D714}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\compressonator\cmp_compressonatorlib\basis">
+      <UniqueIdentifier>{BED2EE4C-8435-376D-99C0-3F8B906DEA5C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\compressonator\cmp_compressonatorlib\bc6h">
+      <UniqueIdentifier>{79B16C4F-DACC-346F-B28A-A73086C64BCF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\compressonator\cmp_compressonatorlib\bc7">
+      <UniqueIdentifier>{806D85D4-F97A-3B85-9D9E-E24583850B5B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\compressonator\cmp_compressonatorlib\block">
+      <UniqueIdentifier>{8181AB32-7C83-3082-9205-EE2CE7662E1E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\compressonator\cmp_compressonatorlib\buffer">
+      <UniqueIdentifier>{7D435788-9288-3755-B125-B68FE7CFA9DF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\compressonator\cmp_compressonatorlib\common">
+      <UniqueIdentifier>{52EE239D-EAEF-36F8-9DB5-3D2A5D7F485B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\compressonator\cmp_compressonatorlib\dxt">
+      <UniqueIdentifier>{DAE942D1-20D9-3DE4-A69C-7FB9A77F44BB}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\compressonator\cmp_compressonatorlib\dxtc">
+      <UniqueIdentifier>{F12F4CF5-F8D4-3308-9FE1-2BBDEB3BADFA}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\compressonator\cmp_compressonatorlib\etc">
+      <UniqueIdentifier>{3815869B-1F12-35F9-95C0-7CF31D44AA18}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\compressonator\cmp_compressonatorlib\gt">
+      <UniqueIdentifier>{8C9CA1E4-5F61-33B9-B315-A8251E117570}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\compressonator\cmp_core">
+      <UniqueIdentifier>{526683D4-4A2C-3F38-A7D8-0DF83B92A5BC}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\compressonator\cmp_core\shaders">
+      <UniqueIdentifier>{68042B62-86CA-3D41-899A-1FA8374FD38E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\compressonator\cmp_core\source">
+      <UniqueIdentifier>{0E71A2C7-9477-3269-B6E4-3088B60E6A74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\compressonator\cmp_framework">
+      <UniqueIdentifier>{BBE2F782-0551-3605-968F-90D05940FB64}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\compressonator\cmp_framework\common">
+      <UniqueIdentifier>{D917268D-C8C8-3A05-8378-200C2EF49D66}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\xcore">
+      <UniqueIdentifier>{4AF7765A-A70C-3CA3-B27A-DD52775D305E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\xcore\xbitmap">
+      <UniqueIdentifier>{146E973B-975B-3CB2-A952-F61303939BA7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\xcore\xbmp_tools">
+      <UniqueIdentifier>{308E3672-0F0C-3CEC-BA2A-D9B028895B8B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\xcore\xcmdline">
+      <UniqueIdentifier>{8E5A090E-8023-3EC4-B899-1C28688AC066}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\xcore\xcompression">
+      <UniqueIdentifier>{6CEB48E2-3AA0-3B78-89A6-D66BF9CE9198}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\xcore\xerr">
+      <UniqueIdentifier>{E0B6AFE8-6B98-38DA-AAED-AAE5AA93640A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\xcore\xfile">
+      <UniqueIdentifier>{C4C174D2-2ABF-386A-9C8F-4E6920585548}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\xcore\xmath">
+      <UniqueIdentifier>{22A6582D-2A99-386C-BAC1-0AE24906BC40}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\xcore\xmath\Functions">
+      <UniqueIdentifier>{06FE746D-D191-30F5-8338-656F689CE96F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\xcore\xmath\Implementation">
+      <UniqueIdentifier>{27F8E37D-1A19-3463-9D4D-85F67B7ED2B2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\xcore\xmath\Linear Algebra">
+      <UniqueIdentifier>{7C81CABF-CF53-368E-82D7-74510FDCBEA0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\xcore\xmath\Trigonometry">
+      <UniqueIdentifier>{3D089811-1BB5-311B-A076-5F70191E2103}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\xcore\xproperty">
+      <UniqueIdentifier>{2A88D6BE-DE3D-3AC1-A705-A4135D16AFBB}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\xcore\xresource">
+      <UniqueIdentifier>{2950B84C-90A3-3E33-8938-C0C3BDA50FCB}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\xcore\xresource_pipeline_v2">
+      <UniqueIdentifier>{5B4F6384-C7F9-3BBB-BF9D-DBEB935E227B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\xcore\xserializer">
+      <UniqueIdentifier>{039DF011-83B2-3BF3-86CB-9395669795CD}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\xcore\xstrtool">
+      <UniqueIdentifier>{B36B142F-EB6D-3217-93E7-E384F06C702C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\xcore\xtextfile">
+      <UniqueIdentifier>{8D811122-9512-320B-B1FA-9BD0B6A3BB54}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\xcore\xtexture_comp">
+      <UniqueIdentifier>{732E55D1-0C27-32F6-A9D4-EA23B0EDCA1A}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

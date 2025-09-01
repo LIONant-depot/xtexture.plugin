@@ -1,11 +1,13 @@
 #include "xtexture_compiler.h"
-#include "../../dependencies/xbmp_tools/src/xbmp_tools.h"
-#include "../../dependencies/crunch/inc/crnlib.h"
+#include "dependencies/xbmp_tools/src/xbmp_tools.h"
+#include "dependencies/crunch/inc/crnlib.h"
 #include "../xtexture_rsc_descriptor.h"
-#include "../../dependencies/xresource_pipeline_v2/dependencies/xproperty/source/examples/xcore_sprop_serializer/xcore_sprop_serializer.h"
+#include "dependencies/xproperty/source/examples/xcore_sprop_serializer/xcore_sprop_serializer.h"
 #include "Compressonator.h"
 #include <iostream>
 #include "half.h"
+#include "dependencies/xmath/source/xmath_flinear.h"
+#include "dependencies/xbitmap/source/bridges/xserializer/xbitmap_to_xserializer.h"
 
 namespace crnlib
 {
@@ -16,10 +18,13 @@ namespace crnlib
 
 struct implementation final : xtexture_compiler::instance
 {
+    using state    = xresource_pipeline::state;
+    using msg_type = xresource_pipeline::msg_type;
+
     xtexture_rsc::descriptor                        m_Descriptor;
-    std::unordered_map<std::string, int>            m_BitmapHash;
-    std::vector<xcore::bitmap>                      m_Bitmaps;
-    xcore::bitmap                                   m_FinalBitmap;
+    std::unordered_map<std::wstring, int>           m_BitmapHash;
+    std::vector<xbitmap>                            m_Bitmaps;
+    xbitmap                                         m_FinalBitmap;
     void*                                           m_pDDSData;
     bool                                            m_HasMixes;
     bool                                            m_bCubeMap;
@@ -33,16 +38,16 @@ struct implementation final : xtexture_compiler::instance
 */
     //---------------------------------------------------------------------------------------------
 
-    xcore::err onCompile(void) override
+    xerr onCompile(void) override
     {
         //
         // Read the descriptor file...
         //
         {
             xproperty::settings::context    Context{};
-            auto                            DescriptorFileName = xcore::string::Fmt("%s/%s/Descriptor.txt", m_ProjectPaths.m_Project.data(), m_InputSrcDescriptorPath.data());
+            auto                            DescriptorFileName = std::format(L"{}/{}/Descriptor.txt", m_ProjectPaths.m_Project, m_InputSrcDescriptorPath);
 
-            if ( auto Err = m_Descriptor.Serialize(true, DescriptorFileName.data(), Context); Err)
+            if ( auto Err = m_Descriptor.Serialize(true, DescriptorFileName, Context); Err)
                 return Err;
         }
 
@@ -75,12 +80,12 @@ struct implementation final : xtexture_compiler::instance
             // Turns out that Compressanator can not handle Color and Alpha compression well in this format
             // It makes the color black for the transparent pixels...
             // Seems like crunch has also this problem...
-            XLOG_CHANNEL_INFO(m_LogChannel, "using Crunch as the compression compiler");
+            LogMessage(msg_type::INFO, "using Crunch as the compression compiler" );
             UseCrunch();
         }
         else
         {
-            XLOG_CHANNEL_INFO(m_LogChannel, "using Compressonator as the compression compiler");
+            LogMessage(msg_type::INFO, "using Compressonator as the compression compiler");
             UseCompressonatorHDRFriendlyFormat();
             UseCompressonator();
         }
@@ -95,7 +100,7 @@ struct implementation final : xtexture_compiler::instance
 
             if (T.m_bValid)
             {
-                Serialize(T.m_DataPath.data());
+                Serialize(T.m_DataPath);
             }
         }
         displayProgressBar("Serializing", 1);
@@ -105,30 +110,30 @@ struct implementation final : xtexture_compiler::instance
 
     //---------------------------------------------------------------------------------------------
 
-    xcore::err DoValidation() const
+    xerr DoValidation() const
     {
         {
             std::vector<std::string> Errors;
             m_Descriptor.Validate(Errors);
-            if (Errors.size())
+            if (Errors.empty() == false)
             {
                 for (auto& E : Errors)
                 {
-                    XLOG_CHANNEL_ERROR(m_LogChannel, E.c_str());
+                    LogMessage( msg_type::ERROR, E );
                 }
 
-                return xerr_failure_s("The descriptor has validation errors");
+                return xerr::create_f<state, "The descriptor has validation errors">();
             }
         }
 
         if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::TANGENT_NORMAL && m_Descriptor.m_bSRGB)
         {
-            XLOG_CHANNEL_WARNING(m_LogChannel, "You have selected SRGB (Gamma) space, this will unnormalize the normals and create problems");
+            LogMessage( msg_type::WARNING, "You have selected SRGB (Gamma) space, this will unnormalize the normals and create problems" );
         }
 
         if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::INTENSITY && m_Descriptor.m_bSRGB)
         {
-            XLOG_CHANNEL_WARNING(m_LogChannel, "You have selected SRGB (Gamma) space, for an intensity texture... This is unusual...");
+            LogMessage(msg_type::WARNING, "You have selected SRGB (Gamma) space, for an intensity texture... This is unusual...");
         }
 
         return {};
@@ -146,7 +151,7 @@ struct implementation final : xtexture_compiler::instance
         {
             for (auto& B : m_Bitmaps)
             {
-                for (auto& E : B.getMip<xcore::icolor>(0))
+                for (auto& E : B.getMip<xcolori>(0))
                 {
                     E.m_A = 255;
                 }
@@ -210,7 +215,7 @@ struct implementation final : xtexture_compiler::instance
             {
                 for (auto& B : m_Bitmaps)
                 {
-                    for (auto& E : B.getMip<xcore::icolor>(0))
+                    for (auto& E : B.getMip<xcolori>(0))
                     {
                         E.m_G = 255 - E.m_G;
                     }
@@ -221,9 +226,9 @@ struct implementation final : xtexture_compiler::instance
             {
                 for (auto& B : m_Bitmaps)
                 {
-                    for (auto& E : B.getMip<xcore::icolor>(0))
+                    for (auto& E : B.getMip<xcolori>(0))
                     {
-                        E.setupFromNormal(E.getNormal().NormalizeSafe());
+                        E.setupFromNormal(xmath::fvec3(E.getNormal()).NormalizeSafeCopy());
                     }
                 }
             }
@@ -232,7 +237,7 @@ struct implementation final : xtexture_compiler::instance
             {
                 for (auto& B : m_Bitmaps)
                 {
-                    for (auto& E : B.getMip<xcore::icolor>(0))
+                    for (auto& E : B.getMip<xcolori>(0))
                     {
                         auto O = E;
                         E.m_R = 0xff;
@@ -246,7 +251,7 @@ struct implementation final : xtexture_compiler::instance
             {
                 for (auto& B : m_Bitmaps)
                 {
-                    for (auto& E : B.getMip<xcore::icolor>(0))
+                    for (auto& E : B.getMip<xcolori>(0))
                     {
                         auto O = E;
                         E.m_R = O.m_G;
@@ -267,7 +272,7 @@ struct implementation final : xtexture_compiler::instance
          {
              if ( m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR )
              {
-                 xcore::bitmap Bitmap;
+                 xbitmap Bitmap;
                  xbmp::tools::filters::ConvertToCubeMapHDR(Bitmap, m_Bitmaps[0], m_Descriptor.m_ToCubeMapFaceResolution, m_Descriptor.m_ToCubeMapUseBilinear);
                  m_Bitmaps[0] = std::move(Bitmap);
 
@@ -275,7 +280,7 @@ struct implementation final : xtexture_compiler::instance
              }
              else 
              {
-                 xcore::bitmap Bitmap;
+                 xbitmap Bitmap;
                  xbmp::tools::filters::ConvertToCubeMap(Bitmap, m_Bitmaps[0], m_Descriptor.m_ToCubeMapFaceResolution, m_Descriptor.m_ToCubeMapUseBilinear );
                  m_Bitmaps[0] = std::move(Bitmap);
 
@@ -287,7 +292,7 @@ struct implementation final : xtexture_compiler::instance
         {
             assert(m_Bitmaps.size() == 6);
 
-            xcore::bitmap Bitmap;
+            xbitmap Bitmap;
 
             auto FaceSize  = m_Bitmaps[0].getFaceSize();
             auto FrameSize = FaceSize * 6;
@@ -331,7 +336,7 @@ struct implementation final : xtexture_compiler::instance
 
     //---------------------------------------------------------------------------------------------
 
-    void LoadImageByCompressonator( const std::string_view FilePath, xcore::bitmap& Bitmap )
+    void LoadImageByCompressonator( const std::wstring_view FilePath, xbitmap& Bitmap )
     {
         //
         // Function to convert CMP_MipSet to CMP_Texture
@@ -375,9 +380,9 @@ struct implementation final : xtexture_compiler::instance
         // load image file
         //
         CMP_MipSet MipSetIn {};
-        if (auto result = CMP_LoadTexture(FilePath.data(), &MipSetIn); result != CMP_OK)
+        if (auto result = CMP_LoadTexture(xstrtool::To(FilePath).c_str(), &MipSetIn); result != CMP_OK)
         {
-            throw(std::runtime_error(std::format("Unable to load image file. [BROKEN_LINK] {}", FilePath.data())));
+            throw(std::runtime_error(std::format("Unable to load image file. [BROKEN_LINK] {}", xstrtool::To(FilePath) )));
         }
 
         //
@@ -387,11 +392,11 @@ struct implementation final : xtexture_compiler::instance
         ConvertMipSetToTexture(MipSetIn, Texture);
         if ( DecompressTexture(Texture) == false )
         {
-            throw(std::runtime_error(std::format("Failed to the image unable to decompress the texture {}", FilePath.data())));
+            throw(std::runtime_error(std::format("Failed to the image unable to decompress the texture {}", xstrtool::To(FilePath) )));
         }
 
         //
-        // Convert to xcore::bitmap
+        // Convert to xbitmap
         //
         Bitmap.CreateBitmap(Texture.dwWidth, Texture.dwHeight);
         std::memcpy(Bitmap.getMip<std::byte>(0).data(), Texture.pData, Texture.dwDataSize);
@@ -405,49 +410,49 @@ struct implementation final : xtexture_compiler::instance
 
     //---------------------------------------------------------------------------------------------
 
-    void LoadTexture( xcore::bitmap& Bitmap, const xcore::cstring& FilePath )
+    void LoadTexture( xbitmap& Bitmap, const std::wstring_view FilePath )
     {
         // let xbmp tools deal with the common formats
-        if (   xcore::string::FindStrI(FilePath, ".jpeg") != -1
-            || xcore::string::FindStrI(FilePath, ".jpg")  != -1
-            || xcore::string::FindStrI(FilePath, ".tga")  != -1
-            || xcore::string::FindStrI(FilePath, ".png")  != -1 
-            || xcore::string::FindStrI(FilePath, ".bmp")  != -1
-            || xcore::string::FindStrI(FilePath, ".psd")  != -1
-            || xcore::string::FindStrI(FilePath, ".hdr")  != -1
-            || xcore::string::FindStrI(FilePath, ".exr") != -1)
+        if (   xstrtool::findI(FilePath, L".jpeg") != std::string::npos
+            || xstrtool::findI(FilePath, L".jpg")  != std::string::npos
+            || xstrtool::findI(FilePath, L".tga")  != std::string::npos
+            || xstrtool::findI(FilePath, L".png")  != std::string::npos
+            || xstrtool::findI(FilePath, L".bmp")  != std::string::npos
+            || xstrtool::findI(FilePath, L".psd")  != std::string::npos
+            || xstrtool::findI(FilePath, L".hdr")  != std::string::npos
+            || xstrtool::findI(FilePath, L".exr")  != std::string::npos )
         {
             if ( m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR )
             {
-                if (xcore::string::FindStrI(FilePath, ".exr") != -1)
+                if (xstrtool::findI(FilePath, L".exr") != std::string::npos )
                 {
                     if (auto Err = xbmp::tools::loader::LoadHDREXRImage(Bitmap, FilePath); Err)
-                        throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", xbmp::tools::getErrorMsg(Err), FilePath.c_str())));
+                        throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", Err.getMessage(), xstrtool::To(FilePath) )));
                 }
                 else 
                 {
                     if (auto Err = xbmp::tools::loader::LoadHDRSTDImage(Bitmap, FilePath); Err)
-                        throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", xbmp::tools::getErrorMsg(Err), FilePath.c_str())));
+                        throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", Err.getMessage(), xstrtool::To(FilePath) )));
                 }
             }
             else
             {
-                if (xcore::string::FindStrI(FilePath, ".exr") != -1)
+                if (xstrtool::findI(FilePath, L".exr") != std::string::npos )
                 {
                     if (auto Err = xbmp::tools::loader::LoadEXRImage(Bitmap, FilePath); Err)
-                        throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", xbmp::tools::getErrorMsg(Err), FilePath.c_str())));
+                        throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", Err.getMessage(), xstrtool::To(FilePath) )));
                 }
                 else
                 {
                     if (auto Err = xbmp::tools::loader::LoadSTDImage(Bitmap, FilePath); Err)
-                        throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", xbmp::tools::getErrorMsg(Err), FilePath.c_str())));
+                        throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", Err.getMessage(), xstrtool::To(FilePath) )));
                 }
             }
         }
         else
         {
             // Let Compressonator deal with all other formats...
-            LoadImageByCompressonator(FilePath.c_str(), Bitmap);
+            LoadImageByCompressonator(FilePath, Bitmap);
         }
     }
 
@@ -455,16 +460,18 @@ struct implementation final : xtexture_compiler::instance
 
     void DumpAllFileNamesIntoHash()
     {
-        auto AddTexture = [&]( std::string& Str )
+        auto AddTexture = [&]( std::string& sStr )
         {
+            std::wstring Str = xstrtool::To(sStr);
+
             //
             // Let first clean the path for the textures...
             //
-            if ( int i = xcore::string::FindStrI(Str.c_str(), ".lion_project"); i != -1 )
+            if ( auto i = xstrtool::findI(Str, L".lion_project"); i != std::string::npos )
             {
                 Str = Str.substr(i + 14);
             }
-            else if (int i = xcore::string::FindStrI(Str.c_str(), ".lion_library"); i != -1)
+            else if ( i = xstrtool::findI(Str, L".lion_library"); i != std::string::npos )
             {
                 Str = Str.substr(i + 15);
             }
@@ -474,7 +481,7 @@ struct implementation final : xtexture_compiler::instance
             //
             if (auto P = m_BitmapHash.find(Str); P != m_BitmapHash.end())
             {
-                XLOG_CHANNEL_WARNING(m_LogChannel, "You have duplicated file names (%s)", Str.c_str());
+                LogMessage( msg_type::WARNING, std::format(L"You have duplicated file names ({})", Str ) );
             }
             else
             {
@@ -594,7 +601,7 @@ struct implementation final : xtexture_compiler::instance
 
     //---------------------------------------------------------------------------------------------
 
-    void StandardizeBitmap( xcore::bitmap& Bitmap )
+    void StandardizeBitmap( xbitmap& Bitmap )
     {
         //
         // Set all the wrapping properly
@@ -603,11 +610,11 @@ struct implementation final : xtexture_compiler::instance
         {
             static constexpr auto Table = []() consteval
             {
-                std::array<xcore::bitmap::wrap_mode, (int)xtexture_rsc::wrap_type::ENUM_COUNT > WrapTable = { xcore::bitmap::wrap_mode::ENUM_COUNT };
+                std::array<xbitmap::wrap_mode, (int)xtexture_rsc::wrap_type::ENUM_COUNT > WrapTable = { xbitmap::wrap_mode::ENUM_COUNT };
 
-                WrapTable[(int)xtexture_rsc::wrap_type::CLAMP_TO_EDGE]  = xcore::bitmap::wrap_mode::CLAMP_TO_EDGE;
-                WrapTable[(int)xtexture_rsc::wrap_type::WRAP]           = xcore::bitmap::wrap_mode::WRAP;
-                WrapTable[(int)xtexture_rsc::wrap_type::MIRROR]         = xcore::bitmap::wrap_mode::MIRROR;
+                WrapTable[(int)xtexture_rsc::wrap_type::CLAMP_TO_EDGE]  = xbitmap::wrap_mode::CLAMP_TO_EDGE;
+                WrapTable[(int)xtexture_rsc::wrap_type::WRAP]           = xbitmap::wrap_mode::WRAP;
+                WrapTable[(int)xtexture_rsc::wrap_type::MIRROR]         = xbitmap::wrap_mode::MIRROR;
 
                 return WrapTable;
             }();
@@ -621,7 +628,7 @@ struct implementation final : xtexture_compiler::instance
         //
         if ( m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR )
         {
-            if (Bitmap.getFormat() == xcore::bitmap::format::R32G32B32A32_FLOAT)
+            if (Bitmap.getFormat() == xbitmap::format::R32G32B32A32_FLOAT)
             {
                 // Make sure it has the right wrap mode
                 SetTheRightWrapMode();
@@ -630,7 +637,7 @@ struct implementation final : xtexture_compiler::instance
         }
         else
         {
-            if (Bitmap.getFormat() == xcore::bitmap::format::R8G8B8A8)
+            if (Bitmap.getFormat() == xbitmap::format::R8G8B8A8)
             {
                 // Make sure it has the right wrap mode
                 SetTheRightWrapMode();
@@ -643,9 +650,9 @@ struct implementation final : xtexture_compiler::instance
         //
         if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR)
         {
-            if( Bitmap.getFormat() != xcore::bitmap::format::R8G8B8 
-             && Bitmap.getFormat() != xcore::bitmap::format::R5G6B5
-             && Bitmap.getFormat() != xcore::bitmap::format::R32G32B32_FLOAT)
+            if( Bitmap.getFormat() != xbitmap::format::R8G8B8 
+             && Bitmap.getFormat() != xbitmap::format::R5G6B5
+             && Bitmap.getFormat() != xbitmap::format::R32G32B32_FLOAT)
                 throw(std::runtime_error("Source texture has a strange format"));
 
             const auto  nPixels      = Bitmap.getHeight() * Bitmap.getWidth();
@@ -656,7 +663,7 @@ struct implementation final : xtexture_compiler::instance
 
             Data[0] = 0;
 
-            if ( Bitmap.getFormat() == xcore::bitmap::format::R32G32B32_FLOAT )
+            if ( Bitmap.getFormat() == xbitmap::format::R32G32B32_FLOAT )
             {
                 const auto* pBitmapData  = Bitmap.getMip<float>(0).data();
 
@@ -685,7 +692,7 @@ struct implementation final : xtexture_compiler::instance
                 //
                 // Integer conversions to float
                 //
-                const auto          ColorFmt        = xcore::color::format{ static_cast<xcore::color::format::type>(Bitmap.getFormat()) };
+                const auto          ColorFmt        = xcolor::format{ static_cast<xcolor::format::type>(Bitmap.getFormat()) };
                 const auto&         Descriptor      = ColorFmt.getDescriptor();
                 const auto          BytesPerPixel   = Descriptor.m_TB / 8;
                 const std::byte*    pBitmapData     = Bitmap.getMip<std::byte>(0).data();
@@ -693,7 +700,7 @@ struct implementation final : xtexture_compiler::instance
                 for (auto i = 0u; i < nPixels; ++i)
                 {
                     const std::uint32_t D       = *reinterpret_cast<const std::uint32_t*>(pBitmapData);
-                    const auto          Color   = xcore::icolor{ D, ColorFmt };
+                    const auto          Color   = xcolori{ D, ColorFmt };
 
                     *pData = static_cast<float>(Color.m_R) / 0xff;
                     pData++;
@@ -717,7 +724,7 @@ struct implementation final : xtexture_compiler::instance
             Bitmap.setup
             ( Bitmap.getWidth()
             , Bitmap.getHeight()
-            , xcore::bitmap::format::R32G32B32A32_FLOAT
+            , xbitmap::format::R32G32B32A32_FLOAT
             , sizeof(float) * FaceSize
             , { reinterpret_cast<std::byte*>(Data.release()), sizeof(float) * DataSize }
             , true
@@ -727,16 +734,16 @@ struct implementation final : xtexture_compiler::instance
         }
         else
         {
-            if( Bitmap.getFormat() != xcore::bitmap::format::R8G8B8 
-             && Bitmap.getFormat() != xcore::bitmap::format::R5G6B5 )
+            if( Bitmap.getFormat() != xbitmap::format::R8G8B8 
+             && Bitmap.getFormat() != xbitmap::format::R5G6B5 )
                 throw(std::runtime_error("Source texture has a strange format"));
 
             const auto          nPixels         = Bitmap.getHeight() * Bitmap.getWidth();
-            const auto          ColorFmt        = xcore::color::format{ static_cast<xcore::color::format::type>(Bitmap.getFormat()) };
+            const auto          ColorFmt        = xcolor::format{ static_cast<xcolor::format::type>(Bitmap.getFormat()) };
             const auto&         Descriptor      = ColorFmt.getDescriptor();
             const auto          BytesPerPixel   = Descriptor.m_TB / 8;
             const std::byte*    pBitmapData     = Bitmap.getMip<std::byte>(0).data();
-            auto                Data            = std::make_unique<xcore::icolor[]>( 1 + nPixels);
+            auto                Data            = std::make_unique<xcolori[]>( 1 + nPixels);
             auto*               pData           = &Data[1];
 
             Data[0].m_Value = 0;
@@ -744,7 +751,7 @@ struct implementation final : xtexture_compiler::instance
             for (auto i = 0u; i < nPixels; ++i)
             {
                 const std::uint32_t D = *reinterpret_cast<const std::uint32_t*>(pBitmapData);
-                *pData = xcore::icolor{ D, ColorFmt };
+                *pData = xcolori{ D, ColorFmt };
 
                 pData++;
                 pBitmapData += BytesPerPixel;
@@ -756,9 +763,9 @@ struct implementation final : xtexture_compiler::instance
             Bitmap.setup
             ( Bitmap.getWidth()
             , Bitmap.getHeight()
-            , xcore::bitmap::format::R8G8B8A8
-            , sizeof(xcore::icolor) * nPixels
-            , { reinterpret_cast<std::byte*>(Data.release()), sizeof(xcore::icolor) * (1 + nPixels) }
+            , xbitmap::format::R8G8B8A8
+            , sizeof(xcolori) * nPixels
+            , { reinterpret_cast<std::byte*>(Data.release()), sizeof(xcolori) * (1 + nPixels) }
             , true
             , 1
             , 1
@@ -783,7 +790,7 @@ struct implementation final : xtexture_compiler::instance
         for (auto& [FileName, BitmapIndex] : m_BitmapHash)
         {
             BitmapIndex = Index++;
-            LoadTexture(m_Bitmaps[BitmapIndex], xcore::string::Fmt("%s/%s", m_ProjectPaths.m_Project.data(), FileName.data()));
+            LoadTexture(m_Bitmaps[BitmapIndex], std::format(L"{}/{}", m_ProjectPaths.m_Project, FileName));
 
             if (BitmapIndex == 0 )
             {
@@ -792,18 +799,18 @@ struct implementation final : xtexture_compiler::instance
 
                 if ( (Width%4) != 0 )
                 {
-                    XLOG_CHANNEL_WARNING(m_LogChannel, "Input Texture: [%s] Width is not a multiple of 4", FileName.c_str());
+                    LogMessage( msg_type::WARNING, std::format(L"Input Texture: [{}] Width is not a multiple of 4", FileName) );
                 }
 
                 if ( (Height%4)!= 0)
                 {
-                    XLOG_CHANNEL_WARNING(m_LogChannel, "Input Texture: [%s] Height is not a multiple of 4", FileName.c_str());
+                    LogMessage(msg_type::WARNING, std::format(L"Input Texture: [%s] Height is not a multiple of 4", FileName));
                 }
             }
             else
             {
                 if (Width != m_Bitmaps[BitmapIndex].getWidth() || Height != m_Bitmaps[BitmapIndex].getHeight())
-                    throw std::runtime_error(std::format("Input Texture: [{}] All textures should be the same size", FileName));
+                    throw std::runtime_error(std::format("Input Texture: [{}] All textures should be the same size", xstrtool::To(FileName) ));
             }
 
             //
@@ -817,9 +824,9 @@ struct implementation final : xtexture_compiler::instance
 
     void CollapseMixes()
     {
-        std::vector<xcore::bitmap>  MixedBitmaps;
+        std::vector<xbitmap>  MixedBitmaps;
 
-        auto HandleMix = [&](xcore::bitmap& Dest, const xtexture_rsc::mix_source& MixSrc)
+        auto HandleMix = [&](xbitmap& Dest, const xtexture_rsc::mix_source& MixSrc)
         {
 
             //
@@ -827,7 +834,7 @@ struct implementation final : xtexture_compiler::instance
             //
             if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR)
             {
-                auto faceSize = sizeof(xcore::vector4)* m_Bitmaps[0].getWidth()* m_Bitmaps[0].getHeight();
+                auto faceSize = sizeof(xmath::fvec4) * m_Bitmaps[0].getWidth()* m_Bitmaps[0].getHeight();
                 auto datasize  = faceSize + sizeof(std::uint32_t);
                 auto pdata     = new std::byte[datasize];
                 pdata[0] = pdata[1] = pdata[2] = pdata[3] = std::byte{0u};
@@ -835,7 +842,7 @@ struct implementation final : xtexture_compiler::instance
                 Dest.setup
                 ( m_Bitmaps[0].getWidth()
                 , m_Bitmaps[0].getHeight()
-                , xcore::bitmap::format::R32G32B32A32_FLOAT
+                , xbitmap::format::R32G32B32A32_FLOAT
                 , faceSize
                 , { pdata, datasize }
                 , true
@@ -855,7 +862,7 @@ struct implementation final : xtexture_compiler::instance
             {
                 for (auto& E : MixSrc.m_Inputs)
                 {
-                    xcore::bitmap& Src = m_Bitmaps[ m_BitmapHash[E.m_FileName] ];
+                    xbitmap& Src = m_Bitmaps[ m_BitmapHash[xstrtool::To(E.m_FileName)] ];
 
                     for (int y = 0, end_y = Src.getHeight(); y < end_y; ++y)
                     for (int x = 0, end_x = Src.getWidth();  x < end_x; ++x)
@@ -931,8 +938,8 @@ struct implementation final : xtexture_compiler::instance
                 }
             };
 
-           if( m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR) Mixing((xcore::fcolor*)nullptr);
-           else                                                                 Mixing((xcore::icolor*)nullptr);
+           if( m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR) Mixing((xcolorf*)nullptr);
+           else                                                                 Mixing((xcolori*)nullptr);
             
         };
 
@@ -1128,18 +1135,31 @@ struct implementation final : xtexture_compiler::instance
         //
         if (m_DebugType == debug_type::D1 || m_DebugType == debug_type::D1)
         {
-            auto filename = xcore::string::Fmt("%s\\FinalImage.dds", m_ResourceLogPath.data());
+            auto filename = std::format(L"{}\\FinalImage.dds", m_ResourceLogPath);
 
             // IF it suposed to have gamma make sure to convert it to sRGB
-            FILE* fp = fopen(filename, "wb");
-            if (fp == nullptr)
-                throw(std::runtime_error("Unable to save the Debug dds..."));
+            FILE*   fp = nullptr;
+            
+            if (auto Err = _wfopen_s(&fp, filename.c_str(), L"wb"); Err != 0 || fp == nullptr )
+            {
+                std::array<wchar_t, 256> errMsg;
+                if (_wcserror_s(errMsg.data(), errMsg.size(), Err) == 0)
+                {
+                    xerr::LogMessage<state::FAILURE>(std::format("Unable to save the dds: {}, {}", Err, xstrtool::To(errMsg.data())));
+                }
+                else
+                {
+                    xerr::LogMessage<state::FAILURE>(std::format("Unable to save the dds, system unkown error: {}", Err));
+                }
+
+                throw(std::runtime_error("Unable to save the dds..."));
+            }
 
             // in the DDS file offset to dxgiFormat part of the DX10 header
             if (-1 == fseek(fp, 128, SEEK_SET))
                 throw(std::runtime_error("Unable to save the Debug dds..."));
 
-            if (-1 == fwrite(m_pDDSData, CompressSize, 1, fp))
+            if (1 != fwrite(m_pDDSData, CompressSize, 1, fp))
                 throw(std::runtime_error("Unable to save the Debug dds..."));
 
             fclose(fp);
@@ -1147,10 +1167,10 @@ struct implementation final : xtexture_compiler::instance
 
 
         //
-        // Convert from DDS format to xcore::bitmap
+        // Convert from DDS format to xbitmap
         //
         if (auto Err = xbmp::tools::loader::LoadDSS(m_FinalBitmap, { reinterpret_cast<std::byte*>(m_pDDSData), CompressSize }); Err)
-            throw(std::runtime_error(xbmp::tools::getErrorMsg(Err)));
+            throw(std::runtime_error(std::format("{}",Err.getMessage())) );
     }
 
 
@@ -1341,7 +1361,7 @@ struct implementation final : xtexture_compiler::instance
         // If we are not dealing with HDR formats then we can skip this step
         if (m_Descriptor.m_UsageType != xtexture_rsc::usage_type::HDR_COLOR) return;
 
-        xcore::bitmap HDRHalfBitmap;
+        xbitmap HDRHalfBitmap;
 
         auto FullColorDataSize = m_Bitmaps[0].getDataSize();
         auto HalfColorDataSize = (FullColorDataSize - sizeof(int))/2 + sizeof(int);
@@ -1353,7 +1373,7 @@ struct implementation final : xtexture_compiler::instance
         HDRHalfBitmap.setup
         ( m_Bitmaps[0].getWidth()
         , m_Bitmaps[0].getHeight()
-        , xcore::bitmap::format::R16G16B16A16_FLOAT
+        , xbitmap::format::R16G16B16A16_FLOAT
         , FaceSize
         , { pData, HalfColorDataSize }
         , true
@@ -1374,7 +1394,7 @@ struct implementation final : xtexture_compiler::instance
         {
             for (auto iFace = 0, FaceCount = HDRHalfBitmap.getFaceCount(); iFace < FaceCount; ++iFace)
             {
-                const auto SrcFullColor  = m_Bitmaps[0].getMip<xcore::fcolor>(0, iFace, iFrame);
+                const auto SrcFullColor  = m_Bitmaps[0].getMip<xcolorf>(0, iFace, iFrame);
                       auto DestHalfColor = HDRHalfBitmap.getMip<half_color>(0, iFace, iFrame);
                 for ( auto i=0u; i< SrcFullColor.size(); ++i )
                 {
@@ -1666,9 +1686,9 @@ struct implementation final : xtexture_compiler::instance
         {
             // Force the DDS file to serialize wih the DX10 Header (Only for gamma textures)
             if (m_Descriptor.m_bSRGB) MipSetCompressed.m_dwFourCC = CMP_MAKEFOURCC('D', 'X', '1', '0');
-            auto filename = xcore::string::Fmt("%s\\FinalImage.dds", m_ResourceLogPath.data());
+            auto filename = std::format(L"{}\\FinalImage.dds", m_ResourceLogPath );
 
-            if (auto cmp_status = CMP_SaveTexture(filename, &MipSetCompressed); cmp_status != CMP_OK)
+            if (auto cmp_status = CMP_SaveTexture( xstrtool::To(filename).c_str(), &MipSetCompressed); cmp_status != CMP_OK)
                 throw(std::runtime_error("Unable to export the texture"));
 
             //  
@@ -1690,15 +1710,29 @@ struct implementation final : xtexture_compiler::instance
                 if(auto NewFormat = ToSRGB[static_cast<std::int32_t>(m_Descriptor.m_Compression)]; NewFormat)
                 {
                     // IF it suposed to have gamma make sure to convert it to sRGB
-                    FILE* fp = fopen(filename, "r+b" );
-                    if( fp == nullptr )
+                    FILE* fp = nullptr;
+                        
+                    if( auto Err = _wfopen_s( &fp, filename.c_str(), L"r+b"); Err != 0 || fp == nullptr)
+                    {
+                        std::array<wchar_t, 256> errMsg;
+                        if (_wcserror_s(errMsg.data(), errMsg.size(), Err) == 0)
+                        {
+                            xerr::LogMessage<state::FAILURE>(std::format("Unable to reload the Debug dds: {}, {}", Err, xstrtool::To(errMsg.data())));
+                        }
+                        else
+                        {
+                            xerr::LogMessage<state::FAILURE>(std::format("Unable to reload the Debug dds, system unknown error: {}", Err));
+                        }
+
                         throw(std::runtime_error("Unable to reload the Debug dds..."));
+                    }
+                        
 
                     // in the DDS file offset to dxgiFormat part of the DX10 header
                     if (-1 == fseek(fp, 128, SEEK_SET))        
                         throw(std::runtime_error("Unable to reload the Debug dds..."));
 
-                    if (-1 == fwrite(&NewFormat, 4, 1, fp))
+                    if (1 != fwrite(&NewFormat, 4, 1, fp))
                         throw(std::runtime_error("Unable to reload the Debug dds..."));
 
                     fclose(fp);
@@ -1707,25 +1741,25 @@ struct implementation final : xtexture_compiler::instance
         }
 
         //
-        // Convert from Mipset to xcore::bitmap
+        // Convert from Mipset to xbitmap
         //
         static constexpr auto DescriptorBitmapFormatToxBitmap = []() consteval ->auto
         {
-            std::array< xcore::bitmap::format, static_cast<std::int32_t>(xtexture_rsc::compression_format::count_v) > Array = { xcore::bitmap::format::XCOLOR_END };
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_BC1)]             = xcore::bitmap::format::BC1_4RGB;
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC1_A1)]         = xcore::bitmap::format::BC1_4RGBA1;
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC3_A8)]         = xcore::bitmap::format::BC3_8RGBA;
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::R_BC4)]               = xcore::bitmap::format::BC4_4R;
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RG_BC5)]              = xcore::bitmap::format::BC5_8RG;
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_UHDR_BC6)]        = xcore::bitmap::format::BC6H_8RGB_UFLOAT;
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_SHDR_BC6)]        = xcore::bitmap::format::BC6H_8RGB_SFLOAT;
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC7)]            = xcore::bitmap::format::BC7_8RGBA;
-            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_UNCOMPRESSED)]   = xcore::bitmap::format::XCOLOR;
+            std::array< xbitmap::format, static_cast<std::int32_t>(xtexture_rsc::compression_format::count_v) > Array = { xbitmap::format::XCOLOR_END };
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_BC1)]             = xbitmap::format::BC1_4RGB;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC1_A1)]         = xbitmap::format::BC1_4RGBA1;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC3_A8)]         = xbitmap::format::BC3_8RGBA;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::R_BC4)]               = xbitmap::format::BC4_4R;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RG_BC5)]              = xbitmap::format::BC5_8RG;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_UHDR_BC6)]        = xbitmap::format::BC6H_8RGB_UFLOAT;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_SHDR_BC6)]        = xbitmap::format::BC6H_8RGB_SFLOAT;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC7)]            = xbitmap::format::BC7_8RGBA;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_UNCOMPRESSED)]   = xbitmap::format::XCOLOR;
             return Array;
         }();
 
-        if (DescriptorBitmapFormatToxBitmap[static_cast<std::int32_t>(m_Descriptor.m_Compression)] == xcore::bitmap::format::XCOLOR_END)
-            throw(std::runtime_error("Unable to convert the texture to xcore::bitmap"));
+        if (DescriptorBitmapFormatToxBitmap[static_cast<std::int32_t>(m_Descriptor.m_Compression)] == xbitmap::format::XCOLOR_END)
+            throw(std::runtime_error("Unable to convert the texture to xbitmap"));
 
         //
         // Set up the Final xBitmap
@@ -1750,14 +1784,14 @@ struct implementation final : xtexture_compiler::instance
                     FaceTexelByteSize += MipSetCompressed.m_pMipLevelTable[i]->m_dwLinearSize;
                 }
 
-                xassert( auto total = FaceTexelByteSize * m_Bitmaps[0].getFaceCount(); total  == TotalTexelByteSize );
+                assert( [&]{auto total = FaceTexelByteSize * m_Bitmaps[0].getFaceCount(); return total  == TotalTexelByteSize; }()  );
 
-                const auto MipTableSize = sizeof(xcore::bitmap::mip) * MipSetCompressed.m_nMipLevels;
+                const auto MipTableSize = sizeof(xbitmap::mip) * MipSetCompressed.m_nMipLevels;
                 std::unique_ptr<std::byte[]> TextureData = std::make_unique<std::byte[]>(MipTableSize + TotalTexelByteSize);
 
                 // Set the mip table as well
                 {
-                    auto            pMipTable = reinterpret_cast<xcore::bitmap::mip*>(TextureData.get());
+                    auto            pMipTable = reinterpret_cast<xbitmap::mip*>(TextureData.get());
                     int             CurOffset = 0;
                     for (int i = 0, j=0; i < CompressTotalMips; i+= m_Bitmaps[0].getFaceCount(), j++ )
                     {
@@ -1790,7 +1824,7 @@ struct implementation final : xtexture_compiler::instance
                 //
                 // Make sure the final xbitmap has all the basics setup
                 //
-                m_FinalBitmap.setColorSpace(m_Descriptor.m_bSRGB ? xcore::bitmap::color_space::SRGB : xcore::bitmap::color_space::LINEAR);
+                m_FinalBitmap.setColorSpace(m_Descriptor.m_bSRGB ? xbitmap::color_space::SRGB : xbitmap::color_space::LINEAR);
                 m_FinalBitmap.setUWrapMode(m_Bitmaps[0].getUWrapMode());
                 m_FinalBitmap.setVWrapMode(m_Bitmaps[0].getVWrapMode());
 
@@ -1800,8 +1834,8 @@ struct implementation final : xtexture_compiler::instance
                 if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::TANGENT_NORMAL)
                 {
                     // These two formats require special decoding...
-                         if (m_FinalBitmap.getFormat() == xcore::bitmap::format::BC3_8RGBA) m_FinalBitmap.setFormat(xcore::bitmap::format::BC3_81Y0X_NORMAL);
-                    else if (m_FinalBitmap.getFormat() == xcore::bitmap::format::BC5_8RG)   m_FinalBitmap.setFormat(xcore::bitmap::format::BC5_8YX_NORMAL);
+                         if (m_FinalBitmap.getFormat() == xbitmap::format::BC3_8RGBA) m_FinalBitmap.setFormat(xbitmap::format::BC3_81Y0X_NORMAL);
+                    else if (m_FinalBitmap.getFormat() == xbitmap::format::BC5_8RG)   m_FinalBitmap.setFormat(xbitmap::format::BC5_8YX_NORMAL);
                 }
             }
 
@@ -1836,29 +1870,41 @@ struct implementation final : xtexture_compiler::instance
 
     //---------------------------------------------------------------------------------------------
 
-    void Serialize(const std::string_view FilePath)
+    void Serialize(const std::wstring_view FilePath)
     {
         //
         // We serialize the final image as a xbmp because the file size is usually half the size of a DDS file
         //
-        auto FinalPath = xcore::string::Fmt("%s", FilePath.data());
+        auto FinalPath = FilePath;
 
-        if (auto Err = m_FinalBitmap.SerializeSave(xcore::string::To<wchar_t>(FinalPath), false); Err)
-            throw(std::runtime_error(Err.getCode().m_pString));
+        {
+            xserializer::stream Serializer;
+            if ( auto Err = Serializer.Save( FinalPath
+                                            , m_FinalBitmap
+                                            ,     m_OptimizationType == optimization_type::O0 ? xserializer::compression_level::FAST 
+                                                : m_OptimizationType == optimization_type::O1 ? xserializer::compression_level::MEDIUM
+                                                : xserializer::compression_level::HIGH
+                                            ); Err )
+            {
+                throw(std::runtime_error( std::string(Err.getMessage()) ));
+            }
+        }
 
         //
         // Verify this can be loaded... 
         //
         if( m_DebugType == debug_type::Dz )
         {
-            xcore::bitmap* pTemp;
-            if (auto Err = m_FinalBitmap.SerializeLoad( pTemp, xcore::string::To<wchar_t>(FinalPath)); Err)
-                throw(std::runtime_error(Err.getCode().m_pString));
+            xbitmap* pTemp;
+            xserializer::stream Serializer;
+
+            if (auto Err = Serializer.Load(FinalPath, pTemp); Err)
+                throw(std::runtime_error( std::string( Err.getMessage() ) ));
 
             //
             // OK Time to let things go...
             //
-            xcore::memory::AlignedFree(pTemp);
+            xserializer::default_memory_handler_v.Free( { .m_bUnique = true }, pTemp );
         }
     }
 };
