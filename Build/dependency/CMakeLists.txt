@@ -7,7 +7,6 @@ FetchAndPopulate("https://github.com/LIONant-depot/xbmp_tools.git" "main")
 FetchAndPopulate("https://github.com/BinomialLLC/crunch.git" "master")
 FetchAndPopulate("https://github.com/GPUOpen-Tools/compressonator.git" "master")
 FetchAndPopulate("https://github.com/BinomialLLC/basis_universal.git" "master")
-FetchAndPopulate("https://github.com/BinomialLLC/basis_universal.git" "master")
 FetchAndPopulate("https://github.com/LIONant-depot/xstrtool.git" "main" )
 
 
