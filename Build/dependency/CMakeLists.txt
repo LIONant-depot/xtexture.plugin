@@ -287,12 +287,12 @@ if(compressonator_CREATED)
 endif()
 
 # Define xtexture_compiler
-DefineInterfaceComponent(xtexture_comp "dependencies/xcore"
+DefineInterfaceComponent(xtexture_compiler_ "dependencies/xcore"
   "source/xtexture_rsc_descriptor.h"
   "source/Compiler/xtexture_compiler.h"
   "source/Compiler/xtexture_compiler.cpp"
 )
 if(xtexture_comp_CREATED)
-  AppendComponentIncludes(xtexture_comp
+  AppendComponentIncludes(xtexture_compiler_
   )
 endif()
