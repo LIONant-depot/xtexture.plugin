@@ -460,10 +460,8 @@ struct implementation final : xtexture_compiler::instance
 
     void DumpAllFileNamesIntoHash()
     {
-        auto AddTexture = [&]( std::string& sStr )
+        auto AddTexture = [&]( std::wstring& Str)
         {
-            std::wstring Str = xstrtool::To(sStr);
-
             //
             // Let first clean the path for the textures...
             //
@@ -862,7 +860,7 @@ struct implementation final : xtexture_compiler::instance
             {
                 for (auto& E : MixSrc.m_Inputs)
                 {
-                    xbitmap& Src = m_Bitmaps[ m_BitmapHash[xstrtool::To(E.m_FileName)] ];
+                    xbitmap& Src = m_Bitmaps[ m_BitmapHash[E.m_FileName] ];
 
                     for (int y = 0, end_y = Src.getHeight(); y < end_y; ++y)
                     for (int x = 0, end_x = Src.getWidth();  x < end_x; ++x)
