@@ -1,5 +1,7 @@
-#include "xcore.h"
-#include "../tools/xgpu_xcore_bitmap_helpers.h"
+
+#include "../../tools/xgpu_xcore_bitmap_helpers.h"
+#include "dependencies/xbitmap/source/xbitmap.h"
+#include "dependencies/xbitmap/source/bridges/xserializer/xbitmap_to_xserializer.h"
 
 //
 // We will register the loader
@@ -12,11 +14,12 @@ xresource::loader< xrsc::texture_type_guid_v >::data_type* xresource::loader< xr
 {
     auto&           UserData    = Mgr.getUserData<resource_mgr_user_data>();
     auto            Texture     = std::make_unique<xgpu::texture>();
-    xcore::bitmap*  pBitmap     = nullptr;
+    xbitmap*        pBitmap     = nullptr;
     std::wstring    Path        = Mgr.getResourcePath(GUID, type_name_v);
 
     // Load the xbitmap
-    if (auto Err = xcore::bitmap::SerializeLoad(pBitmap, Path); Err)
+    xserializer::stream Stream;
+    if (auto Err = Stream.Load(Path, pBitmap); Err)
     {
         assert(false);
     }
@@ -28,7 +31,7 @@ xresource::loader< xrsc::texture_type_guid_v >::data_type* xresource::loader< xr
     }
 
     // Free the bitmap
-    xcore::memory::AlignedFree(pBitmap);
+    xserializer::default_memory_handler_v.Free( xserializer::mem_type{ .m_bUnique = true }, pBitmap);
 
     // Return the texture
     return Texture.release();
@@ -36,7 +39,7 @@ xresource::loader< xrsc::texture_type_guid_v >::data_type* xresource::loader< xr
 
 //------------------------------------------------------------------
 
-void xresource::loader< xrsc::texture_type_guid_v >::Destroy(xresource::mgr& Mgr, data_type& Data, const full_guid& GUID)
+void xresource::loader< xrsc::texture_type_guid_v >::Destroy(xresource::mgr& Mgr, data_type&& Data, const full_guid& GUID)
 {
     auto& UserData = Mgr.getUserData<resource_mgr_user_data>();
     UserData.m_Device.Destroy( std::move(Data) );

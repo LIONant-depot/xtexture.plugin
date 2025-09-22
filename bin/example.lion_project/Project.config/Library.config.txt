@@ -1,9 +1,9 @@
 
 // New Types
-< s32:d u32:g s16:C u16:H s8:c u8:h f32:f f64:F string:s u64:G s64:D bool:c enum:s >
+< s32:d u32:g s16:C u16:H s8:c u8:h f32:f f64:F string:s wstring:S u64:G s64:D bool:c enum:s >
 
 [ xProperties : 2 ]
 { Name:s                       Value:?                                                                         }
 //---------------------------  -------------------------------------------------------------------------------
   "Library/GUID"               ;u64    #ADEB2E3BF97B6E03                                                      
-  "Library/Path"               ;string "D:\LIONant\xGPU\dependencies\xtexture.plugin\bin\example.lion_project"
+  "Library/Path"               ;wstring "D:\LIONant\xGPU\dependencies\xtexture.plugin\bin\example.lion_project"

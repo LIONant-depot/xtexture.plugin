@@ -5,7 +5,7 @@
      1        0   
 
 // New Types
-< s32:d u32:g s16:C u16:H s8:c u8:h f32:f f64:F string:s u64:G s64:D bool:c enum:s >
+< s32:d u32:g s16:C u16:H s8:c u8:h f32:f f64:F string:s wstring:S u64:G s64:D bool:c enum:s >
 
 [ xProperties : 22 ]
 { Name:s                                             Value:?                          }
@@ -14,7 +14,7 @@
   "Texture/Wrap Mode U"                              ;enum   "WRAP"                  
   "Texture/Wrap Mode V"                              ;enum   "WRAP"                  
   "Texture/InputType"                                ;enum   "SINGLE_INPUT"          
-  "Texture/Input/Filename"                           ;string "Assets\meadow_2_4k.exr"
+  "Texture/Input/Filename"                           ;wstring "Assets\meadow_2_4k.exr"
   "Texture/Compression"                              ;enum   "RGB_BC1"               
   "Texture/AlphaThreshold"                           ;u8     #80                     
   "Texture/Quality"                                  ;f32    #3F800000               
