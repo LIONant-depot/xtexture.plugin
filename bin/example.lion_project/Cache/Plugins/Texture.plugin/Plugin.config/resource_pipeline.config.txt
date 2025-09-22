@@ -11,5 +11,5 @@
   "PipelinePlugin/Icon"                      ;string "\xEE\xAE\x9F"        
   "PipelinePlugin/Details/RunAfter[]"        ;s64    0                
   "PipelinePlugin/Details/CompilationScript" ;wstring "..\..\Build\build_versions.bat"
-  "PipelinePlugin/Details/DebugCompiler"     ;wstring  "..\..\Build\xtexture_compiler.vs2022\x64\Debug\xtexture_compiler.exe"               
-  "PipelinePlugin/Details/ReleaseCompiler"   ;wstring  "..\..\Build\xtexture_compiler.vs2022\x64\Release\xtexture_compiler.exe"               
+  "PipelinePlugin/Details/DebugCompiler"     ;wstring  "..\..\Build\xtexture_compiler.vs2022\Debug\xtexture_compiler.exe"               
+  "PipelinePlugin/Details/ReleaseCompiler"   ;wstring  "..\..\Build\xtexture_compiler.vs2022\Release\xtexture_compiler.exe"               
