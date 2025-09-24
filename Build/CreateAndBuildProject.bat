@@ -10,13 +10,13 @@ if errorlevel 1 (
 
 cd xtexture_compiler.vs2022
 
-cmake --build . --config Debug --target xtexture_compiler /m
+cmake --build . --config Debug --target xtexture_compiler
 if errorlevel 1 (
     echo Debug compilation failed.
     goto DONE:
 )
 
-cmake --build . --config Release --target xtexture_compiler /m
+cmake --build . --config Release --target xtexture_compiler
 if errorlevel 1 (
     echo Release compilation failed.
     goto DONE:
