@@ -10,6 +10,6 @@
   "PipelinePlugin/TypeGUID/Value"            ;u64    #6701d481518bd833
   "PipelinePlugin/Icon"                      ;string "\xEE\xAE\x9F"        
   "PipelinePlugin/Details/RunAfter[]"        ;s64    0                
-  "PipelinePlugin/Details/CompilationScript" ;wstring "Build\\CreateAndBuildProject.bat"
-  "PipelinePlugin/Details/DebugCompiler"     ;wstring "Build\\xtexture_compiler.vs2022\\Debug\\xtexture_compiler.exe"               
-  "PipelinePlugin/Details/ReleaseCompiler"   ;wstring "Build\\xtexture_compiler.vs2022\\Release\\xtexture_compiler.exe"               
+  "PipelinePlugin/Details/CompilationScript" ;wstring "Cache\\Plugins\\xtexture.plugin\\Build\\CreateAndBuildProject.bat"
+  "PipelinePlugin/Details/DebugCompiler"     ;wstring "Cache\\Plugins\\xtexture.plugin\\Build\\xtexture_compiler.vs2022\\Debug\\xtexture_compiler.exe"               
+  "PipelinePlugin/Details/ReleaseCompiler"   ;wstring "Cache\\Plugins\\xtexture.plugin\\Build\\xtexture_compiler.vs2022\\Release\\xtexture_compiler.exe"               
