@@ -2,11 +2,12 @@
 #include "../../tools/xgpu_xcore_bitmap_helpers.h"
 #include "dependencies/xbitmap/source/xbitmap.h"
 #include "dependencies/xbitmap/source/bridges/xserializer/xbitmap_to_xserializer.h"
+#include "dependencies/xresource_guid/source/bridges/xresource_xproperty_bridge.h"
 
 //
-// We will register the loader
+// We will register the loader, the properties, 
 //
-inline static auto s_TextureLoaderRegistration = xresource::loader_registration<xrsc::texture_type_guid_v>{};
+inline static auto s_TextureRegistrations = xresource::common_registrations<xrsc::texture_type_guid_v>{};
 
 //------------------------------------------------------------------
 

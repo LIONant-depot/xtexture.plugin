@@ -1,7 +1,8 @@
 #ifndef XTEXTURE_XGPU_XRSC_GUID_LOADER_H
 #define XTEXTURE_XGPU_XRSC_GUID_LOADER_H
 #pragma once
-// This header file is used to provide a resource_guid for textures
+
+#include "dependencies/xresource_mgr/source/xresource_mgr.h"
 
 namespace xrsc
 {
