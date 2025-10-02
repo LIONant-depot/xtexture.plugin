@@ -2,7 +2,7 @@
 #include "dependencies/xbmp_tools/src/xbmp_tools.h"
 #include "dependencies/crunch/inc/crnlib.h"
 #include "../xtexture_rsc_descriptor.h"
-#include "dependencies/xproperty/source/examples/xcore_sprop_serializer/xcore_sprop_serializer.h"
+#include "dependencies/xproperty/source/sprop/property_sprop_xtextfile_serializer.h"
 #include "Compressonator.h"
 #include <iostream>
 #include "half.h"
