@@ -7,7 +7,7 @@
 //--------------------------------  -------------------------
   "PipelinePlugin/TypeName"                  ;string "Texture"    
   "PipelinePlugin/FileExtension"             ;wstring "xbmp"               
-  "PipelinePlugin/TypeGUID/Value"            ;u64    #6701d481518bd833
+  "PipelinePlugin/TypeGUID/Value"            ;u64    #6701D481518BD833
   "PipelinePlugin/Icon"                      ;string "\xEE\xAE\x9F"        
   "PipelinePlugin/Details/RunAfter[]"        ;s64    0                
   "PipelinePlugin/Details/CompilationScript" ;wstring "Cache\\Plugins\\xtexture.plugin\\Build\\CreateAndBuildProject.bat"
