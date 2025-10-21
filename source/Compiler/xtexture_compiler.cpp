@@ -9,6 +9,8 @@
 #include "dependencies/xmath/source/xmath_flinear.h"
 #include "dependencies/xbitmap/source/bridges/xserializer/xbitmap_to_xserializer.h"
 
+#include "dependencies/xproperty/source/xcore/my_properties.cpp"
+
 namespace crnlib
 {
     extern std::uint32_t g_number_of_processors;
