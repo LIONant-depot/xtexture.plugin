@@ -508,22 +508,18 @@ namespace xtexture_rsc
     };
 
     enum mipmap_filter : std::uint8_t
-    { NONE
-    , POINT
-    , LINEAR
-    , TRIANGLE
+    { KAISER
     , BOX
+    , LANCZOS
+    , TRIANGLE
     };
 
     static constexpr auto mipmap_filter_v = std::array
-    { xproperty::settings::enum_item("NONE",            mipmap_filter::NONE)
-    , xproperty::settings::enum_item("POINT",           mipmap_filter::POINT)
-    , xproperty::settings::enum_item("LINEAR",          mipmap_filter::LINEAR)
-    , xproperty::settings::enum_item("TRIANGLE",        mipmap_filter::TRIANGLE)
+    { xproperty::settings::enum_item("KAISER",          mipmap_filter::KAISER)
     , xproperty::settings::enum_item("BOX",             mipmap_filter::BOX)
+    , xproperty::settings::enum_item("LANCZOS",         mipmap_filter::LANCZOS)
+    , xproperty::settings::enum_item("TRIANGLE",        mipmap_filter::TRIANGLE)
     };
-
-
 
     struct descriptor final : xresource_pipeline::descriptor::base
     {

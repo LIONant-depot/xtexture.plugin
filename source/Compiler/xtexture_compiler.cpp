@@ -735,7 +735,8 @@ struct implementation final : xtexture_compiler::instance
         else
         {
             if( Bitmap.getFormat() != xbitmap::format::R8G8B8 
-             && Bitmap.getFormat() != xbitmap::format::R5G6B5 )
+             && Bitmap.getFormat() != xbitmap::format::R5G6B5
+             && Bitmap.getFormat() != xbitmap::format::R8)
                 throw(std::runtime_error("Source texture has a strange format"));
 
             const auto          nPixels         = Bitmap.getHeight() * Bitmap.getWidth();
@@ -1373,7 +1374,7 @@ struct implementation final : xtexture_compiler::instance
         HDRHalfBitmap.setup
         ( m_Bitmaps[0].getWidth()
         , m_Bitmaps[0].getHeight()
-        , xbitmap::format::R16G16B16A16_FLOAT
+        , xbitmap::format::R16G16B16A16_SFLOAT
         , FaceSize
         , { pData, HalfColorDataSize }
         , true
@@ -1526,58 +1527,106 @@ struct implementation final : xtexture_compiler::instance
         //
         memcpy(MipSet.pData, reinterpret_cast<CMP_BYTE*>(m_Bitmaps[0].getMip<std::byte>(0).data()), MipSet.dwDataSize);
 
-        for( int i=1; i< MipSet.m_nDepth; ++i )
+        if (true)
         {
-            MipLevelTable[i]->m_nWidth          = MipSet.dwWidth;
-            MipLevelTable[i]->m_nHeight         = MipSet.m_nHeight;
-            MipLevelTable[i]->m_dwLinearSize    = MipSet.dwDataSize;
-            MipLevelTable[i]->m_pbData          = new CMP_BYTE[MipSet.dwDataSize];
-            memcpy(MipLevelTable[i]->m_pbData, reinterpret_cast<CMP_BYTE*>(m_Bitmaps[0].getMip<std::byte>(0, i).data()), MipSet.dwDataSize);
-        }
+            xbmp::tools::mips::mips_filter_type FilterType;
 
-        MipLevelTable[0]->m_nWidth       = MipSet.dwWidth;
-        MipLevelTable[0]->m_nHeight      = MipSet.dwHeight;
-        MipLevelTable[0]->m_dwLinearSize = MipSet.dwDataSize;
-        MipLevelTable[0]->m_pbData       = MipSet.pData;
-
-        MipSet.m_pMipLevelTable    = MipLevelTable;
-
-        //
-        // Generate the mipmaps
-        //
-        {
-            CMP_CFilterParams   CFilterParam  = {};
-
-            CFilterParam.dwMipFilterOptions = 0;
-            CFilterParam.nFilterType        = 1;    // Using D3DX options (Seems like it requires the GPU to actually run the filters)
-
-            switch (m_Descriptor.m_MipmapFilter)
+            switch( m_Descriptor.m_MipmapFilter )
             {
-            case xtexture_rsc::mipmap_filter::NONE:      CFilterParam.dwMipFilterOptions = CFilterParam.dwMipFilterOptions & 0xFFFFFFE0u | CMP_D3DX_FILTER_NONE;       break;
-            case xtexture_rsc::mipmap_filter::POINT:     CFilterParam.dwMipFilterOptions = CFilterParam.dwMipFilterOptions & 0xFFFFFFE0u | CMP_D3DX_FILTER_POINT;      break;
-            case xtexture_rsc::mipmap_filter::LINEAR:    CFilterParam.dwMipFilterOptions = CFilterParam.dwMipFilterOptions & 0xFFFFFFE0u | CMP_D3DX_FILTER_LINEAR;     break;
-            case xtexture_rsc::mipmap_filter::TRIANGLE:  CFilterParam.dwMipFilterOptions = CFilterParam.dwMipFilterOptions & 0xFFFFFFE0u | CMP_D3DX_FILTER_TRIANGLE;   break;
-            case xtexture_rsc::mipmap_filter::BOX:       CFilterParam.dwMipFilterOptions = CFilterParam.dwMipFilterOptions & 0xFFFFFFE0u | CMP_D3DX_FILTER_BOX;        break;
-            }                                                                            
+            case xtexture_rsc::mipmap_filter::BOX:          FilterType = xbmp::tools::mips::mips_filter_type::BOX; break;
+            case xtexture_rsc::mipmap_filter::TRIANGLE:     FilterType = xbmp::tools::mips::mips_filter_type::TRIANGLE; break;
+            case xtexture_rsc::mipmap_filter::KAISER:       FilterType = xbmp::tools::mips::mips_filter_type::KAISER; break;
+            case xtexture_rsc::mipmap_filter::LANCZOS:      FilterType = xbmp::tools::mips::mips_filter_type::LANCZOS; break;
+            }
 
-            if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::MIRROR || m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::MIRROR ) 
-                CFilterParam.dwMipFilterOptions |= CMP_D3DX_FILTER_MIRROR;
-            else
-                CFilterParam.dwMipFilterOptions &= ~CMP_D3DX_FILTER_MIRROR;
+            bool AlphaToCoverrage = false;
+            if (m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC1_A1
+             && m_Descriptor.m_UsageType == xtexture_rsc::usage_type::COLOR_AND_ALPHA) AlphaToCoverrage = true;
 
-            // Does this do anything?
-            if (m_Descriptor.m_bSRGB )
-                CFilterParam.dwMipFilterOptions |= CMP_D3DX_FILTER_SRGB;
-            else
-                CFilterParam.dwMipFilterOptions &= ~CMP_D3DX_FILTER_SRGB;
+            xbmp::tools::mips::GenerateMipMaps
+            ( m_Bitmaps[0]
+            , m_Descriptor.m_MipCustomMinSize
+            , m_Descriptor.m_UsageType == xtexture_rsc::usage_type::TANGENT_NORMAL
+            , FilterType
+            , AlphaToCoverrage
+            , m_Descriptor.m_AlphaThreshold/255.f
+            );
 
-            CFilterParam.nMinSize           = (m_Descriptor.m_bGenerateMips==false) ? std::max(MipSet.m_nHeight, MipSet.m_nWidth) : (m_Descriptor.m_MipCustomMinSize*2-1);//CMP_CalcMaxMipLevel(MipSet.m_nHeight, MipSet.m_nWidth, true));
-            CFilterParam.fGammaCorrection   = 1.0f;
+            int depth = m_Bitmaps[0].getFaceCount();
+            int mip_levels = m_Bitmaps[0].getMipCount();
+            MipSet.m_nMipLevels = mip_levels;
+            MipSet.m_nMaxMipLevels = mip_levels; // Adjust
+            CMP_MipLevel** table = new CMP_MipLevel * [mip_levels * depth];
+            int index = 0;
+            for (int level = 0; level < mip_levels; ++level) 
+            {
+                int lw = std::max(1, MipSet.m_nWidth >> level);
+                int lh = std::max(1, MipSet.m_nHeight >> level);
+                std::uint32_t lsize = lw * lh * (MipSet.m_ChannelFormat == CF_8bit ? 4 : (MipSet.m_ChannelFormat == CF_Float16 ? 8 : 16));
+                for (int face = 0; face < depth; ++face) 
+                {
+                    table[index] = new CMP_MipLevel();
+                    table[index]->m_nWidth = lw;
+                    table[index]->m_nHeight = lh;
+                    table[index]->m_dwLinearSize = lsize;
+                    table[index]->m_pbData = new CMP_BYTE[lsize];
+                    auto span = m_Bitmaps[0].getMip<std::byte>(level, face);
+                    std::memcpy(table[index]->m_pbData, span.data(), lsize);
+                    ++index;
+                }
+            }
+            MipSet.m_pMipLevelTable = table;
+            MipSet.pData = nullptr; // No single pData
+            MipSet.dwDataSize = 0;
+        }
+        else
+        {
+            for( int i=1; i< MipSet.m_nDepth; ++i )
+            {
+                MipLevelTable[i]->m_nWidth          = MipSet.dwWidth;
+                MipLevelTable[i]->m_nHeight         = MipSet.m_nHeight;
+                MipLevelTable[i]->m_dwLinearSize    = MipSet.dwDataSize;
+                MipLevelTable[i]->m_pbData          = new CMP_BYTE[MipSet.dwDataSize];
+                memcpy(MipLevelTable[i]->m_pbData, reinterpret_cast<CMP_BYTE*>(m_Bitmaps[0].getMip<std::byte>(0, i).data()), MipSet.dwDataSize);
+            }
 
-            // This line below does not seem to change anything... 
-            CFilterParam.useSRGB            = m_Descriptor.m_bSRGB;
+            MipLevelTable[0]->m_nWidth       = MipSet.dwWidth;
+            MipLevelTable[0]->m_nHeight      = MipSet.dwHeight;
+            MipLevelTable[0]->m_dwLinearSize = MipSet.dwDataSize;
+            MipLevelTable[0]->m_pbData       = MipSet.pData;
 
-            CMP_GenerateMIPLevelsEx(&MipSet, &CFilterParam);
+            MipSet.m_pMipLevelTable    = MipLevelTable;
+
+            //
+            // Generate the mipmaps
+            //
+            {
+                CMP_CFilterParams   CFilterParam  = {};
+
+                CFilterParam.dwMipFilterOptions = 0;
+                CFilterParam.nFilterType        = 1;    // Using D3DX options (Seems like it requires the GPU to actually run the filters)
+
+                CFilterParam.dwMipFilterOptions = CFilterParam.dwMipFilterOptions & 0xFFFFFFE0u | CMP_D3DX_FILTER_BOX;
+
+                if (m_Descriptor.m_UWrap == xtexture_rsc::wrap_type::MIRROR || m_Descriptor.m_VWrap == xtexture_rsc::wrap_type::MIRROR ) 
+                    CFilterParam.dwMipFilterOptions |= CMP_D3DX_FILTER_MIRROR;
+                else
+                    CFilterParam.dwMipFilterOptions &= ~CMP_D3DX_FILTER_MIRROR;
+
+                // Does this do anything?
+                if (m_Descriptor.m_bSRGB )
+                    CFilterParam.dwMipFilterOptions |= CMP_D3DX_FILTER_SRGB;
+                else
+                    CFilterParam.dwMipFilterOptions &= ~CMP_D3DX_FILTER_SRGB;
+
+                CFilterParam.nMinSize           = (m_Descriptor.m_bGenerateMips==false) ? std::max(MipSet.m_nHeight, MipSet.m_nWidth) : (m_Descriptor.m_MipCustomMinSize*2-1);//CMP_CalcMaxMipLevel(MipSet.m_nHeight, MipSet.m_nWidth, true));
+                CFilterParam.fGammaCorrection   = 1.0f;
+
+                // This line below does not seem to change anything... 
+                CFilterParam.useSRGB            = m_Descriptor.m_bSRGB;
+
+                CMP_GenerateMIPLevelsEx(&MipSet, &CFilterParam);
+            }
         }
 
         //

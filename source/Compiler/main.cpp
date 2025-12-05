@@ -12,13 +12,13 @@ int main( int argc, const char* argv[] )
         static const char* pDebugArgs[] = 
         { "TextureCompiler"
         , "-PROJECT"
-        , "D:\\LIONant\\xGPU\\dependencies\\xtexture.plugin\\bin\\example.lion_project"
+        , "D:\\xgpu_test\\xGPU\\example.lionprj"
         , "-DEBUG"
         , "D1"
         , "-DESCRIPTOR"
-        , "Descriptors\\Texture\\D7\\00\\189E8EEFD88400D7.desc" 
+        , "Descriptors\\Texture\\33\\00\\189E352FD8840033.desc" 
         , "-OUTPUT"
-        , "D:\\LIONant\\xGPU\\dependencies\\xtexture.plugin\\bin\\example.lion_project\\Cache\\Resources\\Platforms"
+        , "D:\\xgpu_test\\xGPU\\example.lionproj\\Cache\\Resources\\Platforms"
         };
 
         argv = pDebugArgs;
