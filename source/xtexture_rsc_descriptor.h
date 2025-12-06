@@ -151,7 +151,17 @@ namespace xtexture_rsc
     , xproperty::settings::enum_item("INTENSITY",          usage_type::INTENSITY)
     };
 
-    enum class compositing : std::uint8_t
+    enum class compositing_from : std::uint8_t
+    { RGBA
+    , RGB
+    , A
+    , R
+    , G
+    , B
+    , CUSTOM_CONSTANT
+    };
+
+    enum class compositing_to : std::uint8_t
     { RGBA
     , RGB
     , A
@@ -160,34 +170,62 @@ namespace xtexture_rsc
     , B
     };
 
-    static constexpr auto compositing_v = std::array
-    { xproperty::settings::enum_item("RGBA",    compositing::RGBA)
-    , xproperty::settings::enum_item("RGB",     compositing::RGB)
-    , xproperty::settings::enum_item("A",       compositing::A)
-    , xproperty::settings::enum_item("R",       compositing::R)
-    , xproperty::settings::enum_item("G",       compositing::G)
-    , xproperty::settings::enum_item("B",       compositing::B)
+    static constexpr auto compositing_from_v = std::array
+    { xproperty::settings::enum_item("RGBA",    compositing_from::RGBA)
+    , xproperty::settings::enum_item("RGB",     compositing_from::RGB)
+    , xproperty::settings::enum_item("A",       compositing_from::A)
+    , xproperty::settings::enum_item("R",       compositing_from::R)
+    , xproperty::settings::enum_item("G",       compositing_from::G)
+    , xproperty::settings::enum_item("B",       compositing_from::B)
+    , xproperty::settings::enum_item("CUSTOM_CONSTANT", compositing_from::CUSTOM_CONSTANT)
+    };
+
+    static constexpr auto compositing_to_v = std::array
+    { xproperty::settings::enum_item("RGBA",    compositing_to::RGBA)
+    , xproperty::settings::enum_item("RGB",     compositing_to::RGB)
+    , xproperty::settings::enum_item("A",       compositing_to::A)
+    , xproperty::settings::enum_item("R",       compositing_to::R)
+    , xproperty::settings::enum_item("G",       compositing_to::G)
+    , xproperty::settings::enum_item("B",       compositing_to::B)
     };
 
     struct mix
     {
-        compositing     m_CopyFrom   { compositing::RGBA };
-        compositing     m_CopyTo     { compositing::RGBA };
-        std::wstring    m_FileName   {};
+        compositing_from    m_CopyFrom   { compositing_from::RGBA };
+        compositing_to      m_CopyTo     { compositing_to::RGBA };
+        std::wstring        m_FileName   {};
+        float               m_Constant   {1.f};
 
         void Validate(std::vector<std::string>& Errors) const noexcept
         {
-            if (m_FileName.empty()) Errors.push_back("You forgot to enter a FileName");
+            if (m_CopyFrom != compositing_from::CUSTOM_CONSTANT)
+            {
+                if (m_FileName.empty()) Errors.push_back("In one of the Mix entries you forgot to enter a FileName");
+            }
         }
 
         XPROPERTY_DEF
         ("Mix", mix
-        , obj_member< "Copy From", &mix::m_CopyFrom, member_enum_span<compositing_v> >
-        , obj_member< "Copy To",   &mix::m_CopyTo, member_enum_span<compositing_v> >
+        , obj_member< "Copy From", &mix::m_CopyFrom, member_enum_span<compositing_from_v> >
+        , obj_member< "Copy To",   &mix::m_CopyTo,   member_enum_span<compositing_to_v> >
         , obj_member< "FileName"
             , &mix::m_FileName
-            , member_ui<std::wstring>::file_dialog<image_filter_v, true, 1> 
-            >
+            , member_ui<std::wstring>::file_dialog<image_filter_v, true, 1>
+            , member_dynamic_flags<+[](const mix& O)
+            {
+                xproperty::flags::type Flags = {};
+                Flags.m_bDontShow = O.m_CopyFrom == compositing_from::CUSTOM_CONSTANT;
+                return Flags;
+            }>>
+        , obj_member< "Constant"
+            , &mix::m_Constant
+            , member_ui<float>::edit_box<0.f, 1.f>
+            , member_dynamic_flags<+[](const mix& O)
+            {
+                xproperty::flags::type Flags = {};
+                Flags.m_bDontShow = O.m_CopyFrom != compositing_from::CUSTOM_CONSTANT;
+                return Flags;
+            }>>
         )
     };
 
@@ -215,12 +253,12 @@ namespace xtexture_rsc
                 }
 
                 switch( E.m_CopyTo )
-                {   case compositing::RGBA: Channels[0] = Channels[1] = Channels[2] = Channels[3] = true; break;
-                    case compositing::RGB:  Channels[1] = Channels[2] = Channels[3] = true; break;
-                    case compositing::A: Channels[0] = true; break;
-                    case compositing::R: Channels[1] = true; break;
-                    case compositing::G: Channels[2] = true; break;
-                    case compositing::B: Channels[3] = true; break;
+                {   case compositing_to::RGBA: Channels[0] = Channels[1] = Channels[2] = Channels[3] = true; break;
+                    case compositing_to::RGB:  Channels[1] = Channels[2] = Channels[3] = true; break;
+                    case compositing_to::A: Channels[0] = true; break;
+                    case compositing_to::R: Channels[1] = true; break;
+                    case compositing_to::G: Channels[2] = true; break;
+                    case compositing_to::B: Channels[3] = true; break;
                 }
 
                 Index++;

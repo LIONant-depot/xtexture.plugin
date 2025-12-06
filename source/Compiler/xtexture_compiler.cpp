@@ -515,7 +515,8 @@ struct implementation final : xtexture_compiler::instance
                 m_HasMixes = true;
                 for ( auto& E : Input.m_Inputs )
                 {
-                    AddTexture(E.m_FileName);
+                    if (E.m_CopyFrom != xtexture_rsc::compositing_from::CUSTOM_CONSTANT)
+                        AddTexture(E.m_FileName);
                 }
             }
             else if constexpr (std::is_same_v<T, xtexture_rsc::mix_source_array>)
@@ -526,7 +527,8 @@ struct implementation final : xtexture_compiler::instance
                 for (auto& L : Input.m_MixSourceList)
                     for (auto& E : L.m_Inputs )
                     {
-                        AddTexture(E.m_FileName);
+                        if (E.m_CopyFrom != xtexture_rsc::compositing_from::CUSTOM_CONSTANT)
+                            AddTexture(E.m_FileName);
                     }
             }
             else if constexpr (std::is_same_v<T, xtexture_rsc::cube_input>)
@@ -561,7 +563,8 @@ struct implementation final : xtexture_compiler::instance
                 auto HandleMix = [&](xtexture_rsc::mix_source& MixSrc )
                 {
                     for (auto& E : MixSrc.m_Inputs)
-                        AddTexture(E.m_FileName);
+                        if (E.m_CopyFrom != xtexture_rsc::compositing_from::CUSTOM_CONSTANT)
+                            AddTexture(E.m_FileName);
                 };
 
                 HandleMix(Input.m_Right);
@@ -578,7 +581,8 @@ struct implementation final : xtexture_compiler::instance
                 auto HandleMix = [&](xtexture_rsc::mix_source& MixSrc )
                 {
                     for (auto& E : MixSrc.m_Inputs)
-                        AddTexture(E.m_FileName);
+                        if (E.m_CopyFrom != xtexture_rsc::compositing_from::CUSTOM_CONSTANT)
+                            AddTexture(E.m_FileName);
                 };
 
                 for( auto& E : Input.m_CubeMixArray )
@@ -863,78 +867,99 @@ struct implementation final : xtexture_compiler::instance
             {
                 for (auto& E : MixSrc.m_Inputs)
                 {
-                    xbitmap& Src = m_Bitmaps[ m_BitmapHash[E.m_FileName] ];
-
-                    for (int y = 0, end_y = Src.getHeight(); y < end_y; ++y)
-                    for (int x = 0, end_x = Src.getWidth();  x < end_x; ++x)
+                    if (E.m_CopyFrom == xtexture_rsc::compositing_from::CUSTOM_CONSTANT)
                     {
-                              T_COLOR D = Dest.getMip<T_COLOR>(0)[y * Src.getWidth() + x];
-                        const T_COLOR S = Src.getMip<T_COLOR>(0) [y * Src.getWidth() + x];
+                        for (int y = 0, end_y = Dest.getHeight(); y < end_y; ++y)
+                        for (int x = 0, end_x = Dest.getWidth(); x < end_x; ++x)
+                        {
+                            T_COLOR D = Dest.getMip<T_COLOR>(0)[y * Dest.getWidth() + x];
+                            T_COLOR S = std::array{ E.m_Constant, E.m_Constant, E.m_Constant, E.m_Constant };
 
-                        if (E.m_CopyFrom == xtexture_rsc::compositing::A)
-                        {
-                                 if (E.m_CopyTo == xtexture_rsc::compositing::R) D.m_R = S.m_A;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::G) D.m_G = S.m_A;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::B) D.m_B = S.m_A;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::A) D.m_A = S.m_A;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::RGB)  { D.m_R = S.m_A; D.m_G = S.m_A; D.m_B = S.m_A; }
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::RGBA) { D.m_R = S.m_A; D.m_G = S.m_A; D.m_B = S.m_A; D.m_A = S.m_A; }
-                        }
-                        else if (E.m_CopyFrom == xtexture_rsc::compositing::R)
-                        {
-                                 if (E.m_CopyTo == xtexture_rsc::compositing::R) D.m_R = S.m_R;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::G) D.m_G = S.m_R;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::B) D.m_B = S.m_R;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::A) D.m_A = S.m_R;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::RGB) {  D.m_R = S.m_R; D.m_G = S.m_R; D.m_B = S.m_R; }
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::RGBA) { D.m_R = S.m_R; D.m_G = S.m_R; D.m_B = S.m_R; D.m_A = S.m_R; }
-                        }
-                        else if (E.m_CopyFrom == xtexture_rsc::compositing::G)
-                        {
-                                 if (E.m_CopyTo == xtexture_rsc::compositing::R) D.m_R = S.m_G;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::G) D.m_G = S.m_G;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::B) D.m_B = S.m_G;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::A) D.m_A = S.m_G;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::RGB) { D.m_R = S.m_G; D.m_G = S.m_G; D.m_B = S.m_G; }
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::RGBA) { D.m_R = S.m_G; D.m_G = S.m_G; D.m_B = S.m_G; D.m_A = S.m_G; }
-                        }
-                        else if (E.m_CopyFrom == xtexture_rsc::compositing::B)
-                        {
-                                 if (E.m_CopyTo == xtexture_rsc::compositing::R) D.m_R = S.m_B;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::G) D.m_G = S.m_B;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::B) D.m_B = S.m_B;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::A) D.m_A = S.m_B;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::RGB)  { D.m_R = S.m_B; D.m_G = S.m_B; D.m_B = S.m_B; }
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::RGBA) { D.m_R = S.m_B; D.m_G = S.m_B; D.m_B = S.m_B; D.m_A = S.m_B; }
-                        }
-                        else if (E.m_CopyFrom == xtexture_rsc::compositing::RGBA)
-                        {
-                                 if (E.m_CopyTo == xtexture_rsc::compositing::RGB)  { D.m_R = S.m_R; D.m_G = S.m_G; D.m_B = S.m_B; }
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::RGBA) { D.m_R = S.m_R; D.m_G = S.m_G; D.m_B = S.m_B; D.m_A = S.m_A; }
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::R) D.m_R = S.m_R;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::G) D.m_G = S.m_G;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::B) D.m_B = S.m_B;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::A) D.m_A = S.m_A;
-                            else assert(false);
-                        }
-                        else if (E.m_CopyFrom == xtexture_rsc::compositing::RGB)
-                        {
-                                 if (E.m_CopyTo == xtexture_rsc::compositing::RGBA) { D.m_R = S.m_R; D.m_G = S.m_G; D.m_B = S.m_B; D.m_A = 0xff; }
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::RGB)  { D.m_R = S.m_R; D.m_G = S.m_G; D.m_B = S.m_B; }
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::R) D.m_R = S.m_R;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::G) D.m_G = S.m_G;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing::B) D.m_B = S.m_B;
-                            else throw(std::runtime_error("It does not have alpha information to copy from"));
-                        }
-                        else
-                        {
-                            assert(false);
-                        }
+                                 if (E.m_CopyTo == xtexture_rsc::compositing_to::RGBA) { D.m_R = S.m_R; D.m_G = S.m_G; D.m_B = S.m_B; D.m_A = S.m_A; }
+                            else if (E.m_CopyTo == xtexture_rsc::compositing_to::RGB)  { D.m_R = S.m_R; D.m_G = S.m_G; D.m_B = S.m_B; }
+                            else if (E.m_CopyTo == xtexture_rsc::compositing_to::R)      D.m_R = S.m_R;
+                            else if (E.m_CopyTo == xtexture_rsc::compositing_to::G)      D.m_G = S.m_G;
+                            else if (E.m_CopyTo == xtexture_rsc::compositing_to::B)      D.m_B = S.m_B;
+                            else if (E.m_CopyTo == xtexture_rsc::compositing_to::A)      D.m_A = S.m_B;
 
-                        //
-                        // Set the destination pixel
-                        //
-                        Dest.getMip<T_COLOR>(0)[y * Src.getWidth() + x] = D;
+                            Dest.getMip<T_COLOR>(0)[y * Dest.getWidth() + x] = D;
+                        }
+                    }
+                    else
+                    {
+                        xbitmap& Src = m_Bitmaps[ m_BitmapHash[E.m_FileName] ];
+
+                        for (int y = 0, end_y = Src.getHeight(); y < end_y; ++y)
+                        for (int x = 0, end_x = Src.getWidth();  x < end_x; ++x)
+                        {
+                                  T_COLOR D = Dest.getMip<T_COLOR>(0)[y * Src.getWidth() + x];
+                            const T_COLOR S = Src.getMip<T_COLOR>(0) [y * Src.getWidth() + x];
+
+                            if (E.m_CopyFrom == xtexture_rsc::compositing_from::A)
+                            {
+                                     if (E.m_CopyTo == xtexture_rsc::compositing_to::R) D.m_R = S.m_A;
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::G) D.m_G = S.m_A;
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::B) D.m_B = S.m_A;
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::A) D.m_A = S.m_A;
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::RGB)  { D.m_R = S.m_A; D.m_G = S.m_A; D.m_B = S.m_A; }
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::RGBA) { D.m_R = S.m_A; D.m_G = S.m_A; D.m_B = S.m_A; D.m_A = S.m_A; }
+                            }
+                            else if (E.m_CopyFrom == xtexture_rsc::compositing_from::R)
+                            {
+                                     if (E.m_CopyTo == xtexture_rsc::compositing_to::R) D.m_R = S.m_R;
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::G) D.m_G = S.m_R;
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::B) D.m_B = S.m_R;
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::A) D.m_A = S.m_R;
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::RGB) {  D.m_R = S.m_R; D.m_G = S.m_R; D.m_B = S.m_R; }
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::RGBA) { D.m_R = S.m_R; D.m_G = S.m_R; D.m_B = S.m_R; D.m_A = S.m_R; }
+                            }
+                            else if (E.m_CopyFrom == xtexture_rsc::compositing_from::G)
+                            {
+                                     if (E.m_CopyTo == xtexture_rsc::compositing_to::R) D.m_R = S.m_G;
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::G) D.m_G = S.m_G;
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::B) D.m_B = S.m_G;
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::A) D.m_A = S.m_G;
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::RGB) { D.m_R = S.m_G; D.m_G = S.m_G; D.m_B = S.m_G; }
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::RGBA) { D.m_R = S.m_G; D.m_G = S.m_G; D.m_B = S.m_G; D.m_A = S.m_G; }
+                            }
+                            else if (E.m_CopyFrom == xtexture_rsc::compositing_from::B)
+                            {
+                                     if (E.m_CopyTo == xtexture_rsc::compositing_to::R) D.m_R = S.m_B;
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::G) D.m_G = S.m_B;
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::B) D.m_B = S.m_B;
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::A) D.m_A = S.m_B;
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::RGB)  { D.m_R = S.m_B; D.m_G = S.m_B; D.m_B = S.m_B; }
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::RGBA) { D.m_R = S.m_B; D.m_G = S.m_B; D.m_B = S.m_B; D.m_A = S.m_B; }
+                            }
+                            else if (E.m_CopyFrom == xtexture_rsc::compositing_from::RGBA)
+                            {
+                                     if (E.m_CopyTo == xtexture_rsc::compositing_to::RGB)  { D.m_R = S.m_R; D.m_G = S.m_G; D.m_B = S.m_B; }
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::RGBA) { D.m_R = S.m_R; D.m_G = S.m_G; D.m_B = S.m_B; D.m_A = S.m_A; }
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::R) D.m_R = S.m_R;
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::G) D.m_G = S.m_G;
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::B) D.m_B = S.m_B;
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::A) D.m_A = S.m_A;
+                                else assert(false);
+                            }
+                            else if (E.m_CopyFrom == xtexture_rsc::compositing_from::RGB)
+                            {
+                                     if (E.m_CopyTo == xtexture_rsc::compositing_to::RGBA) { D.m_R = S.m_R; D.m_G = S.m_G; D.m_B = S.m_B; D.setAlpha(1.0f); }
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::RGB)  { D.m_R = S.m_R; D.m_G = S.m_G; D.m_B = S.m_B; }
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::R) D.m_R = S.m_R;
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::G) D.m_G = S.m_G;
+                                else if (E.m_CopyTo == xtexture_rsc::compositing_to::B) D.m_B = S.m_B;
+                                else throw(std::runtime_error("It does not have alpha information to copy from"));
+                            }
+                            else
+                            {
+                                assert(false);
+                            }
+
+                            //
+                            // Set the destination pixel
+                            //
+                            Dest.getMip<T_COLOR>(0)[y * Src.getWidth() + x] = D;
+                        }
                     }
                 }
             };
