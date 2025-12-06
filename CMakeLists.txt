@@ -30,4 +30,8 @@ source_group("Texture_Compiler" FILES
 
 add_subdirectory("build/dependency" "${CMAKE_CURRENT_BINARY_DIR}/xtexture_compiler")
 
+# ADD SUPPORT FOR OPEN_MP
+find_package(OpenMP REQUIRED)
+target_link_libraries(${TARGET_PROJECT} PRIVATE OpenMP::OpenMP_CXX)
+
 ProcessComponents()
