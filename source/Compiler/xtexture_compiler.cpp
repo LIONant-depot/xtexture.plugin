@@ -1555,6 +1555,7 @@ struct implementation final : xtexture_compiler::instance
         if (true)
         {
             xbmp::tools::mips::mips_filter_type FilterType;
+            bool                                bCubeMapBRDF = false;
 
             switch( m_Descriptor.m_MipmapFilter )
             {
@@ -1562,20 +1563,62 @@ struct implementation final : xtexture_compiler::instance
             case xtexture_rsc::mipmap_filter::TRIANGLE:     FilterType = xbmp::tools::mips::mips_filter_type::TRIANGLE; break;
             case xtexture_rsc::mipmap_filter::KAISER:       FilterType = xbmp::tools::mips::mips_filter_type::KAISER; break;
             case xtexture_rsc::mipmap_filter::LANCZOS:      FilterType = xbmp::tools::mips::mips_filter_type::LANCZOS; break;
+            case xtexture_rsc::mipmap_filter::CUBE_MAP_GGX_ROUGHNESS:
+                if (m_Bitmaps[0].isCubemap() == false)
+                {
+                    LogMessage(msg_type::WARNING, "You selected CUBE_MAP_BRDF but you do not have a cube map, I will change the filter to KAISER");
+                    FilterType = xbmp::tools::mips::mips_filter_type::KAISER;
+                }
+                else
+                {
+                    bCubeMapBRDF = true;
+                }
             }
 
             bool AlphaToCoverrage = false;
             if (m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC1_A1
              && m_Descriptor.m_UsageType == xtexture_rsc::usage_type::COLOR_AND_ALPHA) AlphaToCoverrage = true;
 
-            xbmp::tools::mips::GenerateMipMaps
-            ( m_Bitmaps[0]
-            , m_Descriptor.m_MipCustomMinSize
-            , m_Descriptor.m_UsageType == xtexture_rsc::usage_type::TANGENT_NORMAL
-            , FilterType
-            , AlphaToCoverrage
-            , m_Descriptor.m_AlphaThreshold/255.f
-            );
+            if (bCubeMapBRDF)
+            {
+                xbitmap Temp = std::move(m_Bitmaps[0]);
+
+                // First generate all the mipmaps as it is required for the Prefilter map
+                xbmp::tools::mips::GenerateMipMaps
+                ( Temp
+                , 1
+                , m_Descriptor.m_UsageType == xtexture_rsc::usage_type::TANGENT_NORMAL
+                , xbmp::tools::mips::mips_filter_type::KAISER
+                , AlphaToCoverrage
+                , m_Descriptor.m_AlphaThreshold/255.f
+                );
+
+                displayProgressBar( "CUBE_MAP_GGX_ROUGHNESS", 0);
+
+                // OK now we can compute the final prefilter
+                xbmp::tools::lighting::PrefilterCubemap
+                ( Temp
+                , m_Bitmaps[0]
+                , [&](float P)
+                {
+                    displayProgressBar("CUBE_MAP_GGX_ROUGHNESS", P);
+                }
+                , xbmp::tools::mips::ComputeMaxMips(m_Descriptor.m_MipCustomMinSize, Temp.getWidth(), Temp.getHeight() )
+                );
+
+                displayProgressBar("CUBE_MAP_GGX_ROUGHNESS", 1);
+            }
+            else
+            {
+                xbmp::tools::mips::GenerateMipMaps
+                ( m_Bitmaps[0]
+                , m_Descriptor.m_MipCustomMinSize
+                , m_Descriptor.m_UsageType == xtexture_rsc::usage_type::TANGENT_NORMAL
+                , FilterType
+                , AlphaToCoverrage
+                , m_Descriptor.m_AlphaThreshold/255.f
+                );
+            }
 
             int depth = m_Bitmaps[0].getFaceCount();
             int mip_levels = m_Bitmaps[0].getMipCount();

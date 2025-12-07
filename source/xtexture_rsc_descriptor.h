@@ -550,13 +550,15 @@ namespace xtexture_rsc
     , BOX
     , LANCZOS
     , TRIANGLE
+    , CUBE_MAP_GGX_ROUGHNESS
     };
-
+    
     static constexpr auto mipmap_filter_v = std::array
     { xproperty::settings::enum_item("KAISER",          mipmap_filter::KAISER)
     , xproperty::settings::enum_item("BOX",             mipmap_filter::BOX)
     , xproperty::settings::enum_item("LANCZOS",         mipmap_filter::LANCZOS)
     , xproperty::settings::enum_item("TRIANGLE",        mipmap_filter::TRIANGLE)
+    , xproperty::settings::enum_item("CUBE_MAP_GGX_ROUGHNESS",   mipmap_filter::CUBE_MAP_GGX_ROUGHNESS)
     };
 
     struct descriptor final : xresource_pipeline::descriptor::base
