@@ -1601,7 +1601,7 @@ struct implementation final : xtexture_compiler::instance
                 , m_Bitmaps[0]
                 , [&](float P)
                 {
-                    displayProgressBar("CUBE_MAP_GGX_ROUGHNESS", P);
+                    displayProgressBar("CUBE_MAP_GGX_ROUGHNESS", P*0.9f);
                 }
                 , xbmp::tools::mips::ComputeMaxMips(m_Descriptor.m_MipCustomMinSize, Temp.getWidth(), Temp.getHeight() )
                 );
