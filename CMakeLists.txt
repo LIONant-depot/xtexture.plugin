@@ -30,6 +30,12 @@ source_group("Texture_Compiler" FILES
 
 add_subdirectory("build/dependency" "${CMAKE_CURRENT_BINARY_DIR}/xtexture_compiler")
 
+# The shared xproperty dependency's my_property_ui_null.h isn't present at whatever commit is
+# currently fetched - xresource_pipeline.h only needs it when XRESOURCE_PIPELINE_NO_COMPILER is
+# undefined, so define it for this compiler-only (no ImGui) target, same fix xfont.plugin's own
+# build/dependency/CMakeLists.txt already applies for the identical reason.
+target_compile_definitions(${TARGET_PROJECT} PRIVATE XRESOURCE_PIPELINE_NO_COMPILER)
+
 # ADD SUPPORT FOR OPEN_MP
 find_package(OpenMP REQUIRED)
 target_link_libraries(${TARGET_PROJECT} PRIVATE OpenMP::OpenMP_CXX)

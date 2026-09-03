@@ -1460,6 +1460,7 @@ struct implementation final : xtexture_compiler::instance
             Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_SUPER_COMPRESS)]  = CMP_FORMAT::CMP_FORMAT_BASIS;
             Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_SUPER_COMPRESS)] = CMP_FORMAT::CMP_FORMAT_BASIS;
             Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_UNCOMPRESSED)]   = CMP_FORMAT::CMP_FORMAT_RGBA_8888;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::R_UNCOMPRESSED)]      = CMP_FORMAT::CMP_FORMAT_R_8;
 
             return Array;
         }();
@@ -1468,6 +1469,7 @@ struct implementation final : xtexture_compiler::instance
         {
             std::array< CMP_BYTE, static_cast<std::int32_t>(xtexture_rsc::compression_format::count_v) > Array = { 0 };
 
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::R_UNCOMPRESSED)]      = 1;
             Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_BC1)]             = 3;
             Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC1_A1)]         = 4;
             Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC3_A8)]         = 4;
@@ -1487,6 +1489,7 @@ struct implementation final : xtexture_compiler::instance
         {
             std::array< CMP_TextureDataType, static_cast<std::int32_t>(xtexture_rsc::compression_format::count_v) > Array = { CMP_TextureDataType::TDT_ARGB };
 
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::R_UNCOMPRESSED)]      = CMP_TextureDataType::TDT_XRGB;
             Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_BC1)]             = CMP_TextureDataType::TDT_XRGB;
             Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC1_A1)]         = CMP_TextureDataType::TDT_ARGB;
             Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC3_A8)]         = CMP_TextureDataType::TDT_ARGB;
@@ -1751,6 +1754,45 @@ struct implementation final : xtexture_compiler::instance
                 MipSetCompressed = MipSet;
                 memset(&MipSet, 0, sizeof(CMP_MipSet));
             }
+            else if (m_Descriptor.m_Compression == xtexture_rsc::compression_format::R_UNCOMPRESSED)
+            {
+                // R_UNCOMPRESSED bypasses CMP_ProcessTexture too, same reasoning as RGBA_UNCOMPRESSED
+                // just above - CMP_ProcessTexture is fundamentally a BLOCK-COMPRESSION entry point
+                // (confirmed empirically: targeting CMP_FORMAT_R_8 through it fails outright with
+                // "Unable to compress the texture", not a quality/quantization complaint - it simply
+                // doesn't accept plain uncompressed conversions). So the R-channel extraction from the
+                // source's 4-channel ARGB8888 data has to happen by hand here instead.
+                //
+                // By this point MipSet.pData/dwDataSize are ALREADY null/0 (zeroed a few dozen lines
+                // above, right after the mip-level table was built) - every mip/face's real pixel data
+                // lives in MipSet.m_pMipLevelTable[i]->m_pbData from here on, which is what
+                // downstream code (DDS export, the xbitmap conversion below) actually reads. A shallow
+                // `MipSetCompressed = MipSet` alone - which is all RGBA_UNCOMPRESSED needs, since
+                // source and destination are identical there - would leave every level's own m_pbData
+                // pointing at the stale 4-channel buffer under a claimed 1-channel format, so each
+                // level has to be rebuilt individually instead.
+                MipSetCompressed = MipSet;
+                MipSetCompressed.m_format        = CMP_FORMAT::CMP_FORMAT_R_8;
+                MipSetCompressed.m_nChannels     = 1;
+                MipSetCompressed.m_TextureDataType = CMP_TextureDataType::TDT_XRGB;
+                MipSetCompressed.m_compressed    = false;
+
+                const int Depth     = m_Bitmaps[0].isCubemap() ? 6 : 1;
+                const int LevelCount = MipSetCompressed.m_nMipLevels * Depth;
+                for (int i = 0; i < LevelCount; ++i)
+                {
+                    auto*        pLevel   = MipSetCompressed.m_pMipLevelTable[i];
+                    const auto*  pSrcRGBA = pLevel->m_pbData;
+                    const std::uint32_t PixelCount = static_cast<std::uint32_t>(pLevel->m_nWidth) * static_cast<std::uint32_t>(pLevel->m_nHeight);
+                    auto* pDstR = new CMP_BYTE[PixelCount];
+                    for (std::uint32_t p = 0; p < PixelCount; ++p) pDstR[p] = pSrcRGBA[p * 4]; // R is channel 0, see LoadImageByCompressonator's own DecompressTexture (always ARGB_8888)
+                    delete[] pLevel->m_pbData;
+                    pLevel->m_pbData      = pDstR;
+                    pLevel->m_dwLinearSize = PixelCount;
+                }
+
+                memset(&MipSet, 0, sizeof(CMP_MipSet)); // ownership of the (now R8) mip table moved to MipSetCompressed
+            }
             else
             {
                 static int   s_ActualProgress;
@@ -1872,6 +1914,7 @@ struct implementation final : xtexture_compiler::instance
             Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGB_SHDR_BC6)]        = xbitmap::format::BC6H_8RGB_SFLOAT;
             Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_BC7)]            = xbitmap::format::BC7_8RGBA;
             Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::RGBA_UNCOMPRESSED)]   = xbitmap::format::XCOLOR;
+            Array[static_cast<std::int32_t>(xtexture_rsc::compression_format::R_UNCOMPRESSED)]      = xbitmap::format::R8;
             return Array;
         }();
 

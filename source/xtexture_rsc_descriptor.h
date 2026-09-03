@@ -10,6 +10,7 @@ namespace xtexture_rsc
 
     enum class compression_format : std::uint8_t
     { RGBA_UNCOMPRESSED     // 32bpp
+    , R_UNCOMPRESSED        //  8bpp, single channel, no block compression - e.g. a raw SDF font atlas
     , RGB_BC1               //  4bpp
     , RGBA_BC1_A1           //  4bpp
     , RGBA_BC3_A8           //  8bpp
@@ -29,6 +30,12 @@ namespace xtexture_rsc
     "32bits per-pixel, (8 bit per-element). Standard format with alpha support\n\n"
     "This format retains all the original data from a standard image and is used "
     "when no lost of information is required. Such is the case for debugging or for detailed gradiant";
+
+    static constexpr auto compression_format_r_uncompressed_help_v =
+    "8bits per-pixel, single channel, no block compression at all.\n\n"
+    "Use this for data that must stay exact - e.g. an SDF/distance-field font atlas, where even BC4's "
+    "8:1 block compression visibly degrades the distance values. Costs 4x the memory of R_BC4 for the "
+    "same texture, but that's usually small in absolute terms for a single-channel atlas.";
 
     static constexpr auto compression_format_bc1_help_v =
     "4bits per-pixel, block compression format also known as DXT1. It has no alpha. \n\n"
@@ -54,6 +61,7 @@ namespace xtexture_rsc
 
     static constexpr auto compression_format_v = std::array
     { xproperty::settings::enum_item("RGBA_UNCOMPRESSED",   compression_format::RGBA_UNCOMPRESSED, compression_format_uncompressed_help_v)
+    , xproperty::settings::enum_item("R_UNCOMPRESSED",      compression_format::R_UNCOMPRESSED, compression_format_r_uncompressed_help_v)
     , xproperty::settings::enum_item("RGB_BC1",             compression_format::RGB_BC1, compression_format_bc1_help_v)
     , xproperty::settings::enum_item("RGBA_BC1_A1",         compression_format::RGBA_BC1_A1, compression_format_bc1_a_help_v)
     , xproperty::settings::enum_item("RGBA_BC3_A8",         compression_format::RGBA_BC3_A8, compression_format_bc3_help_v)
