@@ -8,7 +8,7 @@
   "PipelinePlugin/TypeName"                  ;string "Texture"    
   "PipelinePlugin/FileExtension"             ;wstring "xbmp"               
   "PipelinePlugin/TypeGUID/Value"            ;u64    #6701D481518BD833
-  "PipelinePlugin/Icon"                      ;string "\xEE\xAE\x9F"        
+  "PipelinePlugin/IconPath"                      ;wstring "icon.png"
   "PipelinePlugin/Details/RunAfter[]"        ;s64    0                
   "PipelinePlugin/Details/CompilationScript" ;wstring "Cache\\Plugins\\xtexture.plugin\\Build\\CreateAndBuildProject.bat"
   "PipelinePlugin/Details/DebugCompiler"     ;wstring "Cache\\Plugins\\xtexture.plugin\\Build\\xtexture_compiler.vs2022\\Debug\\xtexture_compiler.exe"               
