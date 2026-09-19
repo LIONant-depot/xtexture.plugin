@@ -381,6 +381,7 @@ namespace xtexture_editor
             // Unclassed peer of Level Editor (see prior docking notes). Always-tab-bar helps
             // tab-switching when several top-level editors share a dock node.
             ImGuiWindowFlags Flags = ImGuiWindowFlags_None;
+            Flags |= ImGuiWindowFlags_MenuBar;
 #ifdef ImGuiWindowFlags_DockingAlwaysTabBar
             Flags |= ImGuiWindowFlags_DockingAlwaysTabBar;
 #endif
