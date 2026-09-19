@@ -421,10 +421,9 @@ namespace xtexture_editor
                 m_bRequestFocus = false;
             }
 
-            // Title is "Name###guid". Tall style around Begin so MenuBar clears tall tabs.
-            xeditor::PushMainDockTabStyle();
+            // Title is "Name###guid". Normal Begin (compact toolbar), then title-bar offset.
             const bool bVisible = ImGui::Begin(Title, &m_bOpen, Flags);
-            xeditor::PopMainDockTabStyle();
+            xeditor::ApplyMainDockTabTitleBarOffset();
             xeditor::DrawEditorRootTabIcon(m_Preview.m_pDevice, m_Document.m_Guid.m_Type); // every frame
             if (bVisible)
             {
