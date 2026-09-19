@@ -2,33 +2,27 @@
 #define XTEXTURE_EDITOR_H
 #pragma once
 
-// The Texture editor - owned by the plugin that defines the resource type it edits, per direct
-// user instruction: "we do not want to change E10 a lot... what we want to do is [turn the
-// texture-editing UI into] a standalone texture editor where the source will be in the texture
-// plugin but it can be opened from within E29." E10 itself is untouched by this file - it keeps
-// its own existing, independent editing UI exactly as it was. This is a second, separate
-// implementation of "edit a Texture resource," built on the shared editor framework
-// (source/Tools/Editor/) so any host (E29 today, others later) can open it, in its own
-// dock-isolated window, headlessly, or (once presentation is added) as an embedded preview -
-// without depending on E10 at all.
-//
-// Deliberately scoped to descriptor mutation + save for this first pass - no live bitmap/3D
-// preview yet (that's real, separate work E10's own file already does its own way; this document
-// has zero IUI requirement to be useful, matching the framework's "presentation is optional"
-// principle).
+// Standalone Texture editor - owned by the texture plugin, opened by hosts (E29 today) through
+// the shared editor framework (source/Tools/Editor/). E10 is untouched; this editor reuses the
+// preview mechanics E10 teaches (path rewrite, bitmap_inspector Load, material_mgr bitmap upload,
+// 2D shaders/mesh/push-constants, draw_options) inside the NEW session/document/commands shape.
 #include "source/Tools/Editor/xeditor_types.h"
 #include "source/Tools/Editor/xeditor_registry.h"
 #include "source/Tools/Editor/xeditor_dock_isolation.h"
+#include "source/Tools/Editor/xeditor_inspector.h"
+#include "Plugins/xtexture.plugin/source/Editor/xtexture_editor_preview.h"
 #include "Plugins/xtexture.plugin/source/xtexture_xgpu_rsc_loader.h"
 #include "Plugins/xtexture.plugin/source/xtexture_rsc_descriptor.h"
 #include "source/Examples/E10_TextureResourcePipeline/E10_AssetMgr.h"
 #include "imgui.h"
+#include <cstring>
+#include <array>
+#include <string>
 
 namespace xtexture_editor
 {
     //--------------------------------------------------------------------------------------------
-    // Document - identity, load/save, its own private undo scope. No window/ImGui/GPU dependency
-    // at all - a headless client can open, mutate, undo, save this with none of those.
+    // Document
     //--------------------------------------------------------------------------------------------
     struct document : xeditor::IDocument
     {
@@ -42,13 +36,18 @@ namespace xtexture_editor
 
         bool Load() noexcept override
         {
-            // NOT noexcept - getNodeInfo's own function_traits deduction doesn't handle a
-            // noexcept lambda's operator() type (xgpu_xcontainer_noexcept_lambda_trait_trap).
             e10::g_LibMgr.getNodeInfo(m_LibraryGuid, m_Guid, [&](e10::library_db::info_node& NodeInfo)
             {
                 m_DescriptorPath = NodeInfo.m_Path;
-                if (const auto Pos = m_DescriptorPath.find(L"info.txt"); Pos != std::wstring::npos)
-                    m_DescriptorPath.replace(Pos, std::wstring_view(L"info.txt").length(), L"Descriptor.txt");
+                // Case-insensitive Info.txt -> Descriptor.txt (Cache uses Info.txt).
+                for (size_t i = 0; i + 8 <= m_DescriptorPath.size(); ++i)
+                {
+                    auto Eq = true;
+                    const wchar_t* From = L"info.txt";
+                    for (size_t j = 0; j < 8; ++j)
+                        if (towlower(m_DescriptorPath[i + j]) != From[j]) { Eq = false; break; }
+                    if (Eq) { m_DescriptorPath.replace(i, 8, L"Descriptor.txt"); break; }
+                }
             });
             if (m_DescriptorPath.empty()) return false;
 
@@ -75,9 +74,7 @@ namespace xtexture_editor
     };
 
     //--------------------------------------------------------------------------------------------
-    // Commands - the ONLY way this document mutates, from any origin (UI, headless console, a
-    // test). Deliberately a small, bounded set for this first pass (sRGB, generate-mips) -
-    // matching the same two fields already proven end to end in this session's own testing.
+    // Commands
     //--------------------------------------------------------------------------------------------
     struct set_srgb_cmd : xundo::command_base
     {
@@ -163,9 +160,7 @@ namespace xtexture_editor
     };
 
     //--------------------------------------------------------------------------------------------
-    // Session - bundles a document with its own private xundo::system and the commands above.
-    // One per open texture editor instance/window. A host owns a list of these (zero, one, or
-    // many simultaneously) - never a single shared global slot, unlike E10's own model.
+    // Session
     //--------------------------------------------------------------------------------------------
     struct session
     {
@@ -177,8 +172,13 @@ namespace xtexture_editor
         undo_cmd                 m_UndoCmd;
         redo_cmd                 m_RedoCmd;
         bool                     m_bOpen = true;
+        bool                     m_bRequestFocus = false;
+        preview::runtime         m_Preview{};
+        xeditor::inspector_panel m_DescriptorInspector{"Texture Descriptor"};
+        xeditor::inspector_panel m_ViewerInspector{"Texture Viewer"};
+        bool                     m_bInspectorsBound = false;
 
-        session(xresource::full_guid Guid, e10::library::guid LibraryGuid) noexcept
+        session(xresource::full_guid Guid, e10::library::guid LibraryGuid, xgpu::device* pDevice = nullptr) noexcept
             : m_SetSRGB(m_Undo, m_Document), m_SetGenerateMips(m_Undo, m_Document)
             , m_Save(m_Undo, m_Document), m_UndoCmd(m_Undo), m_RedoCmd(m_Undo)
         {
@@ -186,52 +186,162 @@ namespace xtexture_editor
             m_Document.m_LibraryGuid = LibraryGuid;
             if (auto Err = m_Undo.Init({}, false); !Err.empty()) printf("Texture editor session Init: %s\n", Err.c_str());
             m_Document.Load();
+
+            if (pDevice)
+            {
+                m_Preview.Init(*pDevice);
+                if (!m_Document.m_DescriptorPath.empty())
+                    m_Preview.LoadFromDescriptorPath(m_Document.m_DescriptorPath);
+            }
+
+            BindInspectors();
         }
 
-        // Renders this session's inspector in its own dock-isolated top-level window. Call once
-        // per frame from whichever host owns this session's lifetime.
+        
+        void OnDescriptorChange(xproperty::inspector&, const xproperty::ui::undo::cmd& Cmd) noexcept
+        {
+            if (!m_Document.m_pDescriptor) return;
+            m_Document.m_bDirty = true;
+
+            const auto& Name = Cmd.m_Name;
+            const bool bSRGB = Name.find("sRGB") != std::string::npos || Name.find("SRGB") != std::string::npos;
+            const bool bMips = Name.find("GenerateMips") != std::string::npos;
+            if (!bSRGB && !bMips) return;
+
+            std::array<char, 256> NewBuf{};
+            if (Cmd.m_NewValue.m_pType)
+                xproperty::settings::AnyToString(NewBuf, Cmd.m_NewValue);
+            // Bool any usually stringifies as "true"/"false" or "1"/"0"
+            const bool bNew = (NewBuf[0] == '1' || NewBuf[0] == 't' || NewBuf[0] == 'T');
+
+            if (Cmd.m_Original.m_pType && Cmd.m_pClassObject && Cmd.m_pPropObject)
+            {
+                xproperty::sprop::container::prop Prop{ Cmd.m_Name, Cmd.m_Original };
+                std::string Error;
+                xproperty::sprop::setProperty(Error, Cmd.m_pClassObject, *Cmd.m_pPropObject, Prop, m_DescriptorInspector.m_Context);
+            }
+
+            char Buf[64];
+            if (bSRGB)
+            {
+                snprintf(Buf, sizeof(Buf), "SetSRGB -Value %d", bNew ? 1 : 0);
+                auto _r = m_Undo.Execute(Buf); (void)_r;
+            }
+            else
+            {
+                snprintf(Buf, sizeof(Buf), "SetGenerateMips -Value %d", bNew ? 1 : 0);
+                auto _r = m_Undo.Execute(Buf); (void)_r;
+            }
+        }
+
+        void BindInspectors() noexcept
+        {
+            m_bInspectorsBound = false;
+            if (!m_Document.m_pDescriptor) return;
+
+            m_DescriptorInspector.Clear();
+            m_DescriptorInspector.m_Inspector.AppendEntity();
+            m_DescriptorInspector.AppendComponent(*m_Document.m_pDescriptor->getProperties(), m_Document.m_pDescriptor.get());
+
+            m_DescriptorInspector.m_Inspector.m_OnChangeEvent.m_Delegates.clear();
+            m_DescriptorInspector.m_Inspector.m_OnChangeEvent.Register<&session::OnDescriptorChange>(*this);
+
+            m_ViewerInspector.Clear();
+            m_ViewerInspector.m_Inspector.AppendEntity();
+            m_ViewerInspector.AppendComponent(*xproperty::getObject(m_Preview.m_DrawControls), &m_Preview.m_DrawControls);
+            m_ViewerInspector.AppendComponent(*xproperty::getObject(m_Preview.m_DrawOptions), &m_Preview.m_DrawOptions);
+            m_ViewerInspector.AppendComponent(*xproperty::getObject(m_Preview.m_BitmapInspector), &m_Preview.m_BitmapInspector);
+
+            m_bInspectorsBound = true;
+        }
+
+
+        void EnsureDevice(xgpu::device* pDevice) noexcept
+        {
+            if (!pDevice) return;
+            if (!m_Preview.m_bGpuReady)
+            {
+                m_Preview.Init(*pDevice);
+                if (!m_Document.m_DescriptorPath.empty())
+                    m_Preview.LoadFromDescriptorPath(m_Document.m_DescriptorPath);
+            }
+        }
+
+        void Focus() noexcept
+        {
+            m_bOpen = true;
+            m_bRequestFocus = true;
+        }
+
         void Render() noexcept
         {
             char Title[128];
-            snprintf(Title, sizeof(Title), "Texture Editor##%016llX%016llX", (unsigned long long)m_Document.m_Guid.m_Instance.m_Value, (unsigned long long)m_Document.m_Guid.m_Type.m_Value);
-            ImGui::SetNextWindowSize(ImVec2(420, 360), ImGuiCond_FirstUseEver);
-            // No ImGuiWindowClass restriction here, and deliberately no nested ImGui::DockSpace()
-            // (that pattern is for a window that hosts several dockable child panels of its own,
-            // e.g. E29's root window - this editor has none yet). This window must coexist as a
-            // NORMAL, unclassed peer of E29's own top-level "Level Editor" window (which is
-            // itself unclassed at this outer level - see RenderParentEditorDockspace) so ordinary
-            // tab-switching and drag-to-undock keep working. E29's OWN sub-panels (Level Tree,
-            // Inspector, etc.) already isolate themselves from windows at THIS level via their
-            // own ParentEditorDockClass (DockingAllowUnclassed=false, E29_EditorTabs.h) - applying
-            // a second, conflicting class restriction here, at the wrong level of the hierarchy,
-            // is what broke tab-switching and undocking in live testing. If/when this editor
-            // grows its own sub-panels, per-instance isolation belongs on THOSE sub-panels
-            // (mirroring E29's own pattern one level down), not on this top-level window itself.
-            if (ImGui::Begin(Title, &m_bOpen))
+            snprintf(Title, sizeof(Title), "Texture Editor##%016llX%016llX"
+                , (unsigned long long)m_Document.m_Guid.m_Instance.m_Value
+                , (unsigned long long)m_Document.m_Guid.m_Type.m_Value);
+
+            ImGui::SetNextWindowSize(ImVec2(520, 640), ImGuiCond_FirstUseEver);
+            // Unclassed peer of Level Editor (see prior docking notes). Always-tab-bar helps
+            // tab-switching when several top-level editors share a dock node.
+            ImGuiWindowFlags Flags = ImGuiWindowFlags_None;
+#ifdef ImGuiWindowFlags_DockingAlwaysTabBar
+            Flags |= ImGuiWindowFlags_DockingAlwaysTabBar;
+#endif
+            if (m_bRequestFocus)
+            {
+                ImGui::SetNextWindowFocus();
+                m_bRequestFocus = false;
+            }
+
+            if (ImGui::Begin(Title, &m_bOpen, Flags))
             {
                 if (m_Document.m_pDescriptor)
                 {
-                    // NOTE: a compiled-result preview (xresource::g_Mgr.getResource + ImGui::Image,
-                    // the same minimal pattern E19's own resource-ref thumbnail uses) was tried here
-                    // and reverted - the plugin's OWN resource loader (xtexture_xgpu_rsc_loader.cpp)
-                    // hard `assert(false)`s on ANY load failure (e.g. the compiled resource being
-                    // stale/not yet compiled for this context), which is not safe to call into
-                    // blindly. Making that robust (checking compile status first, or a try/catch
-                    // around the loader) is real, separate follow-up work - left out for now to keep
-                    // this editor in its verified-stable state (properties + undo/redo + save all
-                    // confirmed working) rather than risk an unpredictable crash.
-                    auto* pTex = static_cast<xtexture_rsc::descriptor*>(m_Document.m_pDescriptor.get());
-                    bool bSRGB = pTex->m_bSRGB;
-                    if (ImGui::Checkbox("sRGB", &bSRGB)) { char Buf[32]; snprintf(Buf, sizeof(Buf), "SetSRGB -Value %d", bSRGB ? 1 : 0); auto _r = m_Undo.Execute(Buf); (void)_r; }
-                    bool bMips = pTex->m_bGenerateMips;
-                    if (ImGui::Checkbox("Generate Mips", &bMips)) { char Buf[32]; snprintf(Buf, sizeof(Buf), "SetGenerateMips -Value %d", bMips ? 1 : 0); auto _r = m_Undo.Execute(Buf); (void)_r; }
+                    // ---- Preview (E10-taught 2D draw, hosted in this editor window) ----
+                    const float PreviewH = ImGui::GetContentRegionAvail().y * 0.45f;
+                    ImGui::BeginChild("##TexturePreview", ImVec2(0, PreviewH), true);
+                    {
+                        const ImVec2 Avail = ImGui::GetContentRegionAvail();
+                        m_Preview.Handle2DInput(Avail.x, Avail.y);
+
+                        if (m_Preview.m_bGpuReady)
+                        {
+                            xgpu::tools::imgui::AddCustomRenderCallback([this](xgpu::cmd_buffer& CmdBuffer, const ImVec2&, const ImVec2& Size)
+                            {
+                                m_Preview.Draw2D(CmdBuffer, Size.x, Size.y);
+                            });
+                        }
+                        else
+                        {
+                            ImGui::TextDisabled("Preview needs a GPU device (open from E29).");
+                        }
+
+                        if (!m_Preview.m_bHasTexture)
+                            ImGui::TextUnformatted("No compiled resource yet (compile the texture, then reopen).");
+
+                        ImGui::Dummy(ImVec2(Avail.x, Avail.y));
+                    }
+                    ImGui::EndChild();
+
                     ImGui::Separator();
                     if (ImGui::Button("Undo")) { auto& _r = m_Undo.Undo(); (void)_r; }
                     ImGui::SameLine();
                     if (ImGui::Button("Redo")) { auto& _r = m_Undo.Redo(); (void)_r; }
                     ImGui::SameLine();
                     if (ImGui::Button("Save")) m_Document.Save();
+                    ImGui::SameLine();
+                    if (ImGui::Button("Reload Preview") && m_Preview.m_pDevice)
+                        m_Preview.LoadFromDescriptorPath(m_Document.m_DescriptorPath);
                     ImGui::Text("Dirty: %s", m_Document.isDirty() ? "yes" : "no");
+
+                    ImGui::Separator();
+                    if (m_bInspectorsBound)
+                    {
+                        if (ImGui::CollapsingHeader("Descriptor", ImGuiTreeNodeFlags_DefaultOpen))
+                            m_DescriptorInspector.Show();
+                        if (ImGui::CollapsingHeader("Viewer", ImGuiTreeNodeFlags_DefaultOpen))
+                            m_ViewerInspector.Show();
+                    }
                 }
                 else
                 {
@@ -242,16 +352,10 @@ namespace xtexture_editor
         }
     };
 
-    //--------------------------------------------------------------------------------------------
-    // Registration - lives with the plugin, per direct user instruction (mirrors how the
-    // compiler paths/icon already belong to this same plugin's own config). Purely code-based for
-    // this first pass (a declarative "HasEditor" flag in resource_pipeline.config.txt is real
-    // follow-up work, not done yet - see the framework problem statement's own §6.2/§8.3).
-    //--------------------------------------------------------------------------------------------
     inline xeditor::editor_descriptor MakeEditorDescriptor() noexcept
     {
         xeditor::editor_descriptor Descriptor;
-        Descriptor.m_TypeGuid         = xrsc::texture_type_guid_v;
+        Descriptor.m_TypeGuid          = xrsc::texture_type_guid_v;
         Descriptor.m_bSupportsHeadless = true;
         return Descriptor;
     }
