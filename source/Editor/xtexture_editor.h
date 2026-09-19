@@ -179,6 +179,7 @@ namespace xtexture_editor
         bool                     m_bInspectorsBound = false;
         std::string              m_ViewerWindowTitle;
         std::string              m_DescriptorWindowTitle;
+        std::string              m_PreviewWindowTitle;
 
         session(xresource::full_guid Guid, e10::library::guid LibraryGuid, xgpu::device* pDevice = nullptr) noexcept
             : m_SetSRGB(m_Undo, m_Document), m_SetGenerateMips(m_Undo, m_Document)
@@ -193,6 +194,7 @@ namespace xtexture_editor
             snprintf(IdSuffix, sizeof(IdSuffix), "##%016llX%016llX", (unsigned long long)Guid.m_Instance.m_Value, (unsigned long long)Guid.m_Type.m_Value);
             m_ViewerWindowTitle     = std::string("Rendering Options") + IdSuffix;
             m_DescriptorWindowTitle = std::string("Description") + IdSuffix;
+            m_PreviewWindowTitle    = std::string("Preview") + IdSuffix;
 
             if (pDevice)
             {
@@ -302,11 +304,41 @@ namespace xtexture_editor
 
             if (ImGui::Begin(Title, &m_bOpen, Flags))
             {
-                if (m_Document.m_pDescriptor)
+                if (m_Document.m_pDescriptor && m_bInspectorsBound)
                 {
-                    // ---- Preview (E10-taught 2D draw, hosted in this editor window) ----
-                    const float PreviewH = ImGui::GetContentRegionAvail().y * 0.45f;
-                    ImGui::BeginChild("##TexturePreview", ImVec2(0, PreviewH), true);
+                    // The top-level window is now a thin shell holding ONLY a dockspace - no
+                    // inline content of its own - exactly mirroring how E29's OWN "Level Editor"
+                    // root window works (its real content is entirely sub-panels; the root just
+                    // hosts the dockspace). Mixing "some inline content" with "a nested dockspace
+                    // for only some of the panels" (an earlier version of this function) produced
+                    // a visibly broken layout (panels squeezed into a tiny leftover corner) - one
+                    // dockspace spanning the FULL window, with Preview/Rendering
+                    // Options/Description as three equal, real dockable panels, is the fix.
+                    //
+                    // Per-instance ImGuiWindowClass, keyed by this resource's own guid
+                    // (xeditor::DockClassForResource) - isolation belongs here, one level down
+                    // from the top-level window (which stays unclassed so it can coexist with
+                    // "Level Editor" as a normal peer) - direct user correction: "these
+                    // inspectors belong only to the texture editor."
+                    const auto WindowClass = xeditor::DockClassForResource(m_Document.m_Guid);
+                    const ImGuiID DockId = ImGui::GetID("TextureEditorDock");
+                    if (ImGui::DockBuilderGetNode(DockId) == nullptr)
+                    {
+                        ImGui::DockBuilderAddNode(DockId, ImGuiDockNodeFlags_DockSpace);
+                        ImGui::DockBuilderSetNodeSize(DockId, ImGui::GetContentRegionAvail());
+                        ImGuiID LeftId = 0, RightId = 0, CenterId = 0;
+                        ImGui::DockBuilderSplitNode(DockId, ImGuiDir_Left, 0.25f, &LeftId, &CenterId);
+                        ImGui::DockBuilderSplitNode(CenterId, ImGuiDir_Right, 0.35f, &RightId, &CenterId);
+                        ImGui::DockBuilderDockWindow(m_ViewerWindowTitle.c_str(), LeftId);
+                        ImGui::DockBuilderDockWindow(m_PreviewWindowTitle.c_str(), CenterId);
+                        ImGui::DockBuilderDockWindow(m_DescriptorWindowTitle.c_str(), RightId);
+                        ImGui::DockBuilderFinish(DockId);
+                    }
+                    ImGui::DockSpace(DockId, ImGui::GetContentRegionAvail(), ImGuiDockNodeFlags_None, &WindowClass);
+                    xeditor::ApplyDockClassToTree(ImGui::DockBuilderGetNode(DockId), WindowClass);
+
+                    ImGui::SetNextWindowClass(&WindowClass);
+                    if (ImGui::Begin(m_PreviewWindowTitle.c_str()))
                     {
                         const ImVec2 Avail = ImGui::GetContentRegionAvail();
                         m_Preview.Handle2DInput(Avail.x, Avail.y);
@@ -322,59 +354,34 @@ namespace xtexture_editor
                         {
                             ImGui::TextDisabled("Preview needs a GPU device (open from E29).");
                         }
-
                         if (!m_Preview.m_bHasTexture)
                             ImGui::TextUnformatted("No compiled resource yet (compile the texture, then reopen).");
+                        ImGui::Dummy(Avail);
 
-                        ImGui::Dummy(ImVec2(Avail.x, Avail.y));
+                        ImGui::Separator();
+                        if (ImGui::Button("Undo")) { auto& _r = m_Undo.Undo(); (void)_r; }
+                        ImGui::SameLine();
+                        if (ImGui::Button("Redo")) { auto& _r = m_Undo.Redo(); (void)_r; }
+                        ImGui::SameLine();
+                        if (ImGui::Button("Save")) m_Document.Save();
+                        ImGui::SameLine();
+                        if (ImGui::Button("Reload Preview") && m_Preview.m_pDevice)
+                            m_Preview.LoadFromDescriptorPath(m_Document.m_DescriptorPath);
+                        ImGui::Text("Dirty: %s", m_Document.isDirty() ? "yes" : "no");
                     }
-                    ImGui::EndChild();
+                    ImGui::End();
 
-                    ImGui::Separator();
-                    if (ImGui::Button("Undo")) { auto& _r = m_Undo.Undo(); (void)_r; }
-                    ImGui::SameLine();
-                    if (ImGui::Button("Redo")) { auto& _r = m_Undo.Redo(); (void)_r; }
-                    ImGui::SameLine();
-                    if (ImGui::Button("Save")) m_Document.Save();
-                    ImGui::SameLine();
-                    if (ImGui::Button("Reload Preview") && m_Preview.m_pDevice)
-                        m_Preview.LoadFromDescriptorPath(m_Document.m_DescriptorPath);
-                    ImGui::Text("Dirty: %s", m_Document.isDirty() ? "yes" : "no");
+                    ImGui::SetNextWindowClass(&WindowClass);
+                    if (ImGui::Begin(m_ViewerWindowTitle.c_str()))
+                        m_ViewerInspector.Show();
+                    ImGui::End();
 
-                    ImGui::Separator();
-                    if (m_bInspectorsBound)
-                    {
-                        // Two real, separately dockable panels rather than CollapsingHeader
-                        // sections - direct user request. Nested dockspace ID is computed via
-                        // ImGui::GetID inside this window's own ID scope, so it's naturally
-                        // unique per open session without hand-baking the guid into a string.
-                        // Default layout (built once - DockBuilderGetNode's own null-check is
-                        // the guard, same pattern E29's own BuildParentEditorDefaultLayout
-                        // uses): rendering options (Viewer) on the LEFT, description
-                        // (Descriptor) on the RIGHT.
-                        const ImGuiID InspectorDockId = ImGui::GetID("TextureEditorInspectorDock");
-                        if (ImGui::DockBuilderGetNode(InspectorDockId) == nullptr)
-                        {
-                            ImGui::DockBuilderAddNode(InspectorDockId, ImGuiDockNodeFlags_DockSpace);
-                            ImGui::DockBuilderSetNodeSize(InspectorDockId, ImGui::GetContentRegionAvail());
-                            ImGuiID LeftId = 0, RightId = 0;
-                            ImGui::DockBuilderSplitNode(InspectorDockId, ImGuiDir_Left, 0.5f, &LeftId, &RightId);
-                            ImGui::DockBuilderDockWindow(m_ViewerWindowTitle.c_str(), LeftId);
-                            ImGui::DockBuilderDockWindow(m_DescriptorWindowTitle.c_str(), RightId);
-                            ImGui::DockBuilderFinish(InspectorDockId);
-                        }
-                        ImGui::DockSpace(InspectorDockId, ImGui::GetContentRegionAvail());
-
-                        if (ImGui::Begin(m_ViewerWindowTitle.c_str()))
-                            m_ViewerInspector.Show();
-                        ImGui::End();
-
-                        if (ImGui::Begin(m_DescriptorWindowTitle.c_str()))
-                            m_DescriptorInspector.Show();
-                        ImGui::End();
-                    }
+                    ImGui::SetNextWindowClass(&WindowClass);
+                    if (ImGui::Begin(m_DescriptorWindowTitle.c_str()))
+                        m_DescriptorInspector.Show();
+                    ImGui::End();
                 }
-                else
+                else if (!m_Document.m_pDescriptor)
                 {
                     ImGui::TextUnformatted("Failed to load texture descriptor.");
                 }
