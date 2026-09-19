@@ -211,6 +211,15 @@ namespace xtexture_editor
             {
                 if (m_Document.m_pDescriptor)
                 {
+                    // NOTE: a compiled-result preview (xresource::g_Mgr.getResource + ImGui::Image,
+                    // the same minimal pattern E19's own resource-ref thumbnail uses) was tried here
+                    // and reverted - the plugin's OWN resource loader (xtexture_xgpu_rsc_loader.cpp)
+                    // hard `assert(false)`s on ANY load failure (e.g. the compiled resource being
+                    // stale/not yet compiled for this context), which is not safe to call into
+                    // blindly. Making that robust (checking compile status first, or a try/catch
+                    // around the loader) is real, separate follow-up work - left out for now to keep
+                    // this editor in its verified-stable state (properties + undo/redo + save all
+                    // confirmed working) rather than risk an unpredictable crash.
                     auto* pTex = static_cast<xtexture_rsc::descriptor*>(m_Document.m_pDescriptor.get());
                     bool bSRGB = pTex->m_bSRGB;
                     if (ImGui::Checkbox("sRGB", &bSRGB)) { char Buf[32]; snprintf(Buf, sizeof(Buf), "SetSRGB -Value %d", bSRGB ? 1 : 0); auto _r = m_Undo.Execute(Buf); (void)_r; }
