@@ -1030,7 +1030,9 @@ struct mesh_mgr
             m_bHasTexture = m_UserMaterial.m_TextureRef.isValid();
         }
 
-        // E10 2D input, verbatim math (MainWindow size -> ViewW/H; xgpu mouse -> ImGui on the preview canvas item).
+        // 2D preview input: RMB pan, wheel zoom (multiplicative — even steps at any scale).
+        // Left-drag zoom removed (was E10's LMB). Wheel no longer uses E10's additive Wheel^3,
+        // which made zoom-out steps explode as scale got small.
         void Handle2DInput(float ViewW, float ViewH) noexcept
         {
             if (ViewW <= 1.f || ViewH <= 1.f) return;
@@ -1040,34 +1042,33 @@ struct mesh_mgr
             const float OldScale = m_DrawControls.m_2DMouseScale;
             auto& io = ImGui::GetIO();
 
-            if (ImGui::IsMouseDown(ImGuiMouseButton_Left) || ImGui::IsMouseDown(ImGuiMouseButton_Right))
+            // Right mouse: pan only
+            if (ImGui::IsMouseDown(ImGuiMouseButton_Right))
             {
-                const float MouseDeltaX = io.MouseDelta.x;
-                const float MouseDeltaY = io.MouseDelta.y;
-
-                if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
-                {
-                    m_DrawControls.m_2DMouseScale -= 8000.0f * io.DeltaTime * (MouseDeltaY * (2.0f / ViewH));
-                }
-                else
-                {
-                    m_DrawControls.m_2DMouseTranslate.m_X += MouseDeltaX * (2.0f / ViewW);
-                    m_DrawControls.m_2DMouseTranslate.m_Y += MouseDeltaY * (2.0f / ViewH);
-                }
+                m_DrawControls.m_2DMouseTranslate.m_X += io.MouseDelta.x * (2.0f / ViewW);
+                m_DrawControls.m_2DMouseTranslate.m_Y += io.MouseDelta.y * (2.0f / ViewH);
             }
 
-            // Wheel scale (E10: Mouse.getValue(WHEEL_REL)[0])
-            const double Wheel = io.MouseWheel;
-            m_DrawControls.m_2DMouseScale += static_cast<float>(2000.9f * io.DeltaTime * (Wheel * Wheel * Wheel));
-            m_DrawControls.m_2DMouseScale = std::max(m_DrawControls.m_2DMouseScale, 0.1f);
+            // Wheel: scale by a constant fraction per notch (same idea as E10's 3D distance wheel).
+            // Positive wheel zooms in. ~20% per notch feels even zooming in or out.
+            const float Wheel = io.MouseWheel;
+            if (Wheel != 0.0f)
+            {
+                constexpr float kWheelZoom = 0.2f;
+                m_DrawControls.m_2DMouseScale += m_DrawControls.m_2DMouseScale * kWheelZoom * Wheel;
+                m_DrawControls.m_2DMouseScale = std::max(m_DrawControls.m_2DMouseScale, 0.1f);
+            }
 
-            // Always zoom from the perspective of the mouse (E10: POS_ABS / MainWindow size)
+            // Zoom toward mouse (same as E10)
             const ImVec2 Origin = ImGui::GetItemRectMin();
             const ImVec2 Mouse  = ImGui::GetMousePos();
             const float mx = (((Mouse.x - Origin.x) / ViewW) - 0.5f) * 2.0f;
             const float my = (((Mouse.y - Origin.y) / ViewH) - 0.5f) * 2.0f;
-            m_DrawControls.m_2DMouseTranslate.m_X += (m_DrawControls.m_2DMouseTranslate.m_X - mx) * (m_DrawControls.m_2DMouseScale - OldScale) / OldScale;
-            m_DrawControls.m_2DMouseTranslate.m_Y += (m_DrawControls.m_2DMouseTranslate.m_Y - my) * (m_DrawControls.m_2DMouseScale - OldScale) / OldScale;
+            if (OldScale > 0.0001f)
+            {
+                m_DrawControls.m_2DMouseTranslate.m_X += (m_DrawControls.m_2DMouseTranslate.m_X - mx) * (m_DrawControls.m_2DMouseScale - OldScale) / OldScale;
+                m_DrawControls.m_2DMouseTranslate.m_Y += (m_DrawControls.m_2DMouseTranslate.m_Y - my) * (m_DrawControls.m_2DMouseScale - OldScale) / OldScale;
+            }
         }
 
         void Draw2D(xgpu::cmd_buffer& CmdBuffer, float ViewW, float ViewH) noexcept
