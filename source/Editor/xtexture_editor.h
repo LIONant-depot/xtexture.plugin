@@ -421,11 +421,8 @@ namespace xtexture_editor
                 m_bRequestFocus = false;
             }
 
-            // Title is "Name###guid". Tall style for TitleBarHeight, then normal MenuBar.
-            xeditor::PushMainDockTabStyle();
+            // Title is "Name###guid" — stable id; normal theme tab/menu sizes.
             const bool bVisible = ImGui::Begin(Title, &m_bOpen, Flags);
-            xeditor::PopMainDockTabStyle();
-            xeditor::NormalizeMenuBarAfterTallBegin();
             xeditor::DrawEditorRootTabIcon(m_Preview.m_pDevice, m_Document.m_Guid.m_Type); // every frame
             if (bVisible)
             {
