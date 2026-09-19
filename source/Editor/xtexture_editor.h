@@ -11,6 +11,7 @@
 #include "source/Tools/Editor/xeditor_dock_isolation.h"
 #include "source/Tools/Editor/xeditor_inspector.h"
 #include "source/Tools/Editor/xeditor_toolbar.h"
+#include "source/Tools/Editor/xeditor_resource_tab.h"
 #include "Plugins/xtexture.plugin/source/Editor/xtexture_editor_preview.h"
 #include "Plugins/xtexture.plugin/source/xtexture_xgpu_rsc_loader.h"
 #include "Plugins/xtexture.plugin/source/xtexture_rsc_descriptor.h"
@@ -393,15 +394,21 @@ namespace xtexture_editor
 
         void Render() noexcept
         {
-            char Title[128];
-            snprintf(Title, sizeof(Title), "Texture Editor##%016llX%016llX"
+            // Root tab: type icon + asset name (not "Texture Editor"); taller than default tabs.
+            const std::string DisplayName = xeditor::ResolveResourceDisplayName(
+                m_Document.m_LibraryGuid, m_Document.m_Guid, "Texture");
+            char StableId[40];
+            std::snprintf(StableId, sizeof(StableId), "%016llX%016llX"
                 , (unsigned long long)m_Document.m_Guid.m_Instance.m_Value
                 , (unsigned long long)m_Document.m_Guid.m_Type.m_Value);
+            char Title[256];
+            xeditor::FormatEditorRootTabTitle(Title, sizeof(Title), DisplayName.c_str(), StableId);
 
             ImGui::SetNextWindowSize(ImVec2(520, 640), ImGuiCond_FirstUseEver);
             // Same as Level Editor (E29_EditorTabs.h RenderParentEditorDockspace): zero window
             // padding so the MenuBar strip sits flush on the dockspace with no hairline gap.
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+            xeditor::PushEditorRootTabStyle();
             // Unclassed peer of Level Editor (see prior docking notes). Always-tab-bar helps
             // tab-switching when several top-level editors share a dock node.
             ImGuiWindowFlags Flags = ImGuiWindowFlags_None;
@@ -417,6 +424,7 @@ namespace xtexture_editor
 
             if (ImGui::Begin(Title, &m_bOpen, Flags))
             {
+                xeditor::DrawEditorRootTabIcon(m_Preview.m_pDevice, m_Document.m_Guid.m_Type);
                 TickCompilationFeedback();
                 RenderToolbar();
 
@@ -496,6 +504,7 @@ namespace xtexture_editor
                 }
             }
             ImGui::End();
+            xeditor::PopEditorRootTabStyle();
             ImGui::PopStyleVar();
         }
 
