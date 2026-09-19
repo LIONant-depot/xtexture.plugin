@@ -457,13 +457,13 @@ namespace xtexture_editor
                     if (ImGui::Begin(m_PreviewWindowTitle.c_str()))
                     {
                         const ImVec2 Avail = ImGui::GetContentRegionAvail();
-                        m_Preview.Handle2DInput(Avail.x, Avail.y);
+                        m_Preview.HandleInput(Avail.x, Avail.y);
 
                         if (m_Preview.m_bGpuReady)
                         {
                             xgpu::tools::imgui::AddCustomRenderCallback([this](xgpu::cmd_buffer& CmdBuffer, const ImVec2&, const ImVec2& Size)
                             {
-                                m_Preview.Draw2D(CmdBuffer, Size.x, Size.y);
+                                m_Preview.Draw(CmdBuffer, Size.x, Size.y);
                             });
                         }
                         else

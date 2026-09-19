@@ -8,6 +8,7 @@
 #include "source/Examples/E05_Textures/E05_BitmapInspector.h"
 #include "source/tools/xgpu_imgui_breach.h"
 #include "source/tools/xgpu_view.h"
+#include "dependencies/xprim_geom/source/xprim_geom.h"
 #include "source/tools/xgpu_xcore_bitmap_helpers.h"
 #include "dependencies/xproperty/source/xcore/my_properties.h"
 #include "dependencies/xproperty/source/examples/imgui/xPropertyImGuiInspector.h"
@@ -71,6 +72,12 @@ namespace e10
 
 namespace xtexture_editor::preview
 {
+    inline xgpu::pipeline& PreviewEmptyPipeline() noexcept
+    {
+        static xgpu::pipeline s_Empty{};
+        return s_Empty;
+    }
+
     constexpr auto g_VertShader2DSPV = std::array
     {
         #include "e10_2d_vert.h"
@@ -78,6 +85,30 @@ namespace xtexture_editor::preview
     constexpr auto g_FragShader2DSPV = std::array
     {
         #include "e10_2d_frag.h"
+    };
+    constexpr auto g_VertShader3DSPV = std::array
+    {
+        #include "e10_3d_vert.h"
+    };
+    constexpr auto g_FragShader3DSPV = std::array
+    {
+        #include "e10_3d_frag.h"
+    };
+    constexpr auto g_VertShader2DCubeSPV = std::array
+    {
+        #include "e10_2d_cube_vert.h"
+    };
+    constexpr auto g_FragShader2DCubeSPV = std::array
+    {
+        #include "e10_2d_cube_frag.h"
+    };
+    constexpr auto g_VertShader3DCubeSPV = std::array
+    {
+        #include "e10_3d_cube_vert.h"
+    };
+    constexpr auto g_FragShader3DCubeSPV = std::array
+    {
+        #include "e10_3d_cube_frag.h"
     };
 
 struct draw_options
@@ -518,54 +549,82 @@ struct material_mgr
     
     xgpu::pipeline& getMaterial(xgpu::device& Device, material Material)
     {
-        // 2D-only for this editor pass (cubemap/3D deferred).
-        Material.m_CubeMap  = 0;
-        Material.m_3DRender = 0;
-
         if (auto Entry = m_Pipelines.find(Material.getGuid()); Entry != m_Pipelines.end())
             return Entry->second;
 
         xgpu::vertex_descriptor VertexDescriptor;
+        if (Material.m_3DRender)
         {
             auto Attributes = std::array
             {
-                xgpu::vertex_descriptor::attribute
-                { .m_Offset = offsetof(e10::vert_2d, m_X),  .m_Format = xgpu::vertex_descriptor::format::FLOAT_2D }
-            ,   xgpu::vertex_descriptor::attribute
-                { .m_Offset = offsetof(e10::vert_2d, m_UV), .m_Format = xgpu::vertex_descriptor::format::FLOAT_3D }
+                xgpu::vertex_descriptor::attribute{ .m_Offset = offsetof(e10::vert_3d, m_Position), .m_Format = xgpu::vertex_descriptor::format::FLOAT_3D }
+            ,   xgpu::vertex_descriptor::attribute{ .m_Offset = offsetof(e10::vert_3d, m_Binormal), .m_Format = xgpu::vertex_descriptor::format::FLOAT_3D }
+            ,   xgpu::vertex_descriptor::attribute{ .m_Offset = offsetof(e10::vert_3d, m_Tangent),  .m_Format = xgpu::vertex_descriptor::format::FLOAT_3D }
+            ,   xgpu::vertex_descriptor::attribute{ .m_Offset = offsetof(e10::vert_3d, m_Normal),   .m_Format = xgpu::vertex_descriptor::format::FLOAT_3D }
+            ,   xgpu::vertex_descriptor::attribute{ .m_Offset = offsetof(e10::vert_3d, m_TexCoord), .m_Format = xgpu::vertex_descriptor::format::FLOAT_2D }
             };
-            auto Setup = xgpu::vertex_descriptor::setup
-            { .m_VertexSize = sizeof(e10::vert_2d), .m_Attributes = Attributes };
+            auto Setup = xgpu::vertex_descriptor::setup{ .m_VertexSize = sizeof(e10::vert_3d), .m_Attributes = Attributes };
             if (auto Err = Device.Create(VertexDescriptor, Setup); Err)
             {
-                printf("xtexture_editor preview: vertex descriptor failed: %s\n", xgpu::getErrorMsg(Err));
-                static xgpu::pipeline s_Empty{};
-                return s_Empty;
+                printf("xtexture_editor preview: 3D vertex descriptor failed: %s\n", xgpu::getErrorMsg(Err));
+                return PreviewEmptyPipeline();
+            }
+        }
+        else
+        {
+            auto Attributes = std::array
+            {
+                xgpu::vertex_descriptor::attribute{ .m_Offset = offsetof(e10::vert_2d, m_X),  .m_Format = xgpu::vertex_descriptor::format::FLOAT_2D }
+            ,   xgpu::vertex_descriptor::attribute{ .m_Offset = offsetof(e10::vert_2d, m_UV), .m_Format = xgpu::vertex_descriptor::format::FLOAT_3D }
+            };
+            auto Setup = xgpu::vertex_descriptor::setup{ .m_VertexSize = sizeof(e10::vert_2d), .m_Attributes = Attributes };
+            if (auto Err = Device.Create(VertexDescriptor, Setup); Err)
+            {
+                printf("xtexture_editor preview: 2D vertex descriptor failed: %s\n", xgpu::getErrorMsg(Err));
+                return PreviewEmptyPipeline();
             }
         }
 
         xgpu::shader FragmentShader;
         xgpu::shader VertexShader;
+        auto FailShader = [&](const char* What, auto Err) -> xgpu::pipeline&
         {
-            xgpu::shader::setup SetupF
-            { .m_Type = xgpu::shader::type::bit::FRAGMENT
-            , .m_Sharer = xgpu::shader::setup::raw_data{ g_FragShader2DSPV }
-            };
-            if (auto Err = Device.Create(FragmentShader, SetupF); Err)
+            printf("xtexture_editor preview: %s failed: %s\n", What, xgpu::getErrorMsg(Err));
+            return PreviewEmptyPipeline();
+        };
+
+        if (Material.m_3DRender)
+        {
+            if (Material.m_CubeMap)
             {
-                printf("xtexture_editor preview: frag shader failed: %s\n", xgpu::getErrorMsg(Err));
-                static xgpu::pipeline s_Empty{};
-                return s_Empty;
+                if (auto Err = Device.Create(FragmentShader, xgpu::shader::setup{ .m_Type = xgpu::shader::type::bit::FRAGMENT, .m_Sharer = xgpu::shader::setup::raw_data{ g_FragShader3DCubeSPV } }); Err)
+                    return FailShader("3D cube frag", Err);
+                if (auto Err = Device.Create(VertexShader, xgpu::shader::setup{ .m_Type = xgpu::shader::type::bit::VERTEX, .m_Sharer = xgpu::shader::setup::raw_data{ g_VertShader3DCubeSPV } }); Err)
+                    return FailShader("3D cube vert", Err);
             }
-            xgpu::shader::setup SetupV
-            { .m_Type = xgpu::shader::type::bit::VERTEX
-            , .m_Sharer = xgpu::shader::setup::raw_data{ g_VertShader2DSPV }
-            };
-            if (auto Err = Device.Create(VertexShader, SetupV); Err)
+            else
             {
-                printf("xtexture_editor preview: vert shader failed: %s\n", xgpu::getErrorMsg(Err));
-                static xgpu::pipeline s_Empty{};
-                return s_Empty;
+                if (auto Err = Device.Create(FragmentShader, xgpu::shader::setup{ .m_Type = xgpu::shader::type::bit::FRAGMENT, .m_Sharer = xgpu::shader::setup::raw_data{ g_FragShader3DSPV } }); Err)
+                    return FailShader("3D frag", Err);
+                if (auto Err = Device.Create(VertexShader, xgpu::shader::setup{ .m_Type = xgpu::shader::type::bit::VERTEX, .m_Sharer = xgpu::shader::setup::raw_data{ g_VertShader3DSPV } }); Err)
+                    return FailShader("3D vert", Err);
+            }
+        }
+        else
+        {
+            if (Material.m_CubeMap)
+            {
+                if (auto Err = Device.Create(FragmentShader, xgpu::shader::setup{ .m_Type = xgpu::shader::type::bit::FRAGMENT, .m_Sharer = xgpu::shader::setup::raw_data{ g_FragShader2DCubeSPV } }); Err)
+                    return FailShader("2D cube frag", Err);
+                if (auto Err = Device.Create(VertexShader, xgpu::shader::setup{ .m_Type = xgpu::shader::type::bit::VERTEX, .m_Sharer = xgpu::shader::setup::raw_data{ g_VertShader2DCubeSPV } }); Err)
+                    return FailShader("2D cube vert", Err);
+            }
+            else
+            {
+                if (auto Err = Device.Create(FragmentShader, xgpu::shader::setup{ .m_Type = xgpu::shader::type::bit::FRAGMENT, .m_Sharer = xgpu::shader::setup::raw_data{ g_FragShader2DSPV } }); Err)
+                    return FailShader("2D frag", Err);
+                if (auto Err = Device.Create(VertexShader, xgpu::shader::setup{ .m_Type = xgpu::shader::type::bit::VERTEX, .m_Sharer = xgpu::shader::setup::raw_data{ g_VertShader2DSPV } }); Err)
+                    return FailShader("2D vert", Err);
             }
         }
 
@@ -584,7 +643,7 @@ struct material_mgr
         ,   .m_PushConstantsSize = sizeof(e10::push_contants)
         ,   .m_Samplers          = Samplers
         ,   .m_Primitive         = {.m_Cull = xgpu::pipeline::primitive::cull::NONE }
-        ,   .m_DepthStencil      = {.m_bDepthTestEnable = false }
+        ,   .m_DepthStencil      = {.m_bDepthTestEnable = (bool)Material.m_3DRender }
         ,   .m_Blend             = xgpu::pipeline::blend::getAlphaOriginal()
         };
 
@@ -592,17 +651,12 @@ struct material_mgr
         if (auto Err = Device.Create(Temp, Setup); Err)
         {
             printf("xtexture_editor preview: pipeline create failed: %s\n", xgpu::getErrorMsg(Err));
-            static xgpu::pipeline s_Empty{};
-            return s_Empty;
+            return PreviewEmptyPipeline();
         }
 
         m_Pipelines.insert({Material.getGuid(), std::move(Temp)});
         return m_Pipelines.find(Material.getGuid())->second;
     }
-
-
-    //----------------------------------------------------------------------------------------
-
     std::unordered_map<std::uint32_t, xgpu::pipeline>           m_Pipelines;
     std::unordered_map<std::uint32_t, xgpu::pipeline_instance>  m_PipelineInstances;
     xresource::mgr&                                             m_RscManager;
@@ -618,14 +672,27 @@ struct mesh_mgr
         int          m_IndexCount = 0;
     };
 
-    enum class model { PLANE_2D, ENUM_COUNT };
+    enum class model
+    { PLANE_2D
+    , EXPLODED_CUBE_2D
+    , CUBE_3D
+    , SPHERE_3D
+    , ENUM_COUNT
+    };
+
+    //----------------------------------------------------------------------------------
 
     void Initialize(xgpu::device& Device)
     {
         Create_2DPlane(Device);
+        Create_2DExplodedCube(Device);
+        Create_3DCube(Device);
+        Create_3DSphere(Device);
     }
 
-    void Render(xgpu::cmd_buffer& CmdBuffer, model Model)
+    //----------------------------------------------------------------------------------
+
+    void Render( xgpu::cmd_buffer& CmdBuffer, model Model )
     {
         auto& Mesh = m_Meshes[static_cast<int>(Model)];
         if (Mesh.m_IndexCount <= 0) return;
@@ -634,6 +701,8 @@ struct mesh_mgr
         CmdBuffer.Draw(Mesh.m_IndexCount);
     }
 
+    //----------------------------------------------------------------------------------
+
     void Create_2DPlane(xgpu::device& Device)
     {
         mesh& Mesh = m_Meshes[static_cast<int>(model::PLANE_2D)];
@@ -641,8 +710,7 @@ struct mesh_mgr
 
         if (auto Err = Device.Create(Mesh.m_VertexBuffer, { .m_Type = xgpu::buffer::type::VERTEX, .m_EntryByteSize = sizeof(e10::vert_2d), .m_EntryCount = 4 }); Err)
         {
-            printf("xtexture_editor preview: 2D plane VB failed: %s\n", xgpu::getErrorMsg(Err));
-            Mesh.m_IndexCount = 0;
+            printf("xtexture_editor preview: mesh buffer failed: %s\n", xgpu::getErrorMsg(Err));
             return;
         }
 
@@ -657,21 +725,214 @@ struct mesh_mgr
 
         if (auto Err = Device.Create(Mesh.m_IndexBuffer, { .m_Type = xgpu::buffer::type::INDEX, .m_EntryByteSize = sizeof(std::uint32_t), .m_EntryCount = Mesh.m_IndexCount }); Err)
         {
-            printf("xtexture_editor preview: 2D plane IB failed: %s\n", xgpu::getErrorMsg(Err));
-            Mesh.m_IndexCount = 0;
+            printf("xtexture_editor preview: mesh buffer failed: %s\n", xgpu::getErrorMsg(Err));
             return;
         }
 
         (void)Mesh.m_IndexBuffer.MemoryMap(0, Mesh.m_IndexCount, [&](void* pData)
         {
-            auto pIndex = static_cast<std::uint32_t*>(pData);
-            constexpr auto StaticIndex = std::array{ 2u, 1u, 0u, 3u, 2u, 0u };
-            for (auto i : StaticIndex) { *pIndex++ = i; }
+            auto            pIndex = static_cast<std::uint32_t*>(pData);
+            constexpr auto  StaticIndex = std::array
+            {
+                2u,  1u,  0u,      3u,  2u,  0u,    // front
+            };
+            static_assert(StaticIndex.size() == 6);
+            for (auto i : StaticIndex)
+            {
+                *pIndex = i;
+                pIndex++;
+            }
         });
     }
 
-    std::array<mesh, static_cast<int>(model::ENUM_COUNT)> m_Meshes{};
+    //----------------------------------------------------------------------------------
+
+    void Create_2DExplodedCube(xgpu::device& Device)
+    {
+        mesh& Mesh = m_Meshes[static_cast<int>(model::EXPLODED_CUBE_2D)];
+        Mesh.m_IndexCount = 6 * 6;
+
+        if (auto Err = Device.Create(Mesh.m_VertexBuffer, { .m_Type = xgpu::buffer::type::VERTEX, .m_EntryByteSize = sizeof(e10::vert_2d), .m_EntryCount = 4*6 }); Err)
+        {
+            printf("xtexture_editor preview: mesh buffer failed: %s\n", xgpu::getErrorMsg(Err));
+            return;
+        }
+
+        (void)Mesh.m_VertexBuffer.MemoryMap(0, 4*6, [&](void* pData)
+        {
+            auto pVertex = static_cast<e10::vert_2d*>(pData);
+
+            int iVert=0;
+            pVertex[iVert++] = { 0.0f, -100.0f,  xmath::fvec3(1.0f,  1.0f,  1.0f).NormalizeSafe() };
+            pVertex[iVert++] = { 200.0f, -100.0f,  xmath::fvec3(1.0f,  1.0f, -1.0f).NormalizeSafe() };
+            pVertex[iVert++] = { 200.0f,  100.0f,  xmath::fvec3(1.0f, -1.0f, -1.0f).NormalizeSafe() };
+            pVertex[iVert++] = { 0.0f,  100.0f,  xmath::fvec3(1.0f, -1.0f,  1.0f).NormalizeSafe() };
+
+            for ( int iFace=0; iFace<2; iFace++)
+            {
+                for (int i=0;i<4;++i)
+                {
+                    pVertex[iVert] = pVertex[iVert - 4];
+                    pVertex[iVert].m_UV = xmath::fvec3(pVertex[iVert].m_UV).RotateY(-90_xdeg);
+                    pVertex[iVert].m_X -= 200.0f;
+                    iVert++;
+                }
+            }
+
+            for (int i = 0; i < 4; ++i)
+            {
+                pVertex[iVert] = pVertex[i];
+                pVertex[iVert].m_UV = xmath::fvec3(pVertex[iVert].m_UV).RotateY(90_xdeg);
+                pVertex[iVert].m_X += 200.0f;
+                iVert++;
+            }
+
+            for (int i = 0; i < 4; ++i)
+            {
+                pVertex[iVert] = pVertex[4 + i];
+                pVertex[iVert].m_UV = xmath::fvec3(pVertex[iVert].m_UV).RotateX(-90_xdeg);
+                pVertex[iVert].m_Y -= 200.0f;
+                iVert++;
+            }
+
+            for (int i = 0; i < 4; ++i)
+            {
+                pVertex[iVert] = pVertex[4 + i];
+                pVertex[iVert].m_UV = xmath::fvec3(pVertex[iVert].m_UV).RotateX(90_xdeg);
+                pVertex[iVert].m_Y += 200.0f;
+                iVert++;
+            }
+
+            assert(iVert <= (4 * 6) );
+        });
+
+        if (auto Err = Device.Create(Mesh.m_IndexBuffer, { .m_Type = xgpu::buffer::type::INDEX, .m_EntryByteSize = sizeof(std::uint32_t), .m_EntryCount = Mesh.m_IndexCount }); Err)
+        {
+            printf("xtexture_editor preview: mesh buffer failed: %s\n", xgpu::getErrorMsg(Err));
+            return;
+        }
+
+        (void)Mesh.m_IndexBuffer.MemoryMap(0, Mesh.m_IndexCount, [&](void* pData)
+        {
+            auto            pIndex = static_cast<std::uint32_t*>(pData);
+            constexpr auto  StaticIndex = std::array
+            {
+                2u,  1u,  0u,      3u,  2u,  0u,    // front
+            };
+            static_assert(StaticIndex.size() == 6);
+
+            for (int iFace = 0; iFace < 6; ++iFace)
+            {
+                for (auto i : StaticIndex)
+                {
+                    *pIndex = static_cast<std::uint32_t>(i + iFace* 4);
+                    pIndex++;
+                }
+            }
+        });
+    }
+
+    //----------------------------------------------------------------------------------
+
+    void Create_3DCube(xgpu::device& Device)
+    {
+        const auto  Primitive = xprim_geom::cube::Generate(4, 4, 4, 4, xprim_geom::float3{ 1,1,1 });
+        mesh&       Mesh      = m_Meshes[static_cast<int>(model::CUBE_3D)];
+
+        Mesh.m_IndexCount = static_cast<int>(Primitive.m_Indices.size());
+
+        if (auto Err = Device.Create(Mesh.m_VertexBuffer, { .m_Type = xgpu::buffer::type::VERTEX, .m_EntryByteSize = sizeof(e10::vert_3d), .m_EntryCount = static_cast<int>(Primitive.m_Vertices.size()) }); Err)
+        {
+            printf("xtexture_editor preview: mesh buffer failed: %s\n", xgpu::getErrorMsg(Err));
+            return;
+        }
+
+        (void)Mesh.m_VertexBuffer.MemoryMap(0, static_cast<int>(Primitive.m_Vertices.size()), [&](void* pData)
+        {
+            auto pVertex = static_cast<e10::vert_3d*>(pData);
+            for( int i=0; i< static_cast<int>(Primitive.m_Vertices.size()); ++i )
+            {
+                auto&       V  = pVertex[i];
+                const auto& v  = Primitive.m_Vertices[i];
+                V.m_Position.setup( v.m_Position.m_X, v.m_Position.m_Y, v.m_Position.m_Z );
+                V.m_Normal.setup( v.m_Normal.m_X, v.m_Normal.m_Y, v.m_Normal.m_Z );
+
+                V.m_Tangent.setup(v.m_Tangent.m_X, v.m_Tangent.m_Y, v.m_Tangent.m_Z);
+                V.m_Binormal = (xmath::fvec3{ V.m_Normal }.Cross(xmath::fvec3{ V.m_Tangent } )).NormalizeSafe();
+
+                V.m_TexCoord.setup(v.m_Texcoord.m_X, v.m_Texcoord.m_Y);
+            }
+        });
+        
+        if (auto Err = Device.Create(Mesh.m_IndexBuffer, { .m_Type = xgpu::buffer::type::INDEX, .m_EntryByteSize = sizeof(std::uint32_t), .m_EntryCount = static_cast<int>(Primitive.m_Indices.size()) }); Err)
+        {
+            printf("xtexture_editor preview: mesh buffer failed: %s\n", xgpu::getErrorMsg(Err));
+            return;
+        }
+
+        (void)Mesh.m_IndexBuffer.MemoryMap(0, static_cast<int>(Primitive.m_Indices.size()), [&](void* pData)
+        {
+            auto            pIndex      = static_cast<std::uint32_t*>(pData);
+            for( int i=0; i< static_cast<int>(Primitive.m_Indices.size()); ++i )
+            {
+                pIndex[i] = Primitive.m_Indices[i];
+            }
+        });
+    }
+
+    //----------------------------------------------------------------------------------
+
+    void Create_3DSphere(xgpu::device& Device)
+    {
+        const auto  Primitive = xprim_geom::uvsphere::Generate( 70, 70, 1, 0.5f );
+        mesh&       Mesh      = m_Meshes[static_cast<int>(model::SPHERE_3D)];
+
+        Mesh.m_IndexCount = static_cast<int>(Primitive.m_Indices.size());
+
+        if (auto Err = Device.Create(Mesh.m_VertexBuffer, { .m_Type = xgpu::buffer::type::VERTEX, .m_EntryByteSize = sizeof(e10::vert_3d), .m_EntryCount = static_cast<int>(Primitive.m_Vertices.size()) }); Err)
+        {
+            printf("xtexture_editor preview: mesh buffer failed: %s\n", xgpu::getErrorMsg(Err));
+            return;
+        }
+
+        (void)Mesh.m_VertexBuffer.MemoryMap(0, static_cast<int>(Primitive.m_Vertices.size()), [&](void* pData)
+        {
+            auto pVertex = static_cast<e10::vert_3d*>(pData);
+            for( int i=0; i< static_cast<int>(Primitive.m_Vertices.size()); ++i )
+            {
+                auto&       V  = pVertex[i];
+                const auto& v  = Primitive.m_Vertices[i];
+                V.m_Position.setup( v.m_Position.m_X, v.m_Position.m_Y, v.m_Position.m_Z );
+                V.m_Normal.setup( v.m_Normal.m_X, v.m_Normal.m_Y, v.m_Normal.m_Z );
+
+                V.m_Tangent.setup(v.m_Tangent.m_X, v.m_Tangent.m_Y, v.m_Tangent.m_Z);
+                V.m_Binormal = (xmath::fvec3{ V.m_Normal }.Cross(xmath::fvec3{ V.m_Tangent } )).NormalizeSafe();
+
+                V.m_TexCoord.setup(v.m_Texcoord.m_X, v.m_Texcoord.m_Y);
+            }
+        });
+
+        if (auto Err = Device.Create(Mesh.m_IndexBuffer, { .m_Type = xgpu::buffer::type::INDEX, .m_EntryByteSize = sizeof(std::uint32_t), .m_EntryCount = static_cast<int>(Primitive.m_Indices.size()) }); Err)
+        {
+            printf("xtexture_editor preview: mesh buffer failed: %s\n", xgpu::getErrorMsg(Err));
+            return;
+        }
+
+        (void)Mesh.m_IndexBuffer.MemoryMap(0, static_cast<int>(Primitive.m_Indices.size()), [&](void* pData)
+        {
+            auto            pIndex      = static_cast<std::uint32_t*>(pData);
+            for( int i=0; i< static_cast<int>(Primitive.m_Indices.size()); ++i )
+            {
+                pIndex[i] = Primitive.m_Indices[i];
+            }
+        });
+    }
+
+    std::array<mesh, static_cast<int>(mesh_mgr::model::ENUM_COUNT)> m_Meshes;
 };
+
+
+
 
 
 
@@ -874,7 +1135,123 @@ struct mesh_mgr
 
             m_Materials.SetMaterialInstance(*m_pDevice, CmdBuffer, m_UserMaterial, true, m_DrawOptions.m_bBilinearMode);
             CmdBuffer.setPushConstants(PC);
-            m_Meshes.Render(CmdBuffer, mesh_mgr::model::PLANE_2D);
+            if (m_BitmapInspector.m_pBitmap->isCubemap())
+                m_Meshes.Render(CmdBuffer, mesh_mgr::model::EXPLODED_CUBE_2D);
+            else
+                m_Meshes.Render(CmdBuffer, mesh_mgr::model::PLANE_2D);
+        }
+
+        void Handle3DInput(float ViewW, float ViewH) noexcept
+        {
+            if (ViewW <= 1.f || ViewH <= 1.f) return;
+            if (!ImGui::IsWindowHovered()) return;
+
+            auto& io = ImGui::GetIO();
+            if (ImGui::IsMouseDown(ImGuiMouseButton_Right))
+            {
+                const ImVec2 Delta = io.MouseDelta;
+                m_DrawControls.m_3DAngles.m_Pitch.m_Value -= 0.01f * Delta.y;
+                m_DrawControls.m_3DAngles.m_Yaw.m_Value   -= 0.01f * Delta.x;
+            }
+
+            if (ImGui::IsKeyPressed(ImGuiKey_Space, false))
+            {
+                m_DrawControls.m_3DLightPosition = m_DrawControls.m_3DView.getPosition();
+                m_DrawControls.m_3DFollowCamera = !m_DrawControls.m_3DFollowCamera;
+            }
+
+            const float Wheel = io.MouseWheel;
+            m_DrawControls.m_3DDistance += m_DrawControls.m_3DDistance * -0.2f * Wheel;
+            m_DrawControls.m_3DDistance = std::max(m_DrawControls.m_3DDistance, 0.2f);
+
+            m_DrawControls.m_3DView.LookAt(m_DrawControls.m_3DDistance, m_DrawControls.m_3DAngles, { 0,0,0 });
+        }
+
+        void Draw3D(xgpu::cmd_buffer& CmdBuffer, float ViewW, float ViewH) noexcept
+        {
+            if (!m_pDevice || !m_bGpuReady || ViewW <= 1.f || ViewH <= 1.f) return;
+            if (!m_bHasTexture || !m_BitmapInspector.m_pBitmap) return;
+            m_DrawControls.m_3DView.LookAt(m_DrawControls.m_3DDistance, m_DrawControls.m_3DAngles, { 0,0,0 });
+
+            e10::push_contants PC{};
+            const float MipMode = m_DrawOptions.m_ChooseMipLevel == -1 ? 1.0f : 0.0f;
+            switch (m_DrawOptions.m_ChannelsMode)
+            {
+            case draw_options::channels_mode::COLOR_ALPHA:
+                PC.m_ColorMask = xmath::fvec4(1); PC.m_Mode = xmath::fvec4(1, 0, 0, MipMode); break;
+            case draw_options::channels_mode::NO_ALPHA:
+                PC.m_ColorMask = xmath::fvec4(1); PC.m_Mode = xmath::fvec4(0, 0, 1, MipMode); break;
+            case draw_options::channels_mode::A_ONLY:
+                PC.m_ColorMask = xmath::fvec4(0, 0, 0, 1); PC.m_Mode = xmath::fvec4(0, 1, 0, MipMode); break;
+            case draw_options::channels_mode::R_ONLY:
+                PC.m_ColorMask = xmath::fvec4(1, 0, 0, 0); PC.m_Mode = xmath::fvec4(0, 1, 0, MipMode); break;
+            case draw_options::channels_mode::G_ONLY:
+                PC.m_ColorMask = xmath::fvec4(0, 1, 0, 0); PC.m_Mode = xmath::fvec4(0, 1, 0, MipMode); break;
+            case draw_options::channels_mode::B_ONLY:
+                PC.m_ColorMask = xmath::fvec4(0, 0, 1, 0); PC.m_Mode = xmath::fvec4(0, 1, 0, MipMode); break;
+            }
+
+            if (m_BitmapInspector.m_pBitmap->getFormat() == xbitmap::format::BC3_81Y0X_NORMAL
+                && m_DrawOptions.m_DisplayInGammaMode != draw_options::display_gamma_mode::RAW_DATA_INFILE)
+                PC.m_NormalModes = xmath::fvec4(1, 0, 0, 0);
+            else if (m_BitmapInspector.m_pBitmap->getFormat() == xbitmap::format::BC5_8YX_NORMAL
+                && m_DrawOptions.m_DisplayInGammaMode != draw_options::display_gamma_mode::RAW_DATA_INFILE)
+                PC.m_NormalModes = xmath::fvec4(0, 1, 0, 0);
+            else
+                PC.m_NormalModes = xmath::fvec4(0, 0, 0, 0);
+
+            PC.m_MipLevel = static_cast<float>(std::max(0, m_DrawOptions.m_ChooseMipLevel));
+            PC.m_TintColor = xmath::fvec4(1);
+            PC.m_UVScale = m_DrawOptions.m_UVScale;
+            switch (m_DrawOptions.m_DisplayInGammaMode)
+            {
+            case draw_options::display_gamma_mode::GAMMA:   PC.m_ToGamma = m_DrawOptions.m_DisplayGamma; break;
+            case draw_options::display_gamma_mode::LINEAR:  PC.m_ToGamma = 1; break;
+            case draw_options::display_gamma_mode::RAW_DATA_INFILE:
+                PC.m_ToGamma = (m_BitmapInspector.m_pBitmap->getColorSpace() == xbitmap::color_space::SRGB) ? 2.2f : 1.0f;
+                break;
+            }
+
+            m_Materials.SetMaterialInstance(*m_pDevice, CmdBuffer, m_UserMaterial, false, m_DrawOptions.m_bBilinearMode);
+
+            m_DrawControls.m_3DView.setViewport({ 0, 0, static_cast<int>(ViewW), static_cast<int>(ViewH) });
+            const auto W2C = m_DrawControls.m_3DView.getW2C();
+            xmath::fmat4 L2W;
+            L2W.setupIdentity();
+            if (m_BitmapInspector.m_pBitmap->isValid())
+                L2W.setupScale(xmath::fvec3{ m_BitmapInspector.m_pBitmap->getAspectRatio(), 1, m_BitmapInspector.m_pBitmap->getAspectRatio() } * 2.0f);
+
+            auto W2L = L2W;
+            W2L = W2L.InverseSRT();
+            if (m_DrawControls.m_3DFollowCamera)
+                m_DrawControls.m_3DLightPosition = m_DrawControls.m_3DView.getPosition();
+
+            PC.m_L2C = W2C * L2W;
+            PC.m_LocalSpaceLightPosition = W2L * m_DrawControls.m_3DLightPosition;
+            if (m_DrawOptions.m_RenderMode == draw_options::render_mode::RENDER_3D_WITH_LIGHTING)
+                PC.m_NormalModes.m_Z = 1;
+
+            CmdBuffer.setPushConstants(PC);
+            if (m_BitmapInspector.m_pBitmap->isCubemap())
+                m_Meshes.Render(CmdBuffer, mesh_mgr::model::SPHERE_3D);
+            else
+                m_Meshes.Render(CmdBuffer, mesh_mgr::model::CUBE_3D);
+        }
+
+        void HandleInput(float ViewW, float ViewH) noexcept
+        {
+            if (m_DrawOptions.m_RenderMode == draw_options::render_mode::RENDER_2D)
+                Handle2DInput(ViewW, ViewH);
+            else
+                Handle3DInput(ViewW, ViewH);
+        }
+
+        void Draw(xgpu::cmd_buffer& CmdBuffer, float ViewW, float ViewH) noexcept
+        {
+            if (m_DrawOptions.m_RenderMode == draw_options::render_mode::RENDER_2D)
+                Draw2D(CmdBuffer, ViewW, ViewH);
+            else
+                Draw3D(CmdBuffer, ViewW, ViewH);
         }
     };
 
