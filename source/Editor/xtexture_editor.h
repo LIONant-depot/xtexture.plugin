@@ -10,6 +10,7 @@
 #include "source/Tools/Editor/xeditor_registry.h"
 #include "source/Tools/Editor/xeditor_dock_isolation.h"
 #include "source/Tools/Editor/xeditor_inspector.h"
+#include "source/Tools/Editor/xeditor_toolbar.h"
 #include "Plugins/xtexture.plugin/source/Editor/xtexture_editor_preview.h"
 #include "Plugins/xtexture.plugin/source/xtexture_xgpu_rsc_loader.h"
 #include "Plugins/xtexture.plugin/source/xtexture_rsc_descriptor.h"
@@ -180,6 +181,13 @@ namespace xtexture_editor
         std::string              m_ViewerWindowTitle;
         std::string              m_DescriptorWindowTitle;
         std::string              m_PreviewWindowTitle;
+        std::shared_ptr<e10::compilation::historical_entry::log> m_CompilationLog =
+            std::make_shared<e10::compilation::historical_entry::log>(
+                e10::compilation::historical_entry::communication{
+                    .m_Result = e10::compilation::historical_entry::result::SUCCESS });
+        std::vector<std::string> m_ValidationErrors;
+        bool                     m_bReloadPreview = false;
+        bool                     m_bCompilationCallbackRegistered = false;
 
         session(xresource::full_guid Guid, e10::library::guid LibraryGuid, xgpu::device* pDevice = nullptr) noexcept
             : m_SetSRGB(m_Undo, m_Document), m_SetGenerateMips(m_Undo, m_Document)
@@ -204,6 +212,86 @@ namespace xtexture_editor
             }
 
             BindInspectors();
+            RegisterCompilationCallback();
+        }
+
+        ~session() noexcept
+        {
+            if (m_bCompilationCallbackRegistered)
+                e10::g_LibMgr.m_OnCompilationState.RemoveDelegates(this);
+        }
+
+        void RegisterCompilationCallback() noexcept
+        {
+            if (m_bCompilationCallbackRegistered) return;
+            e10::g_LibMgr.m_OnCompilationState.Register<&session::OnCompilationState>(*this);
+            m_bCompilationCallbackRegistered = true;
+        }
+
+        void OnCompilationState(e10::library_mgr&, e10::library::guid, xresource::full_guid CompilingEntry,
+                                std::shared_ptr<e10::compilation::historical_entry::log>& LogInformation) noexcept
+        {
+            if (CompilingEntry != m_Document.m_Guid) return;
+            if (m_CompilationLog.get() != LogInformation.get())
+                m_CompilationLog = LogInformation;
+            if (!m_CompilationLog) return;
+
+            e10::compilation::historical_entry::result Results;
+            {
+                xcontainer::lock::scope lk(*m_CompilationLog);
+                Results = m_CompilationLog->get().m_Result;
+            }
+            if (Results == e10::compilation::historical_entry::result::SUCCESS
+                || Results == e10::compilation::historical_entry::result::SUCCESS_WARNINGS)
+            {
+                m_bReloadPreview = true;
+            }
+        }
+
+        static void ToolbarSave(void* pUser) noexcept
+        {
+            auto* Self = static_cast<session*>(pUser);
+            Self->m_Document.Save();
+        }
+
+        static void ToolbarCompile(void* pUser) noexcept
+        {
+            auto* Self = static_cast<session*>(pUser);
+            // Same as E10 Compile: persist descriptor so the library mgr queues compilation.
+            Self->m_ValidationErrors.clear();
+            if (Self->m_Document.m_pDescriptor)
+                Self->m_Document.m_pDescriptor->Validate(Self->m_ValidationErrors);
+            if (!Self->m_ValidationErrors.empty()) return;
+            Self->m_Document.Save();
+        }
+
+        void TickCompilationFeedback() noexcept
+        {
+            if (m_Document.m_pDescriptor)
+            {
+                m_ValidationErrors.clear();
+                m_Document.m_pDescriptor->Validate(m_ValidationErrors);
+            }
+            if (m_bReloadPreview && m_Preview.m_pDevice)
+            {
+                m_bReloadPreview = false;
+                if (!m_Document.m_DescriptorPath.empty())
+                    m_Preview.LoadFromDescriptorPath(m_Document.m_DescriptorPath);
+            }
+        }
+
+        void RenderToolbar() noexcept
+        {
+            xeditor::toolbar_model Bar{};
+            Bar.m_pUndo             = &m_Undo;
+            Bar.m_bDirty            = m_Document.isDirty();
+            Bar.m_bCanCompile       = m_Document.m_pDescriptor != nullptr;
+            Bar.m_Log               = m_CompilationLog;
+            Bar.m_pValidationErrors = &m_ValidationErrors;
+            Bar.m_OnSave            = &session::ToolbarSave;
+            Bar.m_OnCompile         = &session::ToolbarCompile;
+            Bar.m_pUser             = this;
+            xeditor::RenderEditorToolbar(Bar);
         }
 
         
@@ -304,9 +392,12 @@ namespace xtexture_editor
 
             if (ImGui::Begin(Title, &m_bOpen, Flags))
             {
+                TickCompilationFeedback();
+                RenderToolbar();
+
                 if (m_Document.m_pDescriptor && m_bInspectorsBound)
                 {
-                    // The top-level window is now a thin shell holding ONLY a dockspace - no
+                    // The top-level window hosts the framework toolbar, then a dockspace - no
                     // inline content of its own - exactly mirroring how E29's OWN "Level Editor"
                     // root window works (its real content is entirely sub-panels; the root just
                     // hosts the dockspace). Mixing "some inline content" with "a nested dockspace
@@ -357,17 +448,6 @@ namespace xtexture_editor
                         if (!m_Preview.m_bHasTexture)
                             ImGui::TextUnformatted("No compiled resource yet (compile the texture, then reopen).");
                         ImGui::Dummy(Avail);
-
-                        ImGui::Separator();
-                        if (ImGui::Button("Undo")) { auto& _r = m_Undo.Undo(); (void)_r; }
-                        ImGui::SameLine();
-                        if (ImGui::Button("Redo")) { auto& _r = m_Undo.Redo(); (void)_r; }
-                        ImGui::SameLine();
-                        if (ImGui::Button("Save")) m_Document.Save();
-                        ImGui::SameLine();
-                        if (ImGui::Button("Reload Preview") && m_Preview.m_pDevice)
-                            m_Preview.LoadFromDescriptorPath(m_Document.m_DescriptorPath);
-                        ImGui::Text("Dirty: %s", m_Document.isDirty() ? "yes" : "no");
                     }
                     ImGui::End();
 
