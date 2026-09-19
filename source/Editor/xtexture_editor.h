@@ -457,13 +457,17 @@ namespace xtexture_editor
                     if (ImGui::Begin(m_PreviewWindowTitle.c_str()))
                     {
                         const ImVec2 Avail = ImGui::GetContentRegionAvail();
+                        // Claim the canvas like E10's full-window input target (docked panel equivalent).
+                        ImGui::InvisibleButton("##TexturePreviewCanvas", Avail);
                         m_Preview.HandleInput(Avail.x, Avail.y);
 
                         if (m_Preview.m_bGpuReady)
                         {
-                            xgpu::tools::imgui::AddCustomRenderCallback([this](xgpu::cmd_buffer& CmdBuffer, const ImVec2&, const ImVec2& Size)
+                            // AddCustomRenderCallback passes GetWindowSize(); E10 uses one viewport size for
+                            // both input and draw — keep Avail (canvas) for both.
+                            xgpu::tools::imgui::AddCustomRenderCallback([this, Avail](xgpu::cmd_buffer& CmdBuffer, const ImVec2&, const ImVec2&)
                             {
-                                m_Preview.Draw(CmdBuffer, Size.x, Size.y);
+                                m_Preview.Draw(CmdBuffer, Avail.x, Avail.y);
                             });
                         }
                         else
@@ -472,7 +476,6 @@ namespace xtexture_editor
                         }
                         if (!m_Preview.m_bHasTexture)
                             ImGui::TextUnformatted("No compiled resource yet (compile the texture, then reopen).");
-                        ImGui::Dummy(Avail);
                     }
                     ImGui::End();
 

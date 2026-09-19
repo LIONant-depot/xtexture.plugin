@@ -1030,39 +1030,44 @@ struct mesh_mgr
             m_bHasTexture = m_UserMaterial.m_TextureRef.isValid();
         }
 
+        // E10 2D input, verbatim math (MainWindow size -> ViewW/H; xgpu mouse -> ImGui on the preview canvas item).
         void Handle2DInput(float ViewW, float ViewH) noexcept
         {
             if (ViewW <= 1.f || ViewH <= 1.f) return;
-            if (!ImGui::IsWindowHovered()) return;
+            // Caller must have just submitted the preview canvas item (InvisibleButton).
+            if (!ImGui::IsItemHovered() && !ImGui::IsItemActive()) return;
 
-            auto& io = ImGui::GetIO();
             const float OldScale = m_DrawControls.m_2DMouseScale;
+            auto& io = ImGui::GetIO();
 
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left) || ImGui::IsMouseDown(ImGuiMouseButton_Right))
             {
-                const ImVec2 Delta = io.MouseDelta;
+                const float MouseDeltaX = io.MouseDelta.x;
+                const float MouseDeltaY = io.MouseDelta.y;
+
                 if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
-                    m_DrawControls.m_2DMouseScale -= 8000.0f * io.DeltaTime * (Delta.y * (2.0f / ViewH));
+                {
+                    m_DrawControls.m_2DMouseScale -= 8000.0f * io.DeltaTime * (MouseDeltaY * (2.0f / ViewH));
+                }
                 else
                 {
-                    m_DrawControls.m_2DMouseTranslate.m_X += Delta.x * (2.0f / ViewW);
-                    m_DrawControls.m_2DMouseTranslate.m_Y += Delta.y * (2.0f / ViewH);
+                    m_DrawControls.m_2DMouseTranslate.m_X += MouseDeltaX * (2.0f / ViewW);
+                    m_DrawControls.m_2DMouseTranslate.m_Y += MouseDeltaY * (2.0f / ViewH);
                 }
             }
 
-            const float Wheel = io.MouseWheel;
+            // Wheel scale (E10: Mouse.getValue(WHEEL_REL)[0])
+            const double Wheel = io.MouseWheel;
             m_DrawControls.m_2DMouseScale += static_cast<float>(2000.9f * io.DeltaTime * (Wheel * Wheel * Wheel));
             m_DrawControls.m_2DMouseScale = std::max(m_DrawControls.m_2DMouseScale, 0.1f);
 
-            const ImVec2 Mouse = ImGui::GetMousePos();
-            const ImVec2 WinPos = ImGui::GetWindowPos();
-            const float mx = (((Mouse.x - WinPos.x) / ViewW) - 0.5f) * 2.0f;
-            const float my = (((Mouse.y - WinPos.y) / ViewH) - 0.5f) * 2.0f;
-            if (OldScale > 0.0001f)
-            {
-                m_DrawControls.m_2DMouseTranslate.m_X += (m_DrawControls.m_2DMouseTranslate.m_X - mx) * (m_DrawControls.m_2DMouseScale - OldScale) / OldScale;
-                m_DrawControls.m_2DMouseTranslate.m_Y += (m_DrawControls.m_2DMouseTranslate.m_Y - my) * (m_DrawControls.m_2DMouseScale - OldScale) / OldScale;
-            }
+            // Always zoom from the perspective of the mouse (E10: POS_ABS / MainWindow size)
+            const ImVec2 Origin = ImGui::GetItemRectMin();
+            const ImVec2 Mouse  = ImGui::GetMousePos();
+            const float mx = (((Mouse.x - Origin.x) / ViewW) - 0.5f) * 2.0f;
+            const float my = (((Mouse.y - Origin.y) / ViewH) - 0.5f) * 2.0f;
+            m_DrawControls.m_2DMouseTranslate.m_X += (m_DrawControls.m_2DMouseTranslate.m_X - mx) * (m_DrawControls.m_2DMouseScale - OldScale) / OldScale;
+            m_DrawControls.m_2DMouseTranslate.m_Y += (m_DrawControls.m_2DMouseTranslate.m_Y - my) * (m_DrawControls.m_2DMouseScale - OldScale) / OldScale;
         }
 
         void Draw2D(xgpu::cmd_buffer& CmdBuffer, float ViewW, float ViewH) noexcept
@@ -1141,17 +1146,19 @@ struct mesh_mgr
                 m_Meshes.Render(CmdBuffer, mesh_mgr::model::PLANE_2D);
         }
 
+        // E10 3D input (right-drag orbit, wheel distance, space toggles light follow). LookAt runs in Draw3D.
         void Handle3DInput(float ViewW, float ViewH) noexcept
         {
             if (ViewW <= 1.f || ViewH <= 1.f) return;
-            if (!ImGui::IsWindowHovered()) return;
+            if (!ImGui::IsItemHovered() && !ImGui::IsItemActive()) return;
 
             auto& io = ImGui::GetIO();
             if (ImGui::IsMouseDown(ImGuiMouseButton_Right))
             {
-                const ImVec2 Delta = io.MouseDelta;
-                m_DrawControls.m_3DAngles.m_Pitch.m_Value -= 0.01f * Delta.y;
-                m_DrawControls.m_3DAngles.m_Yaw.m_Value   -= 0.01f * Delta.x;
+                const float MousePosX = io.MouseDelta.x;
+                const float MousePosY = io.MouseDelta.y;
+                m_DrawControls.m_3DAngles.m_Pitch.m_Value -= 0.01f * MousePosY;
+                m_DrawControls.m_3DAngles.m_Yaw.m_Value   -= 0.01f * MousePosX;
             }
 
             if (ImGui::IsKeyPressed(ImGuiKey_Space, false))
@@ -1160,11 +1167,8 @@ struct mesh_mgr
                 m_DrawControls.m_3DFollowCamera = !m_DrawControls.m_3DFollowCamera;
             }
 
-            const float Wheel = io.MouseWheel;
-            m_DrawControls.m_3DDistance += m_DrawControls.m_3DDistance * -0.2f * Wheel;
+            m_DrawControls.m_3DDistance += m_DrawControls.m_3DDistance * -0.2f * io.MouseWheel;
             m_DrawControls.m_3DDistance = std::max(m_DrawControls.m_3DDistance, 0.2f);
-
-            m_DrawControls.m_3DView.LookAt(m_DrawControls.m_3DDistance, m_DrawControls.m_3DAngles, { 0,0,0 });
         }
 
         void Draw3D(xgpu::cmd_buffer& CmdBuffer, float ViewW, float ViewH) noexcept
