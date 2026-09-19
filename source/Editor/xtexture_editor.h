@@ -378,6 +378,9 @@ namespace xtexture_editor
                 , (unsigned long long)m_Document.m_Guid.m_Type.m_Value);
 
             ImGui::SetNextWindowSize(ImVec2(520, 640), ImGuiCond_FirstUseEver);
+            // Same as Level Editor (E29_EditorTabs.h RenderParentEditorDockspace): zero window
+            // padding so the MenuBar strip sits flush on the dockspace with no hairline gap.
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
             // Unclassed peer of Level Editor (see prior docking notes). Always-tab-bar helps
             // tab-switching when several top-level editors share a dock node.
             ImGuiWindowFlags Flags = ImGuiWindowFlags_None;
@@ -468,7 +471,9 @@ namespace xtexture_editor
                 }
             }
             ImGui::End();
+            ImGui::PopStyleVar();
         }
+
     };
 
     inline xeditor::editor_descriptor MakeEditorDescriptor() noexcept
