@@ -421,9 +421,11 @@ namespace xtexture_editor
                 m_bRequestFocus = false;
             }
 
-            // Title is "Name###guid". Normal Begin (compact toolbar), then title-bar offset.
+            // Title is "Name###guid". Tall style for TitleBarHeight, then normal MenuBar.
+            xeditor::PushMainDockTabStyle();
             const bool bVisible = ImGui::Begin(Title, &m_bOpen, Flags);
-            xeditor::ApplyMainDockTabTitleBarOffset();
+            xeditor::PopMainDockTabStyle();
+            xeditor::NormalizeMenuBarAfterTallBegin();
             xeditor::DrawEditorRootTabIcon(m_Preview.m_pDevice, m_Document.m_Guid.m_Type); // every frame
             if (bVisible)
             {
