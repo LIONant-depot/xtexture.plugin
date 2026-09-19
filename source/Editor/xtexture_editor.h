@@ -467,6 +467,7 @@ namespace xtexture_editor
                             // both input and draw — keep Avail (canvas) for both.
                             xgpu::tools::imgui::AddCustomRenderCallback([this, Avail](xgpu::cmd_buffer& CmdBuffer, const ImVec2&, const ImVec2&)
                             {
+                                if (!m_bOpen) return;
                                 m_Preview.Draw(CmdBuffer, Avail.x, Avail.y);
                             });
                         }

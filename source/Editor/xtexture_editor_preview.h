@@ -1094,10 +1094,11 @@ struct mesh_mgr
                 m_Meshes.Render(CmdBuffer, mesh_mgr::model::PLANE_2D);
             }
 
-            if (!m_bHasTexture || !m_BitmapInspector.m_pBitmap) return;
+            const xbitmap* pBitmap = m_BitmapInspector.m_pBitmap;
+            if (!m_bHasTexture || !pBitmap || !pBitmap->isValid()) return;
 
             e10::push_contants PC{};
-            PC.m_Scale.m_X = (m_DrawControls.m_2DMouseScale * 0.01f) / (ViewW / ViewH) * m_BitmapInspector.m_pBitmap->getAspectRatio();
+            PC.m_Scale.m_X = (m_DrawControls.m_2DMouseScale * 0.01f) / (ViewW / ViewH) * pBitmap->getAspectRatio();
             PC.m_Scale.m_Y = (m_DrawControls.m_2DMouseScale * 0.01f);
             PC.m_UVScale = m_DrawOptions.m_UVScale;
             PC.m_Translation = m_DrawControls.m_2DMouseTranslate;
@@ -1119,10 +1120,10 @@ struct mesh_mgr
                 PC.m_ColorMask = xmath::fvec4(0, 0, 1, 0); PC.m_Mode = xmath::fvec4(0, 1, 0, MipMode); break;
             }
 
-            if (m_BitmapInspector.m_pBitmap->getFormat() == xbitmap::format::BC3_81Y0X_NORMAL
+            if (pBitmap->getFormat() == xbitmap::format::BC3_81Y0X_NORMAL
                 && m_DrawOptions.m_DisplayInGammaMode != draw_options::display_gamma_mode::RAW_DATA_INFILE)
                 PC.m_NormalModes = xmath::fvec4(1, 0, 0, 0);
-            else if (m_BitmapInspector.m_pBitmap->getFormat() == xbitmap::format::BC5_8YX_NORMAL
+            else if (pBitmap->getFormat() == xbitmap::format::BC5_8YX_NORMAL
                 && m_DrawOptions.m_DisplayInGammaMode != draw_options::display_gamma_mode::RAW_DATA_INFILE)
                 PC.m_NormalModes = xmath::fvec4(0, 1, 0, 0);
             else
@@ -1135,13 +1136,13 @@ struct mesh_mgr
             case draw_options::display_gamma_mode::GAMMA:   PC.m_ToGamma = m_DrawOptions.m_DisplayGamma; break;
             case draw_options::display_gamma_mode::LINEAR:  PC.m_ToGamma = 1; break;
             case draw_options::display_gamma_mode::RAW_DATA_INFILE:
-                PC.m_ToGamma = (m_BitmapInspector.m_pBitmap->getColorSpace() == xbitmap::color_space::SRGB) ? 2.2f : 1.0f;
+                PC.m_ToGamma = (pBitmap->getColorSpace() == xbitmap::color_space::SRGB) ? 2.2f : 1.0f;
                 break;
             }
 
             m_Materials.SetMaterialInstance(*m_pDevice, CmdBuffer, m_UserMaterial, true, m_DrawOptions.m_bBilinearMode);
             CmdBuffer.setPushConstants(PC);
-            if (m_BitmapInspector.m_pBitmap->isCubemap())
+            if (pBitmap->isCubemap())
                 m_Meshes.Render(CmdBuffer, mesh_mgr::model::EXPLODED_CUBE_2D);
             else
                 m_Meshes.Render(CmdBuffer, mesh_mgr::model::PLANE_2D);
@@ -1175,7 +1176,8 @@ struct mesh_mgr
         void Draw3D(xgpu::cmd_buffer& CmdBuffer, float ViewW, float ViewH) noexcept
         {
             if (!m_pDevice || !m_bGpuReady || ViewW <= 1.f || ViewH <= 1.f) return;
-            if (!m_bHasTexture || !m_BitmapInspector.m_pBitmap) return;
+            const xbitmap* pBitmap = m_BitmapInspector.m_pBitmap;
+            if (!m_bHasTexture || !pBitmap || !pBitmap->isValid()) return;
             m_DrawControls.m_3DView.LookAt(m_DrawControls.m_3DDistance, m_DrawControls.m_3DAngles, { 0,0,0 });
 
             e10::push_contants PC{};
@@ -1196,10 +1198,10 @@ struct mesh_mgr
                 PC.m_ColorMask = xmath::fvec4(0, 0, 1, 0); PC.m_Mode = xmath::fvec4(0, 1, 0, MipMode); break;
             }
 
-            if (m_BitmapInspector.m_pBitmap->getFormat() == xbitmap::format::BC3_81Y0X_NORMAL
+            if (pBitmap->getFormat() == xbitmap::format::BC3_81Y0X_NORMAL
                 && m_DrawOptions.m_DisplayInGammaMode != draw_options::display_gamma_mode::RAW_DATA_INFILE)
                 PC.m_NormalModes = xmath::fvec4(1, 0, 0, 0);
-            else if (m_BitmapInspector.m_pBitmap->getFormat() == xbitmap::format::BC5_8YX_NORMAL
+            else if (pBitmap->getFormat() == xbitmap::format::BC5_8YX_NORMAL
                 && m_DrawOptions.m_DisplayInGammaMode != draw_options::display_gamma_mode::RAW_DATA_INFILE)
                 PC.m_NormalModes = xmath::fvec4(0, 1, 0, 0);
             else
@@ -1213,7 +1215,7 @@ struct mesh_mgr
             case draw_options::display_gamma_mode::GAMMA:   PC.m_ToGamma = m_DrawOptions.m_DisplayGamma; break;
             case draw_options::display_gamma_mode::LINEAR:  PC.m_ToGamma = 1; break;
             case draw_options::display_gamma_mode::RAW_DATA_INFILE:
-                PC.m_ToGamma = (m_BitmapInspector.m_pBitmap->getColorSpace() == xbitmap::color_space::SRGB) ? 2.2f : 1.0f;
+                PC.m_ToGamma = (pBitmap->getColorSpace() == xbitmap::color_space::SRGB) ? 2.2f : 1.0f;
                 break;
             }
 
@@ -1223,8 +1225,8 @@ struct mesh_mgr
             const auto W2C = m_DrawControls.m_3DView.getW2C();
             xmath::fmat4 L2W;
             L2W.setupIdentity();
-            if (m_BitmapInspector.m_pBitmap->isValid())
-                L2W.setupScale(xmath::fvec3{ m_BitmapInspector.m_pBitmap->getAspectRatio(), 1, m_BitmapInspector.m_pBitmap->getAspectRatio() } * 2.0f);
+            if (pBitmap->isValid())
+                L2W.setupScale(xmath::fvec3{ pBitmap->getAspectRatio(), 1, pBitmap->getAspectRatio() } * 2.0f);
 
             auto W2L = L2W;
             W2L = W2L.InverseSRT();
@@ -1237,7 +1239,7 @@ struct mesh_mgr
                 PC.m_NormalModes.m_Z = 1;
 
             CmdBuffer.setPushConstants(PC);
-            if (m_BitmapInspector.m_pBitmap->isCubemap())
+            if (pBitmap->isCubemap())
                 m_Meshes.Render(CmdBuffer, mesh_mgr::model::SPHERE_3D);
             else
                 m_Meshes.Render(CmdBuffer, mesh_mgr::model::CUBE_3D);
