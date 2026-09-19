@@ -19,6 +19,7 @@
 #include <cstring>
 #include <array>
 #include <string>
+#include <format>
 
 namespace xtexture_editor
 {
@@ -144,6 +145,28 @@ namespace xtexture_editor
         std::string Query() noexcept override { auto Err = m_Doc.Save(); return Err.empty() ? "SaveTexture: saved" : Err; }
     };
 
+    // Same shape as save_cmd: UI toolbar and headless TextureEditorCommand both go through here.
+    // Persisting the descriptor is what queues compilation (E10 Compile button behavior).
+    struct compile_cmd : xundo::query_command_base
+    {
+        document&                m_Doc;
+        std::vector<std::string>& m_ValidationErrors;
+        compile_cmd(xundo::system& System, document& Doc, std::vector<std::string>& ValidationErrors) noexcept
+            : query_command_base(System, "CompileTexture", nullptr), m_Doc(Doc), m_ValidationErrors(ValidationErrors) {}
+        const char* getCommandHelp() const noexcept override { return "Validates, saves the descriptor, and triggers compilation. Usage: CompileTexture"; }
+        void RegisterArguments() noexcept override {}
+        std::string Query() noexcept override
+        {
+            m_ValidationErrors.clear();
+            if (!m_Doc.m_pDescriptor) return "CompileTexture: no texture loaded";
+            m_Doc.m_pDescriptor->Validate(m_ValidationErrors);
+            if (!m_ValidationErrors.empty())
+                return std::format("CompileTexture: {} validation error(s)", m_ValidationErrors.size());
+            auto Err = m_Doc.Save();
+            return Err.empty() ? "CompileTexture: saved (compile queued)" : Err;
+        }
+    };
+
     struct undo_cmd : xundo::query_command_base
     {
         undo_cmd(xundo::system& System) noexcept : query_command_base(System, "UndoTexture", nullptr) {}
@@ -170,6 +193,8 @@ namespace xtexture_editor
         set_srgb_cmd             m_SetSRGB;
         set_generate_mips_cmd    m_SetGenerateMips;
         save_cmd                 m_Save;
+        std::vector<std::string> m_ValidationErrors;
+        compile_cmd              m_Compile;
         undo_cmd                 m_UndoCmd;
         redo_cmd                 m_RedoCmd;
         bool                     m_bOpen = true;
@@ -185,13 +210,12 @@ namespace xtexture_editor
             std::make_shared<e10::compilation::historical_entry::log>(
                 e10::compilation::historical_entry::communication{
                     .m_Result = e10::compilation::historical_entry::result::SUCCESS });
-        std::vector<std::string> m_ValidationErrors;
         bool                     m_bReloadPreview = false;
         bool                     m_bCompilationCallbackRegistered = false;
 
         session(xresource::full_guid Guid, e10::library::guid LibraryGuid, xgpu::device* pDevice = nullptr) noexcept
             : m_SetSRGB(m_Undo, m_Document), m_SetGenerateMips(m_Undo, m_Document)
-            , m_Save(m_Undo, m_Document), m_UndoCmd(m_Undo), m_RedoCmd(m_Undo)
+            , m_Save(m_Undo, m_Document), m_Compile(m_Undo, m_Document, m_ValidationErrors), m_UndoCmd(m_Undo), m_RedoCmd(m_Undo)
         {
             m_Document.m_Guid        = Guid;
             m_Document.m_LibraryGuid = LibraryGuid;
@@ -251,18 +275,15 @@ namespace xtexture_editor
         static void ToolbarSave(void* pUser) noexcept
         {
             auto* Self = static_cast<session*>(pUser);
-            Self->m_Document.Save();
+            // Same path as headless TextureEditorCommand -Cmd SaveTexture (not a second Save()).
+            auto _r = Self->m_Undo.Query("SaveTexture"); (void)_r;
         }
 
         static void ToolbarCompile(void* pUser) noexcept
         {
             auto* Self = static_cast<session*>(pUser);
-            // Same as E10 Compile: persist descriptor so the library mgr queues compilation.
-            Self->m_ValidationErrors.clear();
-            if (Self->m_Document.m_pDescriptor)
-                Self->m_Document.m_pDescriptor->Validate(Self->m_ValidationErrors);
-            if (!Self->m_ValidationErrors.empty()) return;
-            Self->m_Document.Save();
+            // Same path as headless TextureEditorCommand -Cmd CompileTexture.
+            auto _r = Self->m_Undo.Query("CompileTexture"); (void)_r;
         }
 
         void TickCompilationFeedback() noexcept
