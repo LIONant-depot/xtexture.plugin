@@ -421,8 +421,10 @@ namespace xtexture_editor
                 m_bRequestFocus = false;
             }
 
-            // Title is "Name###guid" — stable ID. Tab height from main DockSpace style.
+            // Title is "Name###guid". Tall style around Begin so MenuBar clears tall tabs.
+            xeditor::PushMainDockTabStyle();
             const bool bVisible = ImGui::Begin(Title, &m_bOpen, Flags);
+            xeditor::PopMainDockTabStyle();
             xeditor::DrawEditorRootTabIcon(m_Preview.m_pDevice, m_Document.m_Guid.m_Type); // every frame
             if (bVisible)
             {
