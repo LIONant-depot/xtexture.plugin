@@ -177,6 +177,8 @@ namespace xtexture_editor
         xeditor::inspector_panel m_DescriptorInspector{"Texture Descriptor"};
         xeditor::inspector_panel m_ViewerInspector{"Texture Viewer"};
         bool                     m_bInspectorsBound = false;
+        std::string              m_ViewerWindowTitle;
+        std::string              m_DescriptorWindowTitle;
 
         session(xresource::full_guid Guid, e10::library::guid LibraryGuid, xgpu::device* pDevice = nullptr) noexcept
             : m_SetSRGB(m_Undo, m_Document), m_SetGenerateMips(m_Undo, m_Document)
@@ -186,6 +188,11 @@ namespace xtexture_editor
             m_Document.m_LibraryGuid = LibraryGuid;
             if (auto Err = m_Undo.Init({}, false); !Err.empty()) printf("Texture editor session Init: %s\n", Err.c_str());
             m_Document.Load();
+
+            char IdSuffix[40];
+            snprintf(IdSuffix, sizeof(IdSuffix), "##%016llX%016llX", (unsigned long long)Guid.m_Instance.m_Value, (unsigned long long)Guid.m_Type.m_Value);
+            m_ViewerWindowTitle     = std::string("Rendering Options") + IdSuffix;
+            m_DescriptorWindowTitle = std::string("Description") + IdSuffix;
 
             if (pDevice)
             {
@@ -337,10 +344,34 @@ namespace xtexture_editor
                     ImGui::Separator();
                     if (m_bInspectorsBound)
                     {
-                        if (ImGui::CollapsingHeader("Descriptor", ImGuiTreeNodeFlags_DefaultOpen))
-                            m_DescriptorInspector.Show();
-                        if (ImGui::CollapsingHeader("Viewer", ImGuiTreeNodeFlags_DefaultOpen))
+                        // Two real, separately dockable panels rather than CollapsingHeader
+                        // sections - direct user request. Nested dockspace ID is computed via
+                        // ImGui::GetID inside this window's own ID scope, so it's naturally
+                        // unique per open session without hand-baking the guid into a string.
+                        // Default layout (built once - DockBuilderGetNode's own null-check is
+                        // the guard, same pattern E29's own BuildParentEditorDefaultLayout
+                        // uses): rendering options (Viewer) on the LEFT, description
+                        // (Descriptor) on the RIGHT.
+                        const ImGuiID InspectorDockId = ImGui::GetID("TextureEditorInspectorDock");
+                        if (ImGui::DockBuilderGetNode(InspectorDockId) == nullptr)
+                        {
+                            ImGui::DockBuilderAddNode(InspectorDockId, ImGuiDockNodeFlags_DockSpace);
+                            ImGui::DockBuilderSetNodeSize(InspectorDockId, ImGui::GetContentRegionAvail());
+                            ImGuiID LeftId = 0, RightId = 0;
+                            ImGui::DockBuilderSplitNode(InspectorDockId, ImGuiDir_Left, 0.5f, &LeftId, &RightId);
+                            ImGui::DockBuilderDockWindow(m_ViewerWindowTitle.c_str(), LeftId);
+                            ImGui::DockBuilderDockWindow(m_DescriptorWindowTitle.c_str(), RightId);
+                            ImGui::DockBuilderFinish(InspectorDockId);
+                        }
+                        ImGui::DockSpace(InspectorDockId, ImGui::GetContentRegionAvail());
+
+                        if (ImGui::Begin(m_ViewerWindowTitle.c_str()))
                             m_ViewerInspector.Show();
+                        ImGui::End();
+
+                        if (ImGui::Begin(m_DescriptorWindowTitle.c_str()))
+                            m_DescriptorInspector.Show();
+                        ImGui::End();
                     }
                 }
                 else
