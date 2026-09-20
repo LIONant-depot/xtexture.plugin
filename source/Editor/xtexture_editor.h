@@ -3,6 +3,7 @@
 #define XTEXTURE_EDITOR_H
 
 #pragma once
+#include "dependencies/xeditor/include/xeditor/full_editor_shell.h"
 #include "dependencies/xeditor/include/xeditor/host.h"
 
 
@@ -823,7 +824,8 @@ namespace xtexture_editor
 
 
 
-            ImGui::SetNextWindowSize(ImVec2(520, 640), ImGuiCond_FirstUseEver);
+            xeditor::SetNextPeerEditorDockedInMainHost(ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(520, 640), ImGuiCond_FirstUseEver);
 
             // Same as Level Editor (E29_EditorTabs.h RenderParentEditorDockspace): zero window
 
