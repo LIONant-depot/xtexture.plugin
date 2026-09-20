@@ -3,6 +3,7 @@
 #define XTEXTURE_EDITOR_H
 
 #pragma once
+#include "dependencies/xeditor/include/xeditor/host.h"
 
 
 
@@ -1020,9 +1021,7 @@ namespace xtexture_editor
                 }
 
             }
-
             ImGui::End();
-
             ImGui::PopStyleVar();
 
         }
