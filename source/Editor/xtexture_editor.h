@@ -28,6 +28,8 @@
 
 #include "source/Tools/Editor/xeditor_resource_tab.h"
 
+#include "source/Tools/Editor/xeditor_resource_editor.h"
+
 #include "Plugins/xtexture.plugin/source/Editor/xtexture_editor_preview.h"
 
 #include "Plugins/xtexture.plugin/source/xtexture_xgpu_rsc_loader.h"
@@ -308,7 +310,7 @@ namespace xtexture_editor
 
 
 
-    // Same shape as save_cmd: UI toolbar and headless TextureEditorCommand both go through here.
+    // Same shape as save_cmd: UI toolbar and headless ResourceEditorCommand both go through here.
 
     // Persisting the descriptor is what queues compilation (E10 Compile button behavior).
 
@@ -390,7 +392,7 @@ namespace xtexture_editor
 
     //--------------------------------------------------------------------------------------------
 
-    struct session
+    struct session : xeditor::resource_editor
 
     {
 
@@ -411,10 +413,6 @@ namespace xtexture_editor
         undo_cmd                 m_UndoCmd;
 
         redo_cmd                 m_RedoCmd;
-
-        bool                     m_bOpen = true;
-
-        bool                     m_bRequestFocus = false;
 
         preview::runtime         m_Preview{};
 
@@ -496,7 +494,13 @@ namespace xtexture_editor
 
 
 
-        ~session() noexcept
+        xeditor::IDocument&     getDocument() noexcept override { return m_Document; }
+
+        xundo::system&          getUndo()     noexcept override { return m_Undo; }
+
+        bool                    isLoaded() const noexcept override { return m_Document.m_pDescriptor != nullptr; }
+
+        ~session() noexcept override
 
         {
 
@@ -568,7 +572,7 @@ namespace xtexture_editor
 
             auto* Self = static_cast<session*>(pUser);
 
-            // Same path as headless TextureEditorCommand -Cmd SaveTexture (not a second Save()).
+            // Same path as headless ResourceEditorCommand -Cmd SaveTexture (not a second Save()).
 
             auto _r = Self->m_Undo.Query("SaveTexture"); (void)_r;
 
@@ -582,7 +586,7 @@ namespace xtexture_editor
 
             auto* Self = static_cast<session*>(pUser);
 
-            // Same path as headless TextureEditorCommand -Cmd CompileTexture.
+            // Same path as headless ResourceEditorCommand -Cmd CompileTexture.
 
             auto _r = Self->m_Undo.Query("CompileTexture"); (void)_r;
 
@@ -788,19 +792,7 @@ namespace xtexture_editor
 
 
 
-        void Focus() noexcept
-
-        {
-
-            m_bOpen = true;
-
-            m_bRequestFocus = true;
-
-        }
-
-
-
-        void Render() noexcept
+        void Render() noexcept override
 
         {
 
@@ -1052,6 +1044,12 @@ namespace xtexture_editor
 
 
     inline const xeditor::auto_register g_Registration{ MakeEditorDescriptor() };
+
+    inline const xeditor::auto_register_resource_editor g_SessionRegistration
+    { xrsc::texture_type_guid_v
+    , [](xresource::full_guid Guid, e10::library::guid LibraryGuid, xgpu::device* pDevice) -> std::unique_ptr<xeditor::resource_editor>
+      { return std::make_unique<session>(Guid, LibraryGuid, pDevice); }
+    };
 
 }
 
