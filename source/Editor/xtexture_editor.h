@@ -34,7 +34,7 @@
 
 #include "Plugins/xtexture.plugin/source/xtexture_rsc_descriptor.h"
 
-#include "source/Examples/E10_TextureResourcePipeline/E10_AssetMgr.h"
+#include "dependencies/xresource_pipeline_v2/source/editor/E10_AssetMgr.h"
 
 #include "imgui.h"
 
