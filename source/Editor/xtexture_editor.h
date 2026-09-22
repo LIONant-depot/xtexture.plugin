@@ -33,8 +33,11 @@
 #include "source/Tools/Editor/xeditor_descriptor_editor.h"
 
 #include "source/Tools/Editor/xeditor_camera.h"
+#include "source/Tools/Editor/xeditor_thumbnail.h"
+#include "source/Tools/Editor/xeditor_thumbnail_cache.h"
 
 #include "Plugins/xtexture.plugin/source/Editor/xtexture_editor_preview.h"
+#include "Plugins/xtexture.plugin/source/Editor/xtexture_thumbnail.h"
 
 #include "Plugins/xtexture.plugin/source/xtexture_xgpu_rsc_loader.h"
 
