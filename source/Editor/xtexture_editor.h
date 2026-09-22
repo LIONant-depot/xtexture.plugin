@@ -320,6 +320,7 @@ namespace xtexture_editor
         // The generic commands every editor has (the texture ones above keep working): any descriptor property, the preview settings, the camera, how the compile went
         xeditor::descriptor_cmds::set_property_cmd      m_SetProperty;
         xeditor::descriptor_cmds::snapshot_edit_cmd     m_SnapshotEdit;
+        xeditor::descriptor_cmds::list_op_cmd           m_ListOp;
         xeditor::descriptor_cmds::list_properties_cmd   m_ListProperties;
         xeditor::document_cmds::save_cmd                m_GenericSave;
         xeditor::document_cmds::compile_cmd             m_GenericCompile;
@@ -362,7 +363,7 @@ namespace xtexture_editor
             : m_SetSRGB(m_Undo, m_Document), m_SetGenerateMips(m_Undo, m_Document)
 
             , m_Save(m_Undo, m_Document), m_Compile(m_Undo, m_Document, m_ValidationErrors), m_UndoCmd(m_Undo), m_RedoCmd(m_Undo)
-            , m_SetProperty(m_Undo, m_Document), m_SnapshotEdit(m_Undo, m_Document), m_ListProperties(m_Undo, m_Document)
+            , m_SetProperty(m_Undo, m_Document), m_SnapshotEdit(m_Undo, m_Document), m_ListOp(m_Undo, m_Document), m_ListProperties(m_Undo, m_Document)
             , m_GenericSave(m_Undo, m_Document), m_GenericCompile(m_Undo, m_Document, m_ValidationErrors), m_GenericUndo(m_Undo), m_GenericRedo(m_Undo)
             , m_SetPreview(m_Undo, [this] { return std::vector<xeditor::cmd_util::property_target>{ { xproperty::getObject(m_Preview.m_DrawControls), &m_Preview.m_DrawControls }, { xproperty::getObject(m_Preview.m_DrawOptions), &m_Preview.m_DrawOptions } }; })
             , m_ListPreview(m_Undo, [this] { return std::vector<xeditor::cmd_util::property_target>{ { xproperty::getObject(m_Preview.m_DrawControls), &m_Preview.m_DrawControls }, { xproperty::getObject(m_Preview.m_DrawOptions), &m_Preview.m_DrawOptions } }; })

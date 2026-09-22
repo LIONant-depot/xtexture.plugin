@@ -19,6 +19,7 @@ Run as `<resource name>\<Command>` (see `list`) or `ResourceEditorCommand -Asset
 |---|---|
 | `ListProperties [-Filter text]` | every descriptor property with its value: the paths `SetProperty` takes, e.g. `Texture/Mipmaps/GenerateMips` |
 | `SetProperty -Path -Value [-Before]`, `SnapshotEdit` | any descriptor property (undoable); an enum takes its item name |
+| `ListOp -Path -Op Insert\|Delete\|Move -Index n [-ToIndex n]` | inserts, deletes or moves an element in the middle of a 1D array property (undoable); ordinal keys only |
 | `SetSRGB -Value`, `SetGenerateMips -Value` | the two properties the window has shortcuts for (undoable) |
 | `Save`, `Compile` (also `SaveTexture`, `CompileTexture`) | save the descriptor; validate, save and queue the compile |
 | `Undo`, `Redo` (also `UndoTexture`, `RedoTexture`) | |
