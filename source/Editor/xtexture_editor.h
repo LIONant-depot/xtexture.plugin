@@ -30,6 +30,10 @@
 
 #include "source/Tools/Editor/xeditor_resource_editor.h"
 
+#include "source/Tools/Editor/xeditor_descriptor_editor.h"
+
+#include "source/Tools/Editor/xeditor_camera.h"
+
 #include "Plugins/xtexture.plugin/source/Editor/xtexture_editor_preview.h"
 
 #include "Plugins/xtexture.plugin/source/xtexture_xgpu_rsc_loader.h"
@@ -60,112 +64,9 @@ namespace xtexture_editor
 
     //--------------------------------------------------------------------------------------------
 
-    struct document : xeditor::IDocument
-
+    // The shared descriptor document: the paths, load and save, and the whole-file snapshots the generic commands undo with
+    struct document : xeditor::descriptor_document
     {
-
-        xresource::full_guid                                   m_Guid          = {};
-
-        e10::library::guid                                     m_LibraryGuid   = {};
-
-        std::wstring                                            m_DescriptorPath;
-
-        std::unique_ptr<xresource_pipeline::descriptor::base>   m_pDescriptor;
-
-        bool                                                     m_bDirty       = false;
-
-
-
-        xresource::full_guid getGuid() const noexcept override { return m_Guid; }
-
-        std::string getDisplayName() const noexcept override
-
-        {
-
-            std::string Name;
-
-            e10::g_LibMgr.getNodeInfo(m_LibraryGuid, m_Guid, [&](e10::library_db::info_node& N){ Name = N.m_Info.m_Name; });
-
-            return Name.empty() ? std::string("<texture>") : Name;
-
-        }
-
-
-
-        bool Load() noexcept override
-
-        {
-
-            e10::g_LibMgr.getNodeInfo(m_LibraryGuid, m_Guid, [&](e10::library_db::info_node& NodeInfo)
-
-            {
-
-                m_DescriptorPath = NodeInfo.m_Path;
-
-                // Case-insensitive Info.txt -> Descriptor.txt (Cache uses Info.txt).
-
-                for (size_t i = 0; i + 8 <= m_DescriptorPath.size(); ++i)
-
-                {
-
-                    auto Eq = true;
-
-                    const wchar_t* From = L"info.txt";
-
-                    for (size_t j = 0; j < 8; ++j)
-
-                        if (towlower(m_DescriptorPath[i + j]) != From[j]) { Eq = false; break; }
-
-                    if (Eq) { m_DescriptorPath.replace(i, 8, L"Descriptor.txt"); break; }
-
-                }
-
-            });
-
-            if (m_DescriptorPath.empty()) return false;
-
-
-
-            m_pDescriptor = xresource_pipeline::factory_base::Find(std::string_view{ "Texture" })->CreateDescriptor();
-
-            xproperty::settings::context Context;
-
-            if (auto Err = m_pDescriptor->Serialize(true, m_DescriptorPath, Context); Err)
-
-                return false;
-
-            m_bDirty = false;
-
-            return true;
-
-        }
-
-
-
-        std::string Save() noexcept override
-
-        {
-
-            if (!m_pDescriptor) return "Texture editor: no descriptor loaded";
-
-            xproperty::settings::context Context;
-
-            if (auto Err = m_pDescriptor->Serialize(false, m_DescriptorPath, Context); Err)
-
-                return std::string(Err.getMessage());
-
-            e10::g_LibMgr.MakeDescriptorDirty({ m_LibraryGuid.m_Instance }, m_Guid);
-
-            m_bDirty = false;
-
-            return {};
-
-        }
-
-
-
-        bool isDirty() const noexcept override { return m_bDirty; }
-
     };
 
 
@@ -416,6 +317,20 @@ namespace xtexture_editor
 
         preview::runtime         m_Preview{};
 
+        // The generic commands every editor has (the texture ones above keep working): any descriptor property, the preview settings, the camera, how the compile went
+        xeditor::descriptor_cmds::set_property_cmd      m_SetProperty;
+        xeditor::descriptor_cmds::snapshot_edit_cmd     m_SnapshotEdit;
+        xeditor::descriptor_cmds::list_properties_cmd   m_ListProperties;
+        xeditor::document_cmds::save_cmd                m_GenericSave;
+        xeditor::document_cmds::compile_cmd             m_GenericCompile;
+        xeditor::document_cmds::undo_cmd                m_GenericUndo;
+        xeditor::document_cmds::redo_cmd                m_GenericRedo;
+        xeditor::set_preview_multi_cmd                  m_SetPreview;
+        xeditor::list_preview_multi_cmd                 m_ListPreview;
+        xeditor::camera_cmds                            m_Camera3D;
+        xeditor::view2d_cmd                             m_SetView;
+        xeditor::document_cmds::compile_status_cmd      m_CompileStatus;
+
         xeditor::inspector_panel m_DescriptorInspector{"Texture Descriptor"};
 
         xeditor::inspector_panel m_ViewerInspector{"Texture Viewer"};
@@ -447,6 +362,13 @@ namespace xtexture_editor
             : m_SetSRGB(m_Undo, m_Document), m_SetGenerateMips(m_Undo, m_Document)
 
             , m_Save(m_Undo, m_Document), m_Compile(m_Undo, m_Document, m_ValidationErrors), m_UndoCmd(m_Undo), m_RedoCmd(m_Undo)
+            , m_SetProperty(m_Undo, m_Document), m_SnapshotEdit(m_Undo, m_Document), m_ListProperties(m_Undo, m_Document)
+            , m_GenericSave(m_Undo, m_Document), m_GenericCompile(m_Undo, m_Document, m_ValidationErrors), m_GenericUndo(m_Undo), m_GenericRedo(m_Undo)
+            , m_SetPreview(m_Undo, [this] { return std::vector<xeditor::cmd_util::property_target>{ { xproperty::getObject(m_Preview.m_DrawControls), &m_Preview.m_DrawControls }, { xproperty::getObject(m_Preview.m_DrawOptions), &m_Preview.m_DrawOptions } }; })
+            , m_ListPreview(m_Undo, [this] { return std::vector<xeditor::cmd_util::property_target>{ { xproperty::getObject(m_Preview.m_DrawControls), &m_Preview.m_DrawControls }, { xproperty::getObject(m_Preview.m_DrawOptions), &m_Preview.m_DrawOptions } }; })
+            , m_Camera3D(m_Undo, { &m_Preview.m_DrawControls.m_3DAngles, &m_Preview.m_DrawControls.m_3DDistance, nullptr, [this] { m_Preview.m_DrawControls.m_3DAngles = {}; m_Preview.m_DrawControls.m_3DDistance = 2; } })
+            , m_SetView(m_Undo, { { "image", { &m_Preview.m_DrawControls.m_2DMouseScale, &m_Preview.m_DrawControls.m_2DMouseTranslate.m_X, &m_Preview.m_DrawControls.m_2DMouseTranslate.m_Y } } })
+            , m_CompileStatus(m_Undo, m_Document, m_CompilationLog, m_ValidationErrors)
 
         {
 
@@ -455,6 +377,8 @@ namespace xtexture_editor
             m_Document.m_LibraryGuid = LibraryGuid;
 
             if (auto Err = m_Undo.Init({}, false); !Err.empty()) printf("Texture editor session Init: %s\n", Err.c_str());
+
+            m_Document.m_OnReplaced = [this] { BindInspectors(); };
 
             m_Document.Load();
 
@@ -670,7 +594,7 @@ namespace xtexture_editor
 
             const bool bMips = Name.find("GenerateMips") != std::string::npos;
 
-            if (!bSRGB && !bMips) return;
+            if (!bSRGB && !bMips) { xeditor::ReportDescriptorEdit(m_Undo, m_Document, Cmd); return; }
 
 
 
