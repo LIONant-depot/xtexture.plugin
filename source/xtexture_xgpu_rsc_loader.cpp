@@ -18,17 +18,23 @@ xresource::loader< xrsc::texture_type_guid_v >::data_type* xresource::loader< xr
     xbitmap*        pBitmap     = nullptr;
     std::wstring    Path        = Mgr.getResourcePath(GUID, type_name_v);
 
-    // Load the xbitmap
+    // Load the xbitmap. A missing/not-yet-compiled resource is an expected, recoverable case (confirmed
+    // live: the thumbnail system eagerly requests a Load for every texture merely SCROLLED into view, so a
+    // fresh clone with nothing compiled yet hits this on the very first frame) - every caller already
+    // handles getResource() returning null (this loader's own doc comment, the inspector picker, the
+    // thumbnail renderer), so return null instead of asserting-then-dereferencing pBitmap anyway (a crash
+    // in a debug build via ucrtbased's own assert, silent undefined behaviour in Release).
     xserializer::stream Stream;
     if (auto Err = Stream.Load(Path, pBitmap); Err)
     {
-        assert(false);
+        return nullptr;
     }
 
     // Create the actual texture
     if (auto Err = xgpu::tools::bitmap::Create(*Texture, UserData.m_Device, *pBitmap); Err)
     {
-        assert(false);
+        xserializer::default_memory_handler_v.Free( xserializer::mem_type{ .m_bUnique = true }, pBitmap);
+        return nullptr;
     }
 
     // Free the bitmap
