@@ -1,5 +1,5 @@
 
-#include "../../tools/xgpu_xcore_bitmap_helpers.h"
+#include "dependencies/xGPU/source/Tools/xgpu_xcore_bitmap_helpers.h"
 #include "dependencies/xbitmap/source/xbitmap.h"
 #include "dependencies/xbitmap/source/bridges/xserializer/xbitmap_to_xserializer.h"
 #include "dependencies/xresource_guid/source/bridges/xresource_xproperty_bridge.h"
