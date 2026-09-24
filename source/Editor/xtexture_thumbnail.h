@@ -144,7 +144,14 @@ namespace xtexture
             auto Samplers = std::array{ xgpu::pipeline::sampler{} };
             if (!Ok(Device.Create(m_CubePipeline, { .m_VertexDescriptor = m_CubeVD, .m_Shaders = Shaders, .m_PushConstantsSize = sizeof(cube_push_const)
                 , .m_Samplers = Samplers
-                , .m_Primitive = { .m_Cull = xgpu::pipeline::primitive::cull::BACK }
+                // FRONT, not BACK: Draw()'s m_L2C premultiplies a Y-axis mirror (fromScale({1,-1,1}), to
+                // cancel the shared readback's own vertical flip - see its own comment), which reverses the
+                // winding the rasterizer sees. Culling BACK after that mirror discarded every triangle -
+                // exact same "clear colour only, draw contributed zero pixels" signature already diagnosed
+                // for the flat-quad path above, just not caught here since it isn't a degenerate case (a
+                // solid cube, unlike a full-screen quad, does need real culling - NONE would let overdrawn
+                // back faces win arbitrarily since depth-test is off).
+                , .m_Primitive = { .m_Cull = xgpu::pipeline::primitive::cull::FRONT }
                 , .m_DepthStencil = { .m_bDepthTestEnable = false }   // same colour-only, no-depth-attachment render target as the quad path
                 }))) return false;
 
