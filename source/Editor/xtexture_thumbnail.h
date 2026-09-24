@@ -8,7 +8,19 @@
 // live: VUID-vkCmdDrawIndexed-viewType-07752, a CUBE image view against a plain sampler2D) - it gets its
 // own small cube mesh + the e10_3d_cube_vert/frag.glsl pair E10_TextureResourcePipeline already ships
 // (a samplerCube debug-view shader, reused here instead of authoring a new one), viewed from a fixed angle.
+//
+// Owns its own small offscreen colour render target and render pass (built once in Init(), reused every
+// call) and its own deferred GPU readback - see xeditor_thumbnail.h's contract comment for why (each
+// renderer is now fully self-contained; the shared cache only serializes the finished bitmap it hands
+// back). xtexture_editor_preview.h's own interactive runtime was considered for reuse here (the same
+// "thumbnail just drives the interactive preview's own runtime, headless" pattern GeomStatic uses) but
+// it loads its texture by re-parsing a descriptor PATH into a raw xbitmap (LoadFromDescriptorPath - a
+// different, heavier load than a GUID-based xresource_mgr reference), not by the guid-ref LRU pattern
+// every other thumbnail renderer here uses - reusing it would mean bypassing the resource manager
+// entirely (no ref-counting, a full re-read from disk on every generation) instead of a small, focused
+// mismatch, so this keeps its own compact pipeline instead, same as before.
 #include "source/Tools/Editor/xeditor_thumbnail.h"
+#include "source/Tools/Editor/xeditor_thumbnail_camera_fit.h"
 #include "source/Tools/Editor/xeditor_resource_editor.h"
 #include "source/Tools/xgpu_view.h"
 #include "source/xGPU.h"
@@ -51,6 +63,8 @@ namespace xtexture
     class thumbnail_renderer final : public xeditor::thumbnail_renderer
     {
     public:
+        static constexpr int s_CellPixels = 128;   // matches xeditor_thumbnail_cache::s_CellPixels - fixed by this whole feature's own design
+
         bool Init(xgpu::device& Device) noexcept override
         {
             if (m_bReady) return true;
@@ -112,6 +126,15 @@ namespace xtexture
 
             if (!InitCube(Device)) return false;
 
+            // The render target every generation draws into, and the pass that clears+draws into it -
+            // built once, reused every call (a persistent renderer only ever works on one guid at a time,
+            // see Render()'s own comment).
+            if (!Ok(Device.Create(m_ColorTarget, { .m_Format = xgpu::texture::format::R8G8B8A8_UNORM, .m_Width = s_CellPixels, .m_Height = s_CellPixels, .m_isGamma = false }))) return false;
+            {
+                std::array<xgpu::renderpass::attachment, 1> Attachments{ { m_ColorTarget } };
+                if (!Ok(Device.Create(m_Pass, { .m_Attachments = Attachments }))) return false;
+            }
+
             m_bReady = true;
             return true;
         }
@@ -144,13 +167,10 @@ namespace xtexture
             auto Samplers = std::array{ xgpu::pipeline::sampler{} };
             if (!Ok(Device.Create(m_CubePipeline, { .m_VertexDescriptor = m_CubeVD, .m_Shaders = Shaders, .m_PushConstantsSize = sizeof(cube_push_const)
                 , .m_Samplers = Samplers
-                // FRONT, not BACK: Draw()'s m_L2C premultiplies a Y-axis mirror (fromScale({1,-1,1}), to
-                // cancel the shared readback's own vertical flip - see its own comment), which reverses the
-                // winding the rasterizer sees. Culling BACK after that mirror discarded every triangle -
-                // exact same "clear colour only, draw contributed zero pixels" signature already diagnosed
-                // for the flat-quad path above, just not caught here since it isn't a degenerate case (a
-                // solid cube, unlike a full-screen quad, does need real culling - NONE would let overdrawn
-                // back faces win arbitrarily since depth-test is off).
+                // FRONT, not BACK: the cube is drawn straight through the camera's own W2C (no extra
+                // mirror baked in any more, see Render()'s own comment on why the flip disappeared
+                // entirely) - front-facing winding needs FRONT culling here for the same reason it always
+                // did; NONE would let overdrawn back faces win arbitrarily since depth-test is off.
                 , .m_Primitive = { .m_Cull = xgpu::pipeline::primitive::cull::FRONT }
                 , .m_DepthStencil = { .m_bDepthTestEnable = false }   // same colour-only, no-depth-attachment render target as the quad path
                 }))) return false;
@@ -189,20 +209,49 @@ namespace xtexture
             return true;
         }
 
-        bool Draw(xgpu::device& Device, xgpu::cmd_buffer& CmdBuffer, xresource::full_guid Guid) noexcept override
+        // Polled once per tick (see xeditor_thumbnail.h's contract) until it returns true with OutBitmap
+        // filled in. Serialized to one guid at a time (m_ColorTarget is a single reused render target, not
+        // one per in-flight guid) - a call for a different guid while still busy just says "not yet".
+        bool Render(xgpu::device& Device, xgpu::window& Window, xresource::full_guid Guid, xbitmap& OutBitmap) noexcept override
         {
             if (!m_bReady) return false;
+
+            if (m_bBusy)
+            {
+                if (m_BusyGuid != Guid) return false;              // busy with someone else - try again later
+                if (!m_bReadbackDone) return false;                // still waiting for this frame's PageFlip
+                m_bBusy = false;
+                if (m_ReadbackWidth != s_CellPixels || m_ReadbackHeight != s_CellPixels) return false;
+                FillBitmap(OutBitmap, m_ReadbackPixels, m_bBusyWasCube);
+                return true;
+            }
+
             auto* pTexture = Reference(Guid);
             if (!pTexture) return false;
 
-            if (pTexture->isCubemap()) return DrawCube(Device, CmdBuffer, *pTexture);
+            m_bBusyWasCube = pTexture->isCubemap();
+            {
+                // cmd_buffer's own destructor ends the render pass (same RAII shape E22_FramebufferTarget.cpp
+                // relies on) - scoped so it ends BEFORE the readback below is requested.
+                auto CmdBuffer = Window.StartRenderPass(m_Pass);
+                if (m_bBusyWasCube) DrawCube(Device, CmdBuffer, *pTexture);
+                else                DrawQuad(Device, CmdBuffer, *pTexture);
+            }
 
+            (void)Window.ReadbackTexture(m_ColorTarget, m_ReadbackPixels, m_ReadbackWidth, m_ReadbackHeight, m_bReadbackDone);
+            m_bBusy    = true;
+            m_BusyGuid = Guid;
+            return false;
+        }
+
+        void DrawQuad(xgpu::device& Device, xgpu::cmd_buffer& CmdBuffer, xgpu::texture& Texture) noexcept
+        {
             // The pipeline_instance binds THIS texture's sampler, so it's per-resource - built fresh each
             // call rather than cached (thumbnail generation is already rate-limited/rare), then handed to
             // the device's death-march queue (DestroyGpu's own rule: never just drop a live GPU object).
             xgpu::pipeline_instance Instance;
-            auto Bindings = std::array{ xgpu::pipeline_instance::sampler_binding{ *pTexture } };
-            if (!Ok(Device.Create(Instance, { .m_PipeLine = m_Pipeline, .m_SamplersBindings = Bindings }))) return false;
+            auto Bindings = std::array{ xgpu::pipeline_instance::sampler_binding{ Texture } };
+            if (!Ok(Device.Create(Instance, { .m_PipeLine = m_Pipeline, .m_SamplersBindings = Bindings }))) return;
 
             thumb_push_const PushConst{ .m_L2C = xmath::fmat4::fromIdentity() };
             CmdBuffer.setPipelineInstance(Instance);
@@ -212,14 +261,13 @@ namespace xtexture
             CmdBuffer.Draw(6);
 
             xeditor::DestroyGpu(&Device, Instance);
-            return true;
         }
 
-        bool DrawCube(xgpu::device& Device, xgpu::cmd_buffer& CmdBuffer, xgpu::texture& Texture) noexcept
+        void DrawCube(xgpu::device& Device, xgpu::cmd_buffer& CmdBuffer, xgpu::texture& Texture) noexcept
         {
             xgpu::pipeline_instance Instance;
             auto Bindings = std::array{ xgpu::pipeline_instance::sampler_binding{ Texture } };
-            if (!Ok(Device.Create(Instance, { .m_PipeLine = m_CubePipeline, .m_SamplersBindings = Bindings }))) return false;
+            if (!Ok(Device.Create(Instance, { .m_PipeLine = m_CubePipeline, .m_SamplersBindings = Bindings }))) return;
 
             // Fixed 3/4 angle, non-interactive (a thumbnail, not a viewer). The bounding-SPHERE distance
             // (half-extent*sqrt(3) / sin(halfFOV)) is only a conservative upper bound - a cube's own
@@ -227,12 +275,8 @@ namespace xtexture
             // sphere, so that bound alone still left visible margin (confirmed live, twice: "still not
             // maximizing the viewport"). Since the viewing angle here is FIXED (not user-orbitable), the
             // exact tightest-fit distance for THIS specific angle can be solved directly instead of settling
-            // for the angle-agnostic conservative one: project the cube's 8 corners through a reference view
-            // at an arbitrary distance, find how far the worst corner lands outside the [-1,1] NDC frame, and
-            // scale distance by exactly that factor - perspective NDC extent scales as ~1/Distance once
-            // Distance is much larger than the object (true here, checked: an 8x reference distance keeps
-            // the linear approximation well under a pixel of error at 128x128), so one scale-and-done pass
-            // is enough, no iteration needed.
+            // for the angle-agnostic conservative one - see xeditor_thumbnail_camera_fit.h, which this and
+            // every other 3D-camera thumbnail renderer share the same math from.
             constexpr float HalfExtent = 0.35f;   // InitCube's Size{0.7,0.7,0.7} / 2 - Generate's Size is a FULL side length (its own StartPos = Size * -0.5f)
             xmath::radian3 Angles;
             Angles.m_Pitch = -30_xdeg;
@@ -245,29 +289,21 @@ namespace xtexture
             xgpu::tools::view View;
             View.setFov(10_xdeg);
             View.setAspect(1.0f);
-            View.setViewport({ 0, 0, 128, 128 });   // matches xeditor_thumbnail_cache::s_CellPixels - fixed by this whole feature's own design
+            View.setViewport({ 0, 0, s_CellPixels, s_CellPixels });
 
-            float Distance;
-            {
-                constexpr float RefDistance = 100.0f * HalfExtent;   // far enough that the 1/Distance approximation below is accurate to well under a pixel
-                View.LookAt(RefDistance, Angles, { 0,0,0 });
-                const auto& RefW2C = View.getW2C();
-                float MaxNdc = 0.0f;
-                for (float sx : { -1.0f, 1.0f }) for (float sy : { -1.0f, 1.0f }) for (float sz : { -1.0f, 1.0f })
-                {
-                    const auto Clip = RefW2C * xmath::fvec4{ sx * HalfExtent, sy * HalfExtent, sz * HalfExtent, 1.0f };
-                    MaxNdc = std::max({ MaxNdc, std::fabs(Clip.m_X / Clip.m_W), std::fabs(Clip.m_Y / Clip.m_W) });
-                }
-                Distance = RefDistance * MaxNdc;   // the exact scale that brings the worst corner to the frame's edge
-            }
+            const xmath::fvec3 Half{ HalfExtent, HalfExtent, HalfExtent };
+            const float Distance = xeditor::ComputeTightFitDistance(View, Angles, { 0,0,0 }, -Half, Half);
             View.LookAt(Distance, Angles, { 0,0,0 });
 
             cube_push_const PushConst{};
-            // The generic vertical flip in xeditor_thumbnail_cache.h's readback path (needed and confirmed
-            // correct for the flat quad path) flips this 3D camera render the wrong way relative to it -
-            // cancel that out here by flipping the already-projected clip-space Y before it ever reaches
-            // the rasterizer, rather than touching the shared readback code every other type also uses.
-            PushConst.m_L2C = xmath::fmat4::fromScale({ 1,-1,1 }) * View.getW2C();
+            // No manual Y-mirror here any more: that used to cancel out the shared cache's own CPU-side
+            // readback flip (xeditor_thumbnail_cache.h's old PollInFlight), which every 3D-camera render
+            // needed to counteract but the flat quad above did not (see xeditor_thumbnail.h's own contract
+            // comment) - since this renderer now converts its OWN readback into a bitmap (FillBitmap below),
+            // the fix is simpler than replacing the trick with a shared helper: a camera render just skips
+            // the CPU flip entirely instead (two flips or zero flips land on the same correct image; one
+            // flip does not), so there is nothing left to bake into this matrix at all.
+            PushConst.m_L2C = View.getW2C();
             CmdBuffer.setPipelineInstance(Instance);
             CmdBuffer.setPushConstants(PushConst);
             CmdBuffer.setBuffer(m_CubeVertexBuffer);
@@ -275,7 +311,6 @@ namespace xtexture
             CmdBuffer.Draw(m_CubeIndexCount);
 
             xeditor::DestroyGpu(&Device, Instance);
-            return true;
         }
 
     private:
@@ -286,9 +321,27 @@ namespace xtexture
             return false;
         }
 
+        // The flat quad's own vertex data was hand-tuned against a CPU row-flip (confirmed pixel-for-pixel
+        // against the source image); the cube (and every other camera-based renderer) needs no flip at all
+        // - see DrawCube's own comment.
+        static void FillBitmap(xbitmap& Bmp, const std::vector<std::uint32_t>& Pixels, bool bIsCube) noexcept
+        {
+            Bmp.CreateBitmap(s_CellPixels, s_CellPixels);
+            auto Dst = Bmp.getMip<xcolori>(0);
+            if (bIsCube)
+            {
+                std::memcpy(Dst.data(), Pixels.data(), Pixels.size() * sizeof(std::uint32_t));
+            }
+            else
+            {
+                for (int y = 0; y < s_CellPixels; ++y)
+                    std::memcpy(Dst.data() + y * s_CellPixels, Pixels.data() + (s_CellPixels - 1 - y) * s_CellPixels, s_CellPixels * sizeof(std::uint32_t));
+            }
+        }
+
         // Keeps the texture loaded for a little while after its last thumbnail request - a render just
         // recorded here is only actually consumed by the GPU (and, further out, read back) several frames
-        // later, so releasing the reference the moment Draw returns could free the texture out from under an
+        // later, so releasing the reference the instant Draw returns could free the texture out from under an
         // in-flight render. Mirrors xeditor_texture_thumbnails.h's own LRU-by-GUID exactly, for the same reason.
         xgpu::texture* Reference(const xresource::full_guid& Guid) noexcept
         {
@@ -321,6 +374,19 @@ namespace xtexture
         xgpu::pipeline                                                m_CubePipeline;
         xgpu::buffer                                                  m_CubeVertexBuffer, m_CubeIndexBuffer;
         int                                                            m_CubeIndexCount = 0;
+
+        // This renderer's own offscreen target/pass and its deferred-readback state (see Render()'s own
+        // comment for the one-guid-at-a-time serialization this implies).
+        xgpu::texture                                                 m_ColorTarget;
+        xgpu::renderpass                                              m_Pass;
+        bool                                                          m_bBusy          = false;
+        bool                                                          m_bBusyWasCube   = false;
+        xresource::full_guid                                          m_BusyGuid       {};
+        std::vector<std::uint32_t>                                    m_ReadbackPixels;
+        int                                                            m_ReadbackWidth  = 0;
+        int                                                            m_ReadbackHeight = 0;
+        bool                                                           m_bReadbackDone  = false;
+
         std::size_t                                                   m_Capacity  = 20;
         std::unordered_map<xresource::full_guid, xrsc::texture_ref>  m_Refs;
         std::list<xresource::full_guid>                               m_Order;
