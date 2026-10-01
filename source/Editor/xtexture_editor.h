@@ -10,9 +10,9 @@
 
 // Standalone Texture editor - owned by the texture plugin, opened by hosts (E29 today) through
 
-// the shared editor framework (source/Tools/Editor/). E10 is untouched; this editor reuses the
+// the shared editor framework (source/Tools/Editor/). xresource_editor is untouched; this editor reuses the
 
-// preview mechanics E10 teaches (path rewrite, bitmap_inspector Load, material_mgr bitmap upload,
+// preview mechanics xresource_editor teaches (path rewrite, bitmap_inspector Load, material_mgr bitmap upload,
 
 // 2D shaders/mesh/push-constants, draw_options) inside the NEW session/document/commands shape.
 
@@ -43,7 +43,7 @@
 
 #include "Plugins/xtexture.plugin/source/xtexture_rsc_descriptor.h"
 
-#include "dependencies/xresource_pipeline_v2/source/editor/E10_AssetMgr.h"
+#include "dependencies/xresource_pipeline_v2/source/editor/xresource_editor_asset_mgr.h"
 
 #include "imgui.h"
 
@@ -216,7 +216,7 @@ namespace xtexture_editor
 
     // Same shape as save_cmd: UI toolbar and headless ResourceEditorCommand both go through here.
 
-    // Persisting the descriptor is what queues compilation (E10 Compile button behavior).
+    // Persisting the descriptor is what queues compilation (xresource_editor Compile button behavior).
 
     struct compile_cmd : xundo::query_command_base
 
@@ -347,13 +347,13 @@ namespace xtexture_editor
 
         std::string              m_PreviewWindowTitle;
 
-        std::shared_ptr<e10::compilation::historical_entry::log> m_CompilationLog =
+        std::shared_ptr<xresource_editor::compilation::historical_entry::log> m_CompilationLog =
 
-            std::make_shared<e10::compilation::historical_entry::log>(
+            std::make_shared<xresource_editor::compilation::historical_entry::log>(
 
-                e10::compilation::historical_entry::communication{
+                xresource_editor::compilation::historical_entry::communication{
 
-                    .m_Result = e10::compilation::historical_entry::result::SUCCESS });
+                    .m_Result = xresource_editor::compilation::historical_entry::result::SUCCESS });
 
         bool                     m_bReloadPreview = false;
 
@@ -361,7 +361,7 @@ namespace xtexture_editor
 
 
 
-        session(xresource::full_guid Guid, e10::library::guid LibraryGuid, xgpu::device* pDevice = nullptr) noexcept
+        session(xresource::full_guid Guid, xresource_editor::library::guid LibraryGuid, xgpu::device* pDevice = nullptr) noexcept
 
             : m_SetSRGB(m_Undo, m_Document), m_SetGenerateMips(m_Undo, m_Document)
 
@@ -434,7 +434,7 @@ namespace xtexture_editor
 
             if (m_bCompilationCallbackRegistered)
 
-                e10::g_LibMgr.m_OnCompilationState.RemoveDelegates(this);
+                xresource_editor::g_LibMgr.m_OnCompilationState.RemoveDelegates(this);
 
         }
 
@@ -446,7 +446,7 @@ namespace xtexture_editor
 
             if (m_bCompilationCallbackRegistered) return;
 
-            e10::g_LibMgr.m_OnCompilationState.Register<&session::OnCompilationState>(*this);
+            xresource_editor::g_LibMgr.m_OnCompilationState.Register<&session::OnCompilationState>(*this);
 
             m_bCompilationCallbackRegistered = true;
 
@@ -454,9 +454,9 @@ namespace xtexture_editor
 
 
 
-        void OnCompilationState(e10::library_mgr&, e10::library::guid, xresource::full_guid CompilingEntry,
+        void OnCompilationState(xresource_editor::library_mgr&, xresource_editor::library::guid, xresource::full_guid CompilingEntry,
 
-                                std::shared_ptr<e10::compilation::historical_entry::log>& LogInformation) noexcept
+                                std::shared_ptr<xresource_editor::compilation::historical_entry::log>& LogInformation) noexcept
 
         {
 
@@ -470,7 +470,7 @@ namespace xtexture_editor
 
 
 
-            e10::compilation::historical_entry::result Results;
+            xresource_editor::compilation::historical_entry::result Results;
 
             {
 
@@ -480,9 +480,9 @@ namespace xtexture_editor
 
             }
 
-            if (Results == e10::compilation::historical_entry::result::SUCCESS
+            if (Results == xresource_editor::compilation::historical_entry::result::SUCCESS
 
-                || Results == e10::compilation::historical_entry::result::SUCCESS_WARNINGS)
+                || Results == xresource_editor::compilation::historical_entry::result::SUCCESS_WARNINGS)
 
             {
 
@@ -868,7 +868,7 @@ namespace xtexture_editor
 
                         const ImVec2 Avail = ImGui::GetContentRegionAvail();
 
-                        // Claim the canvas like E10's full-window input target (docked panel equivalent).
+                        // Claim the canvas like xresource_editor's full-window input target (docked panel equivalent).
 
                         ImGui::InvisibleButton("##TexturePreviewCanvas", Avail);
 
@@ -880,7 +880,7 @@ namespace xtexture_editor
 
                         {
 
-                            // AddCustomRenderCallback passes GetWindowSize(); E10 uses one viewport size for
+                            // AddCustomRenderCallback passes GetWindowSize(); xresource_editor uses one viewport size for
 
                             // both input and draw — keep Avail (canvas) for both.
 
@@ -900,7 +900,7 @@ namespace xtexture_editor
 
                         {
 
-                            ImGui::TextDisabled("Preview needs a GPU device (open from E29).");
+                            ImGui::TextDisabled("Preview needs a GPU device (open from the editor).");
 
                         }
 
@@ -975,7 +975,7 @@ namespace xtexture_editor
 
     inline const xeditor::auto_register_resource_editor g_SessionRegistration
     { xrsc::texture_type_guid_v
-    , [](xresource::full_guid Guid, e10::library::guid LibraryGuid, xgpu::device* pDevice) -> std::unique_ptr<xeditor::resource_editor>
+    , [](xresource::full_guid Guid, xresource_editor::library::guid LibraryGuid, xgpu::device* pDevice) -> std::unique_ptr<xeditor::resource_editor>
       { return std::make_unique<session>(Guid, LibraryGuid, pDevice); }
     };
 

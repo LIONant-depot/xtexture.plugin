@@ -3,7 +3,7 @@
 #pragma once
 
 // Texture-editor preview mechanics taught by E10_TextureResourcePipeline.cpp, hosted inside
-// the NEW editor-framework session (plugin document/commands/UI). E10 itself is not modified.
+// the NEW editor-framework session (plugin document/commands/UI). xresource_editor itself is not modified.
 // Safe load: bitmap_inspector::Load + xgpu::tools::bitmap::Create (not getResource on library guids).
 #include "source/Examples/E05_Textures/E05_BitmapInspector.h"
 #include "source/tools/xgpu_imgui_breach.h"
@@ -23,7 +23,7 @@
 #include <array>
 #include <memory>
 
-namespace e10
+namespace xresource_editor
 {
     struct vert_2d
     {
@@ -509,7 +509,7 @@ struct material_mgr
         CreateMaterialInstance(Device, MaterialInstance, Guid);
     }
 
-    // Safe preview path taught by E10's bitmap CreateMaterialInstance overload.
+    // Safe preview path taught by xresource_editor's bitmap CreateMaterialInstance overload.
     void UpdateFromBitmap(xgpu::device& Device, material_instance& MaterialInstance, const xbitmap& Bitmap)
     {
         ReleaseMaterialInstance(Device, MaterialInstance);
@@ -557,13 +557,13 @@ struct material_mgr
         {
             auto Attributes = std::array
             {
-                xgpu::vertex_descriptor::attribute{ .m_Offset = offsetof(e10::vert_3d, m_Position), .m_Format = xgpu::vertex_descriptor::format::FLOAT_3D }
-            ,   xgpu::vertex_descriptor::attribute{ .m_Offset = offsetof(e10::vert_3d, m_Binormal), .m_Format = xgpu::vertex_descriptor::format::FLOAT_3D }
-            ,   xgpu::vertex_descriptor::attribute{ .m_Offset = offsetof(e10::vert_3d, m_Tangent),  .m_Format = xgpu::vertex_descriptor::format::FLOAT_3D }
-            ,   xgpu::vertex_descriptor::attribute{ .m_Offset = offsetof(e10::vert_3d, m_Normal),   .m_Format = xgpu::vertex_descriptor::format::FLOAT_3D }
-            ,   xgpu::vertex_descriptor::attribute{ .m_Offset = offsetof(e10::vert_3d, m_TexCoord), .m_Format = xgpu::vertex_descriptor::format::FLOAT_2D }
+                xgpu::vertex_descriptor::attribute{ .m_Offset = offsetof(xresource_editor::vert_3d, m_Position), .m_Format = xgpu::vertex_descriptor::format::FLOAT_3D }
+            ,   xgpu::vertex_descriptor::attribute{ .m_Offset = offsetof(xresource_editor::vert_3d, m_Binormal), .m_Format = xgpu::vertex_descriptor::format::FLOAT_3D }
+            ,   xgpu::vertex_descriptor::attribute{ .m_Offset = offsetof(xresource_editor::vert_3d, m_Tangent),  .m_Format = xgpu::vertex_descriptor::format::FLOAT_3D }
+            ,   xgpu::vertex_descriptor::attribute{ .m_Offset = offsetof(xresource_editor::vert_3d, m_Normal),   .m_Format = xgpu::vertex_descriptor::format::FLOAT_3D }
+            ,   xgpu::vertex_descriptor::attribute{ .m_Offset = offsetof(xresource_editor::vert_3d, m_TexCoord), .m_Format = xgpu::vertex_descriptor::format::FLOAT_2D }
             };
-            auto Setup = xgpu::vertex_descriptor::setup{ .m_VertexSize = sizeof(e10::vert_3d), .m_Attributes = Attributes };
+            auto Setup = xgpu::vertex_descriptor::setup{ .m_VertexSize = sizeof(xresource_editor::vert_3d), .m_Attributes = Attributes };
             if (auto Err = Device.Create(VertexDescriptor, Setup); Err)
             {
                 printf("xtexture_editor preview: 3D vertex descriptor failed: %s\n", xgpu::getErrorMsg(Err));
@@ -574,10 +574,10 @@ struct material_mgr
         {
             auto Attributes = std::array
             {
-                xgpu::vertex_descriptor::attribute{ .m_Offset = offsetof(e10::vert_2d, m_X),  .m_Format = xgpu::vertex_descriptor::format::FLOAT_2D }
-            ,   xgpu::vertex_descriptor::attribute{ .m_Offset = offsetof(e10::vert_2d, m_UV), .m_Format = xgpu::vertex_descriptor::format::FLOAT_3D }
+                xgpu::vertex_descriptor::attribute{ .m_Offset = offsetof(xresource_editor::vert_2d, m_X),  .m_Format = xgpu::vertex_descriptor::format::FLOAT_2D }
+            ,   xgpu::vertex_descriptor::attribute{ .m_Offset = offsetof(xresource_editor::vert_2d, m_UV), .m_Format = xgpu::vertex_descriptor::format::FLOAT_3D }
             };
-            auto Setup = xgpu::vertex_descriptor::setup{ .m_VertexSize = sizeof(e10::vert_2d), .m_Attributes = Attributes };
+            auto Setup = xgpu::vertex_descriptor::setup{ .m_VertexSize = sizeof(xresource_editor::vert_2d), .m_Attributes = Attributes };
             if (auto Err = Device.Create(VertexDescriptor, Setup); Err)
             {
                 printf("xtexture_editor preview: 2D vertex descriptor failed: %s\n", xgpu::getErrorMsg(Err));
@@ -640,7 +640,7 @@ struct material_mgr
         {
             .m_VertexDescriptor  = VertexDescriptor
         ,   .m_Shaders           = Shaders
-        ,   .m_PushConstantsSize = sizeof(e10::push_contants)
+        ,   .m_PushConstantsSize = sizeof(xresource_editor::push_contants)
         ,   .m_Samplers          = Samplers
         ,   .m_Primitive         = {.m_Cull = xgpu::pipeline::primitive::cull::NONE }
         ,   .m_DepthStencil      = {.m_bDepthTestEnable = (bool)Material.m_3DRender }
@@ -708,7 +708,7 @@ struct mesh_mgr
         mesh& Mesh = m_Meshes[static_cast<int>(model::PLANE_2D)];
         Mesh.m_IndexCount = 6;
 
-        if (auto Err = Device.Create(Mesh.m_VertexBuffer, { .m_Type = xgpu::buffer::type::VERTEX, .m_EntryByteSize = sizeof(e10::vert_2d), .m_EntryCount = 4 }); Err)
+        if (auto Err = Device.Create(Mesh.m_VertexBuffer, { .m_Type = xgpu::buffer::type::VERTEX, .m_EntryByteSize = sizeof(xresource_editor::vert_2d), .m_EntryCount = 4 }); Err)
         {
             printf("xtexture_editor preview: mesh buffer failed: %s\n", xgpu::getErrorMsg(Err));
             return;
@@ -716,7 +716,7 @@ struct mesh_mgr
 
         (void)Mesh.m_VertexBuffer.MemoryMap(0, 4, [&](void* pData)
         {
-            auto pVertex = static_cast<e10::vert_2d*>(pData);
+            auto pVertex = static_cast<xresource_editor::vert_2d*>(pData);
             pVertex[0] = { -100.0f, -100.0f,  { 0.0f, 0.0f, 0.0f } };
             pVertex[1] = {  100.0f, -100.0f,  { 1.0f, 0.0f, 0.0f } };
             pVertex[2] = {  100.0f,  100.0f,  { 1.0f, 1.0f, 0.0f } };
@@ -752,7 +752,7 @@ struct mesh_mgr
         mesh& Mesh = m_Meshes[static_cast<int>(model::EXPLODED_CUBE_2D)];
         Mesh.m_IndexCount = 6 * 6;
 
-        if (auto Err = Device.Create(Mesh.m_VertexBuffer, { .m_Type = xgpu::buffer::type::VERTEX, .m_EntryByteSize = sizeof(e10::vert_2d), .m_EntryCount = 4*6 }); Err)
+        if (auto Err = Device.Create(Mesh.m_VertexBuffer, { .m_Type = xgpu::buffer::type::VERTEX, .m_EntryByteSize = sizeof(xresource_editor::vert_2d), .m_EntryCount = 4*6 }); Err)
         {
             printf("xtexture_editor preview: mesh buffer failed: %s\n", xgpu::getErrorMsg(Err));
             return;
@@ -760,7 +760,7 @@ struct mesh_mgr
 
         (void)Mesh.m_VertexBuffer.MemoryMap(0, 4*6, [&](void* pData)
         {
-            auto pVertex = static_cast<e10::vert_2d*>(pData);
+            auto pVertex = static_cast<xresource_editor::vert_2d*>(pData);
 
             int iVert=0;
             pVertex[iVert++] = { 0.0f, -100.0f,  xmath::fvec3(1.0f,  1.0f,  1.0f).NormalizeSafe() };
@@ -841,7 +841,7 @@ struct mesh_mgr
 
         Mesh.m_IndexCount = static_cast<int>(Primitive.m_Indices.size());
 
-        if (auto Err = Device.Create(Mesh.m_VertexBuffer, { .m_Type = xgpu::buffer::type::VERTEX, .m_EntryByteSize = sizeof(e10::vert_3d), .m_EntryCount = static_cast<int>(Primitive.m_Vertices.size()) }); Err)
+        if (auto Err = Device.Create(Mesh.m_VertexBuffer, { .m_Type = xgpu::buffer::type::VERTEX, .m_EntryByteSize = sizeof(xresource_editor::vert_3d), .m_EntryCount = static_cast<int>(Primitive.m_Vertices.size()) }); Err)
         {
             printf("xtexture_editor preview: mesh buffer failed: %s\n", xgpu::getErrorMsg(Err));
             return;
@@ -849,7 +849,7 @@ struct mesh_mgr
 
         (void)Mesh.m_VertexBuffer.MemoryMap(0, static_cast<int>(Primitive.m_Vertices.size()), [&](void* pData)
         {
-            auto pVertex = static_cast<e10::vert_3d*>(pData);
+            auto pVertex = static_cast<xresource_editor::vert_3d*>(pData);
             for( int i=0; i< static_cast<int>(Primitive.m_Vertices.size()); ++i )
             {
                 auto&       V  = pVertex[i];
@@ -889,7 +889,7 @@ struct mesh_mgr
 
         Mesh.m_IndexCount = static_cast<int>(Primitive.m_Indices.size());
 
-        if (auto Err = Device.Create(Mesh.m_VertexBuffer, { .m_Type = xgpu::buffer::type::VERTEX, .m_EntryByteSize = sizeof(e10::vert_3d), .m_EntryCount = static_cast<int>(Primitive.m_Vertices.size()) }); Err)
+        if (auto Err = Device.Create(Mesh.m_VertexBuffer, { .m_Type = xgpu::buffer::type::VERTEX, .m_EntryByteSize = sizeof(xresource_editor::vert_3d), .m_EntryCount = static_cast<int>(Primitive.m_Vertices.size()) }); Err)
         {
             printf("xtexture_editor preview: mesh buffer failed: %s\n", xgpu::getErrorMsg(Err));
             return;
@@ -897,7 +897,7 @@ struct mesh_mgr
 
         (void)Mesh.m_VertexBuffer.MemoryMap(0, static_cast<int>(Primitive.m_Vertices.size()), [&](void* pData)
         {
-            auto pVertex = static_cast<e10::vert_3d*>(pData);
+            auto pVertex = static_cast<xresource_editor::vert_3d*>(pData);
             for( int i=0; i< static_cast<int>(Primitive.m_Vertices.size()); ++i )
             {
                 auto&       V  = pVertex[i];
@@ -1031,7 +1031,7 @@ struct mesh_mgr
         }
 
         // 2D preview input: RMB pan, wheel zoom (multiplicative — even steps at any scale).
-        // Left-drag zoom removed (was E10's LMB). Wheel no longer uses E10's additive Wheel^3,
+        // Left-drag zoom removed (was xresource_editor's LMB). Wheel no longer uses xresource_editor's additive Wheel^3,
         // which made zoom-out steps explode as scale got small.
         void Handle2DInput(float ViewW, float ViewH) noexcept
         {
@@ -1049,7 +1049,7 @@ struct mesh_mgr
                 m_DrawControls.m_2DMouseTranslate.m_Y += io.MouseDelta.y * (2.0f / ViewH);
             }
 
-            // Wheel: scale by a constant fraction per notch (same idea as E10's 3D distance wheel).
+            // Wheel: scale by a constant fraction per notch (same idea as xresource_editor's 3D distance wheel).
             // Positive wheel zooms in. ~20% per notch feels even zooming in or out.
             const float Wheel = io.MouseWheel;
             if (Wheel != 0.0f)
@@ -1059,7 +1059,7 @@ struct mesh_mgr
                 m_DrawControls.m_2DMouseScale = std::max(m_DrawControls.m_2DMouseScale, 0.1f);
             }
 
-            // Zoom toward mouse (same as E10)
+            // Zoom toward mouse (same as xresource_editor)
             const ImVec2 Origin = ImGui::GetItemRectMin();
             const ImVec2 Mouse  = ImGui::GetMousePos();
             const float mx = (((Mouse.x - Origin.x) / ViewW) - 0.5f) * 2.0f;
@@ -1077,7 +1077,7 @@ struct mesh_mgr
 
             {
                 m_Materials.SetMaterialInstance(*m_pDevice, CmdBuffer, m_BackgroundMaterial, true, true);
-                e10::push_contants PC{};
+                xresource_editor::push_contants PC{};
                 PC.m_Scale = { (150 * 2.0f) / ViewW, (150 * 2.0f) / ViewH };
                 PC.m_Translation.setup(0);
                 PC.m_UVScale = { 120.0f, 120.0f };
@@ -1097,7 +1097,7 @@ struct mesh_mgr
             const xbitmap* pBitmap = m_BitmapInspector.m_pBitmap;
             if (!m_bHasTexture || !pBitmap || !pBitmap->isValid()) return;
 
-            e10::push_contants PC{};
+            xresource_editor::push_contants PC{};
             PC.m_Scale.m_X = (m_DrawControls.m_2DMouseScale * 0.01f) / (ViewW / ViewH) * pBitmap->getAspectRatio();
             PC.m_Scale.m_Y = (m_DrawControls.m_2DMouseScale * 0.01f);
             PC.m_UVScale = m_DrawOptions.m_UVScale;
@@ -1148,7 +1148,7 @@ struct mesh_mgr
                 m_Meshes.Render(CmdBuffer, mesh_mgr::model::PLANE_2D);
         }
 
-        // E10 3D input (right-drag orbit, wheel distance, space toggles light follow). LookAt runs in Draw3D.
+        // xresource_editor 3D input (right-drag orbit, wheel distance, space toggles light follow). LookAt runs in Draw3D.
         void Handle3DInput(float ViewW, float ViewH) noexcept
         {
             if (ViewW <= 1.f || ViewH <= 1.f) return;
@@ -1180,7 +1180,7 @@ struct mesh_mgr
             if (!m_bHasTexture || !pBitmap || !pBitmap->isValid()) return;
             m_DrawControls.m_3DView.LookAt(m_DrawControls.m_3DDistance, m_DrawControls.m_3DAngles, { 0,0,0 });
 
-            e10::push_contants PC{};
+            xresource_editor::push_contants PC{};
             const float MipMode = m_DrawOptions.m_ChooseMipLevel == -1 ? 1.0f : 0.0f;
             switch (m_DrawOptions.m_ChannelsMode)
             {
