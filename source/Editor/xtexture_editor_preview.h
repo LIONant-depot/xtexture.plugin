@@ -1158,6 +1158,7 @@ struct mesh_mgr
         // xresource_editor 3D input (right-drag orbit, wheel distance, space toggles light follow). LookAt runs in Draw3D.
         void Handle3DInput(float ViewW, float ViewH) noexcept
         {
+            xeditor::PreviewGestures(false);                // right drag looks, the wheel zooms (no pan here)
             if (ViewW <= 1.f || ViewH <= 1.f) return;
             if (!ImGui::IsItemHovered() && !ImGui::IsItemActive()) return;
 
