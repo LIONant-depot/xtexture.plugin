@@ -1148,6 +1148,13 @@ struct mesh_mgr
                 m_Meshes.Render(CmdBuffer, mesh_mgr::model::PLANE_2D);
         }
 
+        // The 3D light sticks to the camera where it is now, or is released again.
+        void ToggleLightFollowsCamera() noexcept
+        {
+            m_DrawControls.m_3DLightPosition = m_DrawControls.m_3DView.getPosition();
+            m_DrawControls.m_3DFollowCamera = !m_DrawControls.m_3DFollowCamera;
+        }
+
         // xresource_editor 3D input (right-drag orbit, wheel distance, space toggles light follow). LookAt runs in Draw3D.
         void Handle3DInput(float ViewW, float ViewH) noexcept
         {
@@ -1163,11 +1170,7 @@ struct mesh_mgr
                 m_DrawControls.m_3DAngles.m_Yaw.m_Value   -= 0.01f * MousePosX;
             }
 
-            if (ImGui::IsKeyPressed(ImGuiKey_Space, false))
-            {
-                m_DrawControls.m_3DLightPosition = m_DrawControls.m_3DView.getPosition();
-                m_DrawControls.m_3DFollowCamera = !m_DrawControls.m_3DFollowCamera;
-            }
+            // The light key is the Texture/Preview/LightFollowsCamera action (xtexture_editor.h); it lands in ToggleLightFollowsCamera.
 
             m_DrawControls.m_3DDistance += m_DrawControls.m_3DDistance * -0.2f * io.MouseWheel;
             m_DrawControls.m_3DDistance = std::max(m_DrawControls.m_3DDistance, 0.2f);

@@ -25,6 +25,7 @@
 #include "source/Tools/Editor/xeditor_inspector.h"
 
 #include "source/Tools/Editor/xeditor_toolbar.h"
+#include "source/Tools/Editor/xeditor_document_actions.h"
 
 #include "source/Tools/Editor/xeditor_resource_tab.h"
 
@@ -296,6 +297,28 @@ namespace xtexture_editor
 
     //--------------------------------------------------------------------------------------------
 
+    // The Texture editor's own actions (Preview/...). L, not Space: Space belongs to the drawer.
+    struct session;
+    struct texture_actions
+    {
+        session* m_pS = nullptr;
+        texture_actions() noexcept = default;
+        explicit texture_actions(session& S) noexcept : m_pS(&S) {}
+
+        void LightFollowsCamera() noexcept;
+
+        XPROPERTY_DEF
+        ( "Texture", texture_actions
+        , obj_scope<"Preview"
+            , obj_action<"LightFollowsCamera", &texture_actions::LightFollowsCamera
+                , member_help<"In the 3D view, the light sticks to the camera where it is now, or is released again">
+                , ximgui::actions::member_keys<"L"> >
+            >
+        )
+    };
+    XPROPERTY_REG(texture_actions)
+    XIMGUI_ACTIONS_OWNER(texture_actions)
+
     struct session : xeditor::resource_editor
 
     {
@@ -303,6 +326,7 @@ namespace xtexture_editor
         document                m_Document;
 
         xundo::system            m_Undo;
+        xeditor::document_actions m_Actions{ *this };       // Save / Undo / Redo / Compile as actions (keys, menu items, hints)
 
         set_srgb_cmd             m_SetSRGB;
 
@@ -319,6 +343,15 @@ namespace xtexture_editor
         redo_cmd                 m_RedoCmd;
 
         preview::runtime         m_Preview{};
+        texture_actions          m_EditorActions{ *this };      // this editor's own keys (Preview/...)
+
+        // ImGui::Begin for one of this editor's windows: Editor/... and Texture/Preview/... are live while it has the focus.
+        bool BeginEditorWindow(const char* pTitle, bool* pOpen = nullptr, ImGuiWindowFlags Flags = 0) noexcept
+        {
+            const bool bShown = ImGui::Begin(pTitle, pOpen, Flags);
+            if (auto* pCtx = xeditor::ActionContext()) { pCtx->Scope(m_Actions); pCtx->Scope(m_EditorActions, "Preview"); }
+            return bShown;
+        }
 
         // The generic commands every editor has (the texture ones above keep working): any descriptor property, the preview settings, the camera, how the compile went
         xeditor::descriptor_cmds::set_property_cmd      m_SetProperty;
@@ -570,6 +603,9 @@ namespace xtexture_editor
 
             Bar.m_OnSave            = &session::ToolbarSave;
 
+            Bar.m_OnHint            = [](void* pUser, const char* pAction) noexcept { xeditor::HintFor(static_cast<session*>(pUser)->m_Actions, pAction); };
+            Bar.m_pOpenFeedback     = &m_Actions.m_bOpenFeedback;
+
             Bar.m_OnCompile         = &session::ToolbarCompile;
 
             Bar.m_pUser             = this;
@@ -781,7 +817,7 @@ namespace xtexture_editor
 
             // Title is "Name###guid" — stable id; normal theme tab/menu sizes.
 
-            const bool bVisible = ImGui::Begin(Title, &m_bOpen, Flags);
+            const bool bVisible = BeginEditorWindow(Title, &m_bOpen, Flags);
 
             xeditor::DrawEditorRootTabIcon(m_Preview.m_pDevice, m_Document.m_Guid.m_Type); // every frame
 
@@ -862,7 +898,7 @@ namespace xtexture_editor
 
                     ImGui::SetNextWindowClass(&WindowClass);
 
-                    if (ImGui::Begin(m_PreviewWindowTitle.c_str()))
+                    if (BeginEditorWindow(m_PreviewWindowTitle.c_str()))
 
                     {
 
@@ -916,7 +952,7 @@ namespace xtexture_editor
 
                     ImGui::SetNextWindowClass(&WindowClass);
 
-                    if (ImGui::Begin(m_ViewerWindowTitle.c_str()))
+                    if (BeginEditorWindow(m_ViewerWindowTitle.c_str()))
 
                         m_ViewerInspector.Show();
 
@@ -926,7 +962,7 @@ namespace xtexture_editor
 
                     ImGui::SetNextWindowClass(&WindowClass);
 
-                    if (ImGui::Begin(m_DescriptorWindowTitle.c_str()))
+                    if (BeginEditorWindow(m_DescriptorWindowTitle.c_str()))
 
                         m_DescriptorInspector.Show();
 
@@ -972,6 +1008,8 @@ namespace xtexture_editor
 
 
     inline const xeditor::auto_register g_Registration{ MakeEditorDescriptor() };
+
+    inline void texture_actions::LightFollowsCamera() noexcept { m_pS->m_Preview.ToggleLightFollowsCamera(); }
 
     inline const xeditor::auto_register_resource_editor g_SessionRegistration
     { xrsc::texture_type_guid_v
