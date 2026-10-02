@@ -605,6 +605,7 @@ namespace xtexture_editor
 
             Bar.m_OnHint            = [](void* pUser, const char* pAction) noexcept { xeditor::HintFor(static_cast<session*>(pUser)->m_Actions, pAction); };
             Bar.m_pOpenFeedback     = &m_Actions.m_bOpenFeedback;
+            Bar.m_Subject           = xeditor::AssetRef(m_Document.m_Guid);        // the Feedback popup shows what the compile of this asset said (the Logs)
 
             Bar.m_OnCompile         = &session::ToolbarCompile;
 
