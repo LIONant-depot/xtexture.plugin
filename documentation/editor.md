@@ -13,7 +13,7 @@ the xGPU tree); this depot adds the texture specific commands and the preview.
 
 ## Commands
 
-Run as `<resource name>\<Command>` (see `list`) or `ResourceEditorCommand -Asset <guid> -Cmd <base64>`. Paths and values are base64.
+Run as `<resource name>\<Command>` (see `list`) or `ResourceEditorCommand -Asset <guid> -Cmd "<command>"`. Paths and values are text, in quotes.
 
 | Command | |
 |---|---|
