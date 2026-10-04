@@ -611,6 +611,8 @@ namespace xtexture_editor
 
             Bar.m_pUser             = this;
 
+            Bar.m_pEditor           = this;
+            Bar.m_pDevice           = m_Preview.m_pDevice;
             xeditor::RenderEditorToolbar(Bar);
 
         }
