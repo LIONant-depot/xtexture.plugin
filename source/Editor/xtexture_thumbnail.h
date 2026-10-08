@@ -42,22 +42,51 @@ namespace xtexture
     // sample: NormalModes below stays all-zero, so the frag shader's normal/lighting branches never engage).
     struct cube_vert { float m_X, m_Y, m_Z; float m_BX, m_BY, m_BZ; float m_TX, m_TY, m_TZ; float m_NX, m_NY, m_NZ; float m_U, m_V; };
 
-    // Matches e10_3d_cube_vert/frag.glsl's uPushConstant exactly (field order and sizes must line up byte-
-    // for-byte with the GLSL std140-ish push-constant block).
+    // e10_3d_cube_vert/frag.glsl's uPushConstant is cube_push_const::gpu (Pack() builds it) - same layout as the texture editor's
+    // xresource_editor::push_contants::gpu.
     struct cube_push_const
     {
-        float           m_MipLevel      {0};
-        float           m_ToGamma       {2.2f};
-        xmath::fvec2    m_UScale        {1,1};
-        xmath::fvec2    m_UTranslate    {0,0};
-        xmath::fvec2    m_UVScale       {1,1};
-        xmath::fvec4    m_TintColor     {1,1,1,1};
-        xmath::fvec4    m_ColorMask     {1,0,0,0};
-        xmath::fvec4    m_Mode          {1,0,0,1};      // .x: use Color as-is: .w: texture() not textureLod()
-        xmath::fvec4    m_NormalModes   {0,0,0,0};      // all zero: no normal-map decode, no lighting
+        // What the E10 shaders' uPushConstant really holds (e10_*.glsl): 128 bytes, the most every Vulkan device must accept
+        // (maxPushConstantsSize - WSLg's Dozen driver allows exactly 128; the fields below used to be pushed as 192 bytes).
+        // ColorMask / Mode / NormalModes are 0/1 switches, so they travel as bits of m_Flags.
+        struct gpu
+        {
+            xmath::fmat4    m_L2C;
+            xmath::fvec4    m_TintColor;
+            xmath::fvec4    m_ScaleTranslate;           // xy: Scale, zw: Translation
+            xmath::fvec4    m_LightPosMip;              // xyz: local space light position, w: mip level
+            float           m_UVScale[2];
+            float           m_ToGamma;
+            std::uint32_t   m_Flags;                    // bits 0-3 ColorMask.xyzw, 4-7 Mode.xyzw, 8-11 NormalModes.xyzw
+        };
+        static_assert(sizeof(gpu) == 128, "the E10 push-constant block must stay at 128 bytes");
+
+        float           m_MipLevel       {0};
+        float           m_ToGamma        {2.2f};
+        xmath::fvec2    m_UScale         {1,1};
+        xmath::fvec2    m_UTranslate     {0,0};
+        xmath::fvec2    m_UVScale        {1,1};
+        xmath::fvec4    m_TintColor      {1,1,1,1};
+        xmath::fvec4    m_ColorMask      {1,0,0,0};
+        xmath::fvec4    m_Mode           {1,0,0,1};      // .x: use Color as-is: .w: texture() not textureLod()
+        xmath::fvec4    m_NormalModes    {0,0,0,0};      // all zero: no normal-map decode, no lighting
         xmath::fmat4    m_L2C;
         xmath::fvec3    m_LocalSpaceLightPos {0,0,0};
-        xmath::fvec4    m_UVMode        {0,0,0,0};
+
+        gpu Pack( void ) const noexcept
+        {
+            constexpr auto Bits = []( const xmath::fvec4& V, int Shift ) constexpr noexcept -> std::uint32_t
+            { return ( (V.m_X != 0 ? 1u : 0u) | (V.m_Y != 0 ? 2u : 0u) | (V.m_Z != 0 ? 4u : 0u) | (V.m_W != 0 ? 8u : 0u) ) << Shift; };
+            return gpu
+            { .m_L2C            = m_L2C
+            , .m_TintColor      = m_TintColor
+            , .m_ScaleTranslate = xmath::fvec4(m_UScale.m_X, m_UScale.m_Y, m_UTranslate.m_X, m_UTranslate.m_Y)
+            , .m_LightPosMip    = xmath::fvec4(m_LocalSpaceLightPos.m_X, m_LocalSpaceLightPos.m_Y, m_LocalSpaceLightPos.m_Z, m_MipLevel)
+            , .m_UVScale        = { m_UVScale.m_X, m_UVScale.m_Y }
+            , .m_ToGamma        = m_ToGamma
+            , .m_Flags          = Bits(m_ColorMask, 0) | Bits(m_Mode, 4) | Bits(m_NormalModes, 8)
+            };
+        }
     };
 
     class thumbnail_renderer final : public xeditor::thumbnail_renderer
@@ -165,7 +194,7 @@ namespace xtexture
 
             auto Shaders  = std::array<const xgpu::shader*, 2>{ &Frag, &Vert };
             auto Samplers = std::array{ xgpu::pipeline::sampler{} };
-            if (!Ok(Device.Create(m_CubePipeline, { .m_VertexDescriptor = m_CubeVD, .m_Shaders = Shaders, .m_PushConstantsSize = sizeof(cube_push_const)
+            if (!Ok(Device.Create(m_CubePipeline, { .m_VertexDescriptor = m_CubeVD, .m_Shaders = Shaders, .m_PushConstantsSize = sizeof(cube_push_const::gpu)
                 , .m_Samplers = Samplers
                 // FRONT, not BACK: the cube is drawn straight through the camera's own W2C (no extra
                 // mirror baked in any more, see Render()'s own comment on why the flip disappeared
@@ -305,7 +334,7 @@ namespace xtexture
             // flip does not), so there is nothing left to bake into this matrix at all.
             PushConst.m_L2C = View.getW2C();
             CmdBuffer.setPipelineInstance(Instance);
-            CmdBuffer.setPushConstants(PushConst);
+            CmdBuffer.setPushConstants(PushConst.Pack());
             CmdBuffer.setBuffer(m_CubeVertexBuffer);
             CmdBuffer.setBuffer(m_CubeIndexBuffer);
             CmdBuffer.Draw(m_CubeIndexCount);
