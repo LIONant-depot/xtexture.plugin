@@ -75,9 +75,9 @@ namespace xtexture_rsc
     };
 
     enum class compression_format_hdr_color : std::uint8_t
-    { RGBA_UNCOMPRESSED     = compression_format::RGBA_UNCOMPRESSED
-    , RGB_UHDR_BC6          = compression_format::RGB_UHDR_BC6
-    , RGB_SHDR_BC6          = compression_format::RGB_SHDR_BC6
+    { RGBA_UNCOMPRESSED     = static_cast<std::uint8_t>(compression_format::RGBA_UNCOMPRESSED)
+    , RGB_UHDR_BC6          = static_cast<std::uint8_t>(compression_format::RGB_UHDR_BC6)
+    , RGB_SHDR_BC6          = static_cast<std::uint8_t>(compression_format::RGB_SHDR_BC6)
     };
 
     static constexpr auto compression_format_hdr_color_v = std::array
@@ -87,10 +87,10 @@ namespace xtexture_rsc
     };
 
     enum class compression_format_color : std::uint8_t
-    { RGBA_UNCOMPRESSED     = compression_format::RGBA_UNCOMPRESSED
-    , RGB_BC1               = compression_format::RGB_BC1
-    , RGB_BC7               = compression_format::RGBA_BC7
-    , RGB_SUPER_COMPRESS    = compression_format::RGB_SUPER_COMPRESS
+    { RGBA_UNCOMPRESSED     = static_cast<std::uint8_t>(compression_format::RGBA_UNCOMPRESSED)
+    , RGB_BC1               = static_cast<std::uint8_t>(compression_format::RGB_BC1)
+    , RGB_BC7               = static_cast<std::uint8_t>(compression_format::RGBA_BC7)
+    , RGB_SUPER_COMPRESS    = static_cast<std::uint8_t>(compression_format::RGB_SUPER_COMPRESS)
     };
 
     static constexpr auto compression_format_color_v = std::array
@@ -101,11 +101,11 @@ namespace xtexture_rsc
     };
 
     enum class compression_format_color_a : std::uint8_t
-    { RGBA_UNCOMPRESSED     = compression_format::RGBA_UNCOMPRESSED
-    , RGBA_BC1_A1           = compression_format::RGBA_BC1_A1
-    , RGBA_BC3_A8           = compression_format::RGBA_BC3_A8
-    , RGBA_BC7              = compression_format::RGBA_BC7
-    , RGBA_SUPER_COMPRESS   = compression_format::RGBA_SUPER_COMPRESS
+    { RGBA_UNCOMPRESSED     = static_cast<std::uint8_t>(compression_format::RGBA_UNCOMPRESSED)
+    , RGBA_BC1_A1           = static_cast<std::uint8_t>(compression_format::RGBA_BC1_A1)
+    , RGBA_BC3_A8           = static_cast<std::uint8_t>(compression_format::RGBA_BC3_A8)
+    , RGBA_BC7              = static_cast<std::uint8_t>(compression_format::RGBA_BC7)
+    , RGBA_SUPER_COMPRESS   = static_cast<std::uint8_t>(compression_format::RGBA_SUPER_COMPRESS)
     };
 
     static constexpr auto compression_format_color_a_v = std::array
@@ -117,11 +117,11 @@ namespace xtexture_rsc
     };
 
     enum class compression_format_tangent_normal : std::uint8_t
-    { RGBA_UNCOMPRESSED     = compression_format::RGBA_UNCOMPRESSED
-    , RG_BC5                = compression_format::RG_BC5
-    , RGBA_BC3_A8           = compression_format::RGBA_BC3_A8
-    , RGBA_BC7              = compression_format::RGBA_BC7
-    , RGBA_SUPER_COMPRESS   = compression_format::RGBA_SUPER_COMPRESS
+    { RGBA_UNCOMPRESSED     = static_cast<std::uint8_t>(compression_format::RGBA_UNCOMPRESSED)
+    , RG_BC5                = static_cast<std::uint8_t>(compression_format::RG_BC5)
+    , RGBA_BC3_A8           = static_cast<std::uint8_t>(compression_format::RGBA_BC3_A8)
+    , RGBA_BC7              = static_cast<std::uint8_t>(compression_format::RGBA_BC7)
+    , RGBA_SUPER_COMPRESS   = static_cast<std::uint8_t>(compression_format::RGBA_SUPER_COMPRESS)
     };
 
     static constexpr auto compression_format_tangent_normal_v = std::array
