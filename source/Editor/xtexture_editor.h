@@ -37,12 +37,12 @@
 #include "source/Tools/Editor/xeditor_thumbnail.h"
 #include "source/Tools/Editor/xeditor_thumbnail_cache.h"
 
-#include "Plugins/xtexture.plugin/source/Editor/xtexture_editor_preview.h"
-#include "Plugins/xtexture.plugin/source/Editor/xtexture_thumbnail.h"
+#include "plugins/xtexture.plugin/source/Editor/xtexture_editor_preview.h"
+#include "plugins/xtexture.plugin/source/Editor/xtexture_thumbnail.h"
 
-#include "Plugins/xtexture.plugin/source/xtexture_xgpu_rsc_loader.h"
+#include "plugins/xtexture.plugin/source/xtexture_xgpu_rsc_loader.h"
 
-#include "Plugins/xtexture.plugin/source/xtexture_rsc_descriptor.h"
+#include "plugins/xtexture.plugin/source/xtexture_rsc_descriptor.h"
 
 #include "dependencies/xresource_pipeline_v2/source/editor/xresource_editor_asset_mgr.h"
 

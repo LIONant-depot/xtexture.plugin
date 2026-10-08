@@ -24,7 +24,7 @@
 #include "source/Tools/Editor/xeditor_resource_editor.h"
 #include "source/Tools/xgpu_view.h"
 #include "source/xGPU.h"
-#include "Plugins/xtexture.plugin/source/xtexture_xgpu_rsc_loader.h"
+#include "plugins/xtexture.plugin/source/xtexture_xgpu_rsc_loader.h"
 #include "dependencies/xprim_geom/source/xprim_geom.h"
 
 #include <algorithm>

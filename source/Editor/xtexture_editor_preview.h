@@ -6,15 +6,15 @@
 // the NEW editor-framework session (plugin document/commands/UI). xresource_editor itself is not modified.
 // Safe load: bitmap_inspector::Load + xgpu::tools::bitmap::Create (not getResource on library guids).
 #include "source/Examples/E05_Textures/E05_BitmapInspector.h"
-#include "source/tools/xgpu_imgui_breach.h"
-#include "source/tools/xgpu_view.h"
+#include "source/Tools/xgpu_imgui_breach.h"
+#include "source/Tools/xgpu_view.h"
 #include "dependencies/xprim_geom/source/xprim_geom.h"
-#include "source/tools/xgpu_xcore_bitmap_helpers.h"
+#include "source/Tools/xgpu_xcore_bitmap_helpers.h"
 #include "dependencies/xproperty/source/xcore/my_properties.h"
 #include "dependencies/xproperty/source/examples/imgui/xPropertyImGuiInspector.h"
 #include "dependencies/xmath/source/bridge/xmath_to_xproperty.h"
 #include "dependencies/xresource_mgr/source/xresource_mgr.h"
-#include "Plugins/xtexture.plugin/source/xtexture_xgpu_rsc_loader.h"
+#include "plugins/xtexture.plugin/source/xtexture_xgpu_rsc_loader.h"
 #include <filesystem>
 #include <cwctype>
 #include <cstdio>
