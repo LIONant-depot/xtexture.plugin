@@ -28,7 +28,7 @@ source_group("Texture_Compiler" FILES
   "source/Compiler/main.cpp"
 )
 
-add_subdirectory("build/dependency" "${CMAKE_CURRENT_BINARY_DIR}/xtexture_compiler")
+add_subdirectory("Build/dependency" "${CMAKE_CURRENT_BINARY_DIR}/xtexture_compiler")
 
 # The shared xproperty dependency's my_property_ui_null.h isn't present at whatever commit is
 # currently fetched - xresource_pipeline.h only needs it when XRESOURCE_PIPELINE_NO_COMPILER is

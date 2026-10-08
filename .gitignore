@@ -12,3 +12,5 @@ Build/xtexture_compiler.vs2022/*
 Build/xtexture_compiler.vs2022/xtexture_compiler.sln
 Build/xtexture_compiler.vs2022/xtexture_compiler.vcxproj
 Build/xtexture_compiler.vs2022/xtexture_compiler.vcxproj.filters
+# Linux: native compiler builds (xLION root CMakeLists.txt, xlion_compilers) and the dependencies link
+/Build/*_compiler.linux/

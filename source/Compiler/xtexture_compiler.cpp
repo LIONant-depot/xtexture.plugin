@@ -3,7 +3,7 @@
 #include "dependencies/crunch/inc/crnlib.h"
 #include "../xtexture_rsc_descriptor.h"
 #include "dependencies/xproperty/source/sprop/property_sprop_xtextfile_serializer.h"
-#include "Compressonator.h"
+#include "compressonator.h"   // cmp_compressonatorlib/compressonator.h (the case matters off Windows)
 #include <iostream>
 #include "half.h"
 #include "dependencies/xmath/source/xmath_flinear.h"
