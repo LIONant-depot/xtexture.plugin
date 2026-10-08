@@ -600,7 +600,7 @@ namespace xtexture_rsc
         std::uint32_t               m_ToCubeMapFaceResolution   { 1024 };
         bool                        m_ToCubeMapUseBilinear      { true };
 
-        virtual void SetupFromSource(std::string_view FileName)
+        virtual void SetupFromSource(std::string_view FileName) override
         {
             
         }
