@@ -298,3 +298,17 @@ if(xtexture_comp_CREATED)
   AppendComponentIncludes(xtexture_compiler_
   )
 endif()
+
+# Linux: crunch and compressonator built the way their own Linux builds do it
+if(NOT WIN32)
+  set(XTEXTURE_CRN "${CMAKE_SOURCE_DIR}/dependencies/crunch/crnlib")
+  # Win32-only crunch files (crunch's Linux Makefile leaves them out too; LZMA then runs single-threaded, COMPRESS_MF_MT is off)
+  set_source_files_properties("${XTEXTURE_CRN}/crn_threading_win32.cpp" "${XTEXTURE_CRN}/lzma_Threads.cpp" "${XTEXTURE_CRN}/lzma_LzFindMt.cpp"
+    DIRECTORY "${CMAKE_SOURCE_DIR}" PROPERTIES HEADER_FILE_ONLY ON)
+  # crunch declares/defines its own sprintf_s, vsprintf_s, ... off MSVC: its sources do without xLION's compat header
+  file(GLOB XTEXTURE_CRN_SOURCES "${XTEXTURE_CRN}/*.cpp")
+  set_source_files_properties(${XTEXTURE_CRN_SOURCES} DIRECTORY "${CMAKE_SOURCE_DIR}" PROPERTIES COMPILE_DEFINITIONS XLION_NO_PLATFORM_COMPAT)
+  # compressonator: the AVX-512 kernels are compiled for AVX-512 and only run after its CPU check (as its own CMake does)
+  set_source_files_properties("${CMAKE_SOURCE_DIR}/dependencies/compressonator/cmp_core/source/core_simd_avx512.cpp"
+    DIRECTORY "${CMAKE_SOURCE_DIR}" PROPERTIES COMPILE_OPTIONS "-mavx512f;-mavx512dq;-mavx512bw;-mavx512vl")
+endif()
