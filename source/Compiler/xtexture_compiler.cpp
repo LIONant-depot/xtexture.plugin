@@ -835,18 +835,20 @@ struct implementation final : xtexture_compiler::instance
         {
 
             //
-            // Prepare the destination bitmap
+            // Prepare the destination bitmap: the size of the first source; a mix of constants only has no source - a 4x4 bitmap
             //
+            const int Width  = m_Bitmaps.empty() ? 4 : m_Bitmaps[0].getWidth();
+            const int Height = m_Bitmaps.empty() ? 4 : m_Bitmaps[0].getHeight();
             if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR)
             {
-                auto faceSize = sizeof(xmath::fvec4) * m_Bitmaps[0].getWidth()* m_Bitmaps[0].getHeight();
+                auto faceSize = sizeof(xmath::fvec4) * Width * Height;
                 auto datasize  = faceSize + sizeof(std::uint32_t);
                 auto pdata     = new std::byte[datasize];
                 pdata[0] = pdata[1] = pdata[2] = pdata[3] = std::byte{0u};
 
                 Dest.setup
-                ( m_Bitmaps[0].getWidth()
-                , m_Bitmaps[0].getHeight()
+                ( Width
+                , Height
                 , xbitmap::format::R32G32B32A32_FLOAT
                 , faceSize
                 , { pdata, datasize }
@@ -857,7 +859,7 @@ struct implementation final : xtexture_compiler::instance
             }
             else
             {
-                Dest.CreateBitmap(m_Bitmaps[0].getWidth(), m_Bitmaps[0].getHeight());
+                Dest.CreateBitmap(Width, Height);
             }
             
             //
@@ -880,7 +882,7 @@ struct implementation final : xtexture_compiler::instance
                             else if (E.m_CopyTo == xtexture_rsc::compositing_to::R)      D.m_R = S.m_R;
                             else if (E.m_CopyTo == xtexture_rsc::compositing_to::G)      D.m_G = S.m_G;
                             else if (E.m_CopyTo == xtexture_rsc::compositing_to::B)      D.m_B = S.m_B;
-                            else if (E.m_CopyTo == xtexture_rsc::compositing_to::A)      D.m_A = S.m_B;
+                            else if (E.m_CopyTo == xtexture_rsc::compositing_to::A)      D.m_A = S.m_A;
 
                             Dest.getMip<T_COLOR>(0)[y * Dest.getWidth() + x] = D;
                         }
