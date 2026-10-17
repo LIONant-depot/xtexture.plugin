@@ -384,7 +384,7 @@ struct implementation final : xtexture_compiler::instance
         CMP_MipSet MipSetIn {};
         if (auto result = CMP_LoadTexture(xstrtool::To(FilePath).c_str(), &MipSetIn); result != CMP_OK)
         {
-            throw(std::runtime_error(std::format("Unable to load image file. [BROKEN_LINK] {}", xstrtool::To(FilePath) )));
+            throw(std::runtime_error(std::format("Unable to load image file. [BROKEN_LINK] {}", xstrtool::UTF16ToUTF8(FilePath) )));
         }
 
         //
@@ -394,7 +394,7 @@ struct implementation final : xtexture_compiler::instance
         ConvertMipSetToTexture(MipSetIn, Texture);
         if ( DecompressTexture(Texture) == false )
         {
-            throw(std::runtime_error(std::format("Failed to the image unable to decompress the texture {}", xstrtool::To(FilePath) )));
+            throw(std::runtime_error(std::format("Failed to the image unable to decompress the texture {}", xstrtool::UTF16ToUTF8(FilePath) )));
         }
 
         //
@@ -429,12 +429,12 @@ struct implementation final : xtexture_compiler::instance
                 if (xstrtool::findI(FilePath, L".exr") != std::string::npos )
                 {
                     if (auto Err = xbmp::tools::loader::LoadHDREXRImage(Bitmap, FilePath); Err)
-                        throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", Err.getMessage(), xstrtool::To(FilePath) )));
+                        throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", Err.getMessage(), xstrtool::UTF16ToUTF8(FilePath) )));
                 }
                 else 
                 {
                     if (auto Err = xbmp::tools::loader::LoadHDRSTDImage(Bitmap, FilePath); Err)
-                        throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", Err.getMessage(), xstrtool::To(FilePath) )));
+                        throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", Err.getMessage(), xstrtool::UTF16ToUTF8(FilePath) )));
                 }
             }
             else
@@ -442,12 +442,12 @@ struct implementation final : xtexture_compiler::instance
                 if (xstrtool::findI(FilePath, L".exr") != std::string::npos )
                 {
                     if (auto Err = xbmp::tools::loader::LoadEXRImage(Bitmap, FilePath); Err)
-                        throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", Err.getMessage(), xstrtool::To(FilePath) )));
+                        throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", Err.getMessage(), xstrtool::UTF16ToUTF8(FilePath) )));
                 }
                 else
                 {
                     if (auto Err = xbmp::tools::loader::LoadSTDImage(Bitmap, FilePath); Err)
-                        throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", Err.getMessage(), xstrtool::To(FilePath) )));
+                        throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", Err.getMessage(), xstrtool::UTF16ToUTF8(FilePath) )));
                 }
             }
         }
@@ -815,7 +815,7 @@ struct implementation final : xtexture_compiler::instance
             else
             {
                 if (Width != m_Bitmaps[BitmapIndex].getWidth() || Height != m_Bitmaps[BitmapIndex].getHeight())
-                    throw std::runtime_error(std::format("Input Texture: [{}] All textures should be the same size", xstrtool::To(FileName) ));
+                    throw std::runtime_error(std::format("Input Texture: [{}] All textures should be the same size", xstrtool::UTF16ToUTF8(FileName) ));
             }
 
             //
