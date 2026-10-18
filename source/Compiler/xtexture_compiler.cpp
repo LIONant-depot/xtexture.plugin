@@ -1,3 +1,4 @@
+#include <limits>
 #include "xtexture_compiler.h"
 #include "dependencies/xbmp_tools/src/xbmp_tools.h"
 #include "dependencies/crunch/inc/crnlib.h"
@@ -895,7 +896,12 @@ struct implementation final : xtexture_compiler::instance
                         for (int x = 0, end_x = Src.getWidth();  x < end_x; ++x)
                         {
                                   T_COLOR D = Dest.getMip<T_COLOR>(0)[y * Src.getWidth() + x];
-                            const T_COLOR S = Src.getMip<T_COLOR>(0) [y * Src.getWidth() + x];
+                                  T_COLOR S = Src.getMip<T_COLOR>(0) [y * Src.getWidth() + x];
+                            if (E.m_bInvert)
+                            {
+                                const auto One = [](auto V) { using V_t = decltype(V); if constexpr (std::is_floating_point_v<V_t>) return static_cast<V_t>(1) - V; else return static_cast<V_t>(std::numeric_limits<V_t>::max() - V); };
+                                S.m_R = One(S.m_R); S.m_G = One(S.m_G); S.m_B = One(S.m_B); S.m_A = One(S.m_A);
+                            }
 
                             if (E.m_CopyFrom == xtexture_rsc::compositing_from::A)
                             {

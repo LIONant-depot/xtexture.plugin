@@ -203,6 +203,7 @@ namespace xtexture_rsc
         compositing_to      m_CopyTo     { compositing_to::RGBA };
         std::wstring        m_FileName   {};
         float               m_Constant   {1.f};
+        bool                m_bInvert    {false};       // what is copied from the file is 1 - value (a glossiness map for a roughness channel)
 
         void Validate(std::vector<std::string>& Errors) const noexcept
         {
@@ -232,6 +233,15 @@ namespace xtexture_rsc
             {
                 xproperty::flags::type Flags = {};
                 Flags.m_bDontShow = O.m_CopyFrom != compositing_from::CUSTOM_CONSTANT;
+                return Flags;
+            }>>
+        , obj_member< "Invert"
+            , &mix::m_bInvert
+            , member_help<"Copy 1 - value instead of the value: a glossiness map is the roughness upside down">
+            , member_dynamic_flags<+[](const mix& O)
+            {
+                xproperty::flags::type Flags = {};
+                Flags.m_bDontShow = O.m_CopyFrom == compositing_from::CUSTOM_CONSTANT;
                 return Flags;
             }>>
         )
