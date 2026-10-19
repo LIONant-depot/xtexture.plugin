@@ -815,7 +815,8 @@ struct implementation final : xtexture_compiler::instance
             }
             else
             {
-                if (Width != m_Bitmaps[BitmapIndex].getWidth() || Height != m_Bitmaps[BitmapIndex].getHeight())
+                // (a mix of maps of different sizes is resized below, to the largest)
+                if (!m_HasMixes && (Width != m_Bitmaps[BitmapIndex].getWidth() || Height != m_Bitmaps[BitmapIndex].getHeight()))
                     throw std::runtime_error(std::format("Input Texture: [{}] All textures should be the same size", xstrtool::UTF16ToUTF8(FileName) ));
             }
 
@@ -823,6 +824,64 @@ struct implementation final : xtexture_compiler::instance
             // Make sure to convert all textures to the same format... RGBA
             //
             StandardizeBitmap(m_Bitmaps[BitmapIndex]);
+        }
+
+        //
+        // The maps of a mix (a model's occlusion, roughness and metalness are often not the same size) are all brought to the largest one
+        //
+        if (m_HasMixes && m_Bitmaps.size() > 1)
+        {
+            int MaxWidth = 0, MaxHeight = 0;
+            for (auto& B : m_Bitmaps) { MaxWidth = std::max<int>(MaxWidth, B.getWidth()); MaxHeight = std::max<int>(MaxHeight, B.getHeight()); }
+            for (auto& [FileName, BitmapIndex] : m_BitmapHash)
+            {
+                auto& B = m_Bitmaps[BitmapIndex];
+                if (B.getWidth() == MaxWidth && B.getHeight() == MaxHeight) continue;
+                if (B.getFormat() != xbitmap::format::R8G8B8A8)
+                    throw std::runtime_error(std::format("Input Texture: [{}] All textures should be the same size", xstrtool::UTF16ToUTF8(FileName)));
+
+                LogMessage(msg_type::INFO, std::format(L"Input Texture: [{}] is {}x{}, resized to {}x{} to mix with the others", FileName, B.getWidth(), B.getHeight(), MaxWidth, MaxHeight));
+                const int  SW = B.getWidth(), SH = B.getHeight();
+                const auto Pixels = B.getMip<xcolori>(0);
+                auto       Data   = std::make_unique<xcolori[]>(1 + static_cast<std::size_t>(MaxWidth) * MaxHeight);
+                Data[0].m_Value = 0;
+                for (int y = 0; y < MaxHeight; ++y)
+                {
+                    const float fy = std::max((y + 0.5f) * SH / MaxHeight - 0.5f, 0.0f);
+                    const int   y0 = std::min(static_cast<int>(fy), SH - 1), y1 = std::min(y0 + 1, SH - 1);
+                    const float ty = fy - y0;
+                    for (int x = 0; x < MaxWidth; ++x)
+                    {
+                        const float fx = std::max((x + 0.5f) * SW / MaxWidth - 0.5f, 0.0f);
+                        const int   x0 = std::min(static_cast<int>(fx), SW - 1), x1 = std::min(x0 + 1, SW - 1);
+                        const float tx = fx - x0;
+                        const auto  Blend = [&](auto Channel)
+                        {
+                            const float Top    = Channel(Pixels[y0 * SW + x0]) * (1 - tx) + Channel(Pixels[y0 * SW + x1]) * tx;
+                            const float Bottom = Channel(Pixels[y1 * SW + x0]) * (1 - tx) + Channel(Pixels[y1 * SW + x1]) * tx;
+                            return static_cast<std::uint8_t>(std::clamp(Top * (1 - ty) + Bottom * ty + 0.5f, 0.0f, 255.0f));
+                        };
+                        auto& D = Data[1 + static_cast<std::size_t>(y) * MaxWidth + x];
+                        D.m_R = Blend([](const xcolori& C) { return float(C.m_R); });
+                        D.m_G = Blend([](const xcolori& C) { return float(C.m_G); });
+                        D.m_B = Blend([](const xcolori& C) { return float(C.m_B); });
+                        D.m_A = Blend([](const xcolori& C) { return float(C.m_A); });
+                    }
+                }
+
+                const auto nPixels = static_cast<std::size_t>(MaxWidth) * MaxHeight;
+                B.setup
+                ( MaxWidth
+                , MaxHeight
+                , xbitmap::format::R8G8B8A8
+                , sizeof(xcolori) * nPixels
+                , { reinterpret_cast<std::byte*>(Data.release()), sizeof(xcolori) * (1 + nPixels) }
+                , true
+                , 1
+                , 1
+                );
+                StandardizeBitmap(B);      // (the wrap modes)
+            }
         }
     }
 
