@@ -612,7 +612,13 @@ namespace xtexture_rsc
 
         virtual void SetupFromSource(std::string_view FileName) override
         {
-            
+
+        }
+
+        std::string SuggestedName() const noexcept override
+        {
+            const auto* pSingle = std::get_if<single_input>(&m_InputVariant);
+            return pSingle ? NameOfFile(pSingle->m_FileName) : std::string{};
         }
 
         void Validate( std::vector<std::string>& Errors ) const noexcept override
