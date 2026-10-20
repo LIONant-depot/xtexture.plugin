@@ -227,9 +227,11 @@ namespace xtexture_editor
 
         std::vector<std::string>& m_ValidationErrors;
 
-        compile_cmd(xundo::system& System, document& Doc, std::vector<std::string>& ValidationErrors) noexcept
+        std::shared_ptr<xresource_editor::compilation::historical_entry::log>* m_pLog;      // the editor's: it holds the order from the moment it is made
 
-            : query_command_base(System, "CompileTexture", nullptr), m_Doc(Doc), m_ValidationErrors(ValidationErrors) {}
+        compile_cmd(xundo::system& System, document& Doc, std::vector<std::string>& ValidationErrors, std::shared_ptr<xresource_editor::compilation::historical_entry::log>* pLog = nullptr) noexcept
+
+            : query_command_base(System, "CompileTexture", nullptr), m_Doc(Doc), m_ValidationErrors(ValidationErrors), m_pLog(pLog) {}
 
         const char* getCommandHelp() const noexcept override { return "Validates, saves the descriptor, and triggers compilation. Usage: CompileTexture"; }
 
@@ -251,7 +253,15 @@ namespace xtexture_editor
 
             auto Err = m_Doc.Save();
 
-            return Err.empty() ? "CompileTexture: saved (compile queued)" : Err;
+            if (!Err.empty()) return Err;
+
+            // The order is made here, not when the file monitor sees the saved file (and a generated texture that nothing lists any more is compiled too:
+            // the person asked)
+            auto Order = xresource_editor::g_LibMgr.RequestCompile({ m_Doc.m_LibraryGuid.m_Instance }, m_Doc.m_Guid);
+
+            if (Order && m_pLog) *m_pLog = Order;
+
+            return Order ? "CompileTexture: saved (compile queued)" : "CompileTexture: saved, nothing to compile";
 
         }
 
@@ -398,7 +408,7 @@ namespace xtexture_editor
 
             : m_SetSRGB(m_Undo, m_Document), m_SetGenerateMips(m_Undo, m_Document)
 
-            , m_Save(m_Undo, m_Document), m_Compile(m_Undo, m_Document, m_ValidationErrors), m_UndoCmd(m_Undo), m_RedoCmd(m_Undo)
+            , m_Save(m_Undo, m_Document), m_Compile(m_Undo, m_Document, m_ValidationErrors, &m_CompilationLog), m_UndoCmd(m_Undo), m_RedoCmd(m_Undo)
             , m_SetProperty(m_Undo, m_Document), m_SnapshotEdit(m_Undo, m_Document), m_ListOp(m_Undo, m_Document), m_ListProperties(m_Undo, m_Document)
             , m_GenericSave(m_Undo, m_Document), m_GenericCompile(m_Undo, m_Document, m_ValidationErrors), m_GenericUndo(m_Undo), m_GenericRedo(m_Undo)
             , m_SetPreview(m_Undo, [this] { return std::vector<xeditor::cmd_util::property_target>{ { xproperty::getObject(m_Preview.m_DrawControls), &m_Preview.m_DrawControls }, { xproperty::getObject(m_Preview.m_DrawOptions), &m_Preview.m_DrawOptions } }; })
@@ -541,6 +551,15 @@ namespace xtexture_editor
 
 
 
+        // Cancel: the manager ends the order of this texture (it leaves the queue, or its compiler ends)
+        static void ToolbarCancel(void* pUser) noexcept
+        {
+            auto* Self = static_cast<session*>(pUser);
+            std::uint64_t Order = 0;
+            if (Self->m_CompilationLog) { xcontainer::lock::scope lk(*Self->m_CompilationLog); Order = Self->m_CompilationLog->get().m_Order; }
+            xresource_editor::g_LibMgr.CancelCompile(Order);
+        }
+
         static void ToolbarCompile(void* pUser) noexcept
 
         {
@@ -597,17 +616,21 @@ namespace xtexture_editor
 
             Bar.m_bCanCompile       = m_Document.m_pDescriptor != nullptr;
 
-            Bar.m_Log               = m_CompilationLog;
-
             Bar.m_pValidationErrors = &m_ValidationErrors;
 
             Bar.m_OnSave            = &session::ToolbarSave;
 
             Bar.m_OnHint            = [](void* pUser, const char* pAction) noexcept { xeditor::HintFor(static_cast<session*>(pUser)->m_Actions, pAction); };
             Bar.m_pOpenFeedback     = &m_Actions.m_bOpenFeedback;
+            Bar.m_Guid              = m_Document.m_Guid;
+            Bar.m_Library           = m_Document.m_LibraryGuid;
             Bar.m_Subject           = xeditor::AssetRef(m_Document.m_Guid);        // the Feedback popup shows what the compile of this asset said (the Logs)
 
             Bar.m_OnCompile         = &session::ToolbarCompile;
+            Bar.m_OnCancel          = &session::ToolbarCancel;
+            // The manager knows the order of this texture, whoever asked for it: this editor shows what it says (an order is open until what it made is done)
+            if (auto Open = xresource_editor::g_LibMgr.FindOpenOrder(m_Document.m_Guid)) { m_CompilationLog = std::move(Open); Bar.m_bOrderOpen = true; }
+            Bar.m_Log               = m_CompilationLog;
 
             Bar.m_pUser             = this;
 
