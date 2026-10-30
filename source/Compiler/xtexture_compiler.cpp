@@ -1,4 +1,5 @@
 #include <limits>
+#include <omp.h>
 #include "xtexture_compiler.h"
 #include "dependencies/xbmp_tools/src/xbmp_tools.h"
 #include "dependencies/crunch/inc/crnlib.h"
@@ -59,6 +60,9 @@ struct implementation final : xtexture_compiler::instance
         //
         if (auto Err = DoValidation(); Err )
             return Err;
+
+        // The OpenMP loops (xbmp_tools filters) get the threads the editor gave this compile (-THREADS)
+        omp_set_num_threads(getThreadCount());
 
         //
         // Compile the textures
@@ -1156,7 +1160,7 @@ struct implementation final : xtexture_compiler::instance
         Params.m_width                  = m_Bitmaps[0].getWidth();
         Params.m_height                 = m_Bitmaps[0].getHeight();
         Params.m_file_type              = crn_file_type::cCRNFileTypeDDS;
-        Params.m_num_helper_threads     = std::min( static_cast<std::uint32_t>(cCRNMaxHelperThreads), Scalar >= 0.5f ? std::thread::hardware_concurrency() : std::thread::hardware_concurrency()/2 );
+        Params.m_num_helper_threads     = std::min( static_cast<std::uint32_t>(cCRNMaxHelperThreads), static_cast<std::uint32_t>(getThreadCount() - 1) );     // helpers besides this thread (-THREADS)
         crnlib::g_number_of_processors  = Params.m_num_helper_threads;
 
 
@@ -1792,7 +1796,7 @@ struct implementation final : xtexture_compiler::instance
             memset(&KernelOps, 0, sizeof(KernelOps));
             KernelOps.format        = TextureConversionTable[static_cast<std::int32_t>(m_Descriptor.m_Compression)];
             KernelOps.fquality      = std::clamp(Scalar, 0.05f, 1.0f);
-            KernelOps.threads       = 0;
+            KernelOps.threads       = std::min(getThreadCount(), 128);     // -THREADS (0 was Compressonator's own choice: ~2 per core in every compiler at once)
             KernelOps.getPerfStats  = true;
 
                  if (m_DebugType == debug_type::D0) KernelOps.getDeviceInfo = false;
