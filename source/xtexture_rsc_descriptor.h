@@ -24,7 +24,7 @@ namespace xtexture_rsc
     , count_v
     };
 
-    static constexpr wchar_t image_filter_v[] = L"Images\0 *.png; *.tga; *.dds; *.jpg; *jpeg; *.hdr; *.exr\0Any Thing\0 *.*\0";
+    static constexpr wchar_t image_filter_v[] = L"Images\0 *.png; *.tga; *.dds; *.jpg; *jpeg; *.hdr; *.exr; *.tif; *.tiff; *.dng\0Any Thing\0 *.*\0";
 
     static constexpr auto compression_format_uncompressed_help_v =
     "32bits per-pixel, (8 bit per-element). Standard format with alpha support\n\n"

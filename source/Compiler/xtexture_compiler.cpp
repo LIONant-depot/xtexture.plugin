@@ -415,8 +415,17 @@ struct implementation final : xtexture_compiler::instance
 
     void LoadTexture( xbitmap& Bitmap, const std::wstring_view FilePath )
     {
+        // TIFF (.tif matches .tiff too) and DNG through xbmp tools (tinydng)
+        if (   xstrtool::findI(FilePath, L".tif") != std::string::npos
+            || xstrtool::findI(FilePath, L".dng") != std::string::npos )
+        {
+            if (auto Err = m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR
+                         ? xbmp::tools::loader::LoadHDRTIFFImage(Bitmap, FilePath)
+                         : xbmp::tools::loader::LoadTIFFImage(Bitmap, FilePath); Err)
+                throw(std::runtime_error(std::format("{}, [BROKEN_LINK] {}", Err.getMessage(), xstrtool::UTF16ToUTF8(FilePath) )));
+        }
         // let xbmp tools deal with the common formats
-        if (   xstrtool::findI(FilePath, L".jpeg") != std::string::npos
+        else if (   xstrtool::findI(FilePath, L".jpeg") != std::string::npos
             || xstrtool::findI(FilePath, L".jpg")  != std::string::npos
             || xstrtool::findI(FilePath, L".tga")  != std::string::npos
             || xstrtool::findI(FilePath, L".png")  != std::string::npos
