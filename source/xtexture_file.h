@@ -134,7 +134,9 @@ namespace xtexture_file
     //   ParallelFor (optional): the big pack's blocks are decoded at once through it (see xserializer::stream::setParallelFor)
     //   bAssemble:              a v2 texture with a part 1 also gets its pixels in m_Bitmap in the xbitmap layout (one more copy; tools)
     //   Part1Path empty:        the tail only (m_bPart1Skipped tells whether there is more)
-    inline xerr Load(const std::wstring_view Part0Path, const std::wstring_view Part1Path, loaded& Out, const xserializer::stream::parallel_for& ParallelFor = {}, bool bAssemble = true) noexcept
+    //   pPart1Buffer:           part 1 read whole at the disk's speed into it first (xfile::ReadWholeFile: no file cache, parallel
+    //                           requests), then parsed from memory - the loader's job passes its thread's buffer; tools pass none
+    inline xerr Load(const std::wstring_view Part0Path, const std::wstring_view Part1Path, loaded& Out, const xserializer::stream::parallel_for& ParallelFor = {}, bool bAssemble = true, xfile::read_buffer* pPart1Buffer = nullptr) noexcept
     {
         // a bitmap that holds its pixels: the pieces point into it
         const auto PiecesOf = [&](const xbitmap& B)
@@ -167,7 +169,13 @@ namespace xtexture_file
 
         part1* pP1 = nullptr;
         xserializer::stream S1; S1.setParallelFor(ParallelFor);
-        if (auto Err = S1.Load(Part1Path, pP1); Err) return Err;
+        if (pPart1Buffer)
+        {
+            std::span<const std::byte> Bytes;
+            if (auto Err = xfile::ReadWholeFile(Part1Path, *pPart1Buffer, Bytes); Err) return Err;
+            if (auto Err = S1.Load(xfile::BufferPath(Bytes), pP1); Err) return Err;
+        }
+        else if (auto Err = S1.Load(Part1Path, pP1); Err) return Err;
         Out.m_pFree[2] = pP1; Out.m_pFree[3] = pP1->m_pData;
         if (pP1->m_Generation != pP0->m_Generation) return xerr::create_f<xserializer::state, "The texture's part 1 is from another compile">();
 

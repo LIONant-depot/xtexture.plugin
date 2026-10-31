@@ -77,6 +77,15 @@ static void RoundTrip(const wchar_t* pName, std::uint32_t W, std::uint32_t H, in
         // (fixed blocks hold 64 KB of input each, so 8+ blocks; MEDIUM's dynamic blocks hold up to 4x that of this compressible data)
         if (bExpectPart1 && Level == xserializer::compression_level::FAST && B.getFrameSize() >= 8 * 64 * 1024) CHECK(nJobs > 0);
 
+        // part 1 read whole first (xfile::ReadWholeFile, the file cache bypassed) and parsed from memory (xfile's buffer device: the
+        // parallel path decodes the blocks where they are), one buffer reused - the same texture
+        {
+            static xfile::read_buffer s_Read;
+            xtexture_file::loaded F;
+            CHECK(!xtexture_file::Load(P0, P1, F, [&](std::size_t n, const std::function<void(std::size_t)>& Job) { for (std::size_t i = 0; i < n; ++i) Job(i); }, true, &s_Read));
+            CHECK(Same(B, F.m_Bitmap));
+        }
+
         // the tail only (the runtime loader's first step: no part 1 read): the last mips, the same bytes as the full texture's
         xtexture_file::loaded T;
         CHECK(!xtexture_file::Load(P0, {}, T, {}, false));

@@ -51,6 +51,9 @@ static void TextureDecodeParallelFor(std::size_t n, const std::function<void(std
 //   transition that does not fit waits (Update tries again). Tails are not counted (always resident while referenced).
 // - A new demand acts once it has held for 0.25 s, and a texture moves at most every 0.5 s (a camera at a threshold does not ping-pong);
 //   demand that changes during a transition is taken up when it ends.
+// - The job reads part 1 whole at the disk's speed (xfile::ReadWholeFile: no file cache, 16 requests in flight - the disk gives 2.6 GB/s
+//   to one request at a time, 6.6 with 4+) into a buffer per job slot, and xserializer decodes it in place (xfile's buffer device).
+//   XTEXTURE_CACHED_READ=1: through the file cache as before.
 // - XTEXTURE_SYNC=1: everything at once, as before. XTEXTURE_TOP_MIP=n: the first mip textures load to (a scripted cap).
 // ponytail: the whole part 1 is read and decoded even for a smaller image (a prefix load would read only the mips kept); requests only
 // from scripts (TextureResidency) and the initial load - quality hints and GPU feedback are P4
@@ -107,6 +110,7 @@ namespace
         std::uint64_t                           m_Budget    = [] { const char* p = std::getenv("XTEXTURE_BUDGET_MB"); return p ? std::uint64_t(std::max(0, std::atoi(p))) << 20 : 0; }();
         int                                     m_DefaultTop = [] { const char* p = std::getenv("XTEXTURE_TOP_MIP"); return p ? std::max(0, std::atoi(p)) : 0; }();
         std::deque<job>                         m_Waiting;
+        std::vector<std::unique_ptr<xfile::read_buffer>> m_ReadBuffers;     // part 1 read whole at the disk's speed into one of these (one per job in flight, kept: no page faults per file)
         int                                     m_nInFlight = 0;
         int                                     m_nInPlace  = 0;            // first loads whose big mips went into the image made at Load
         int                                     m_nDone     = 0;            // (since the queue was last empty: the log line when it empties)
@@ -114,6 +118,7 @@ namespace
         clock::time_point                       m_Start     = {};
     };
     inline residency s_Residency;
+    inline const bool s_bFastRead = std::getenv("XTEXTURE_CACHED_READ") == nullptr;     // XTEXTURE_CACHED_READ=1: part 1 through the file cache as before (A/B)
 
     // a transition's end however it ends: made (Make ran), or not (the read failed, the texture was released or compiled again since)
     struct transition_end
@@ -134,7 +139,18 @@ namespace
     {
         auto pEnd    = std::make_shared<transition_end>(J.m_Key, J.m_Gen, J.m_Bytes);
         auto pLoaded = std::make_shared<xtexture_file::loaded>();
-        if (xtexture_file::Load(J.m_Part0, J.m_bTailOnly ? std::wstring_view{} : std::wstring_view{ J.m_Part1 }, *pLoaded, TextureDecodeParallelFor, false))
+        std::unique_ptr<xfile::read_buffer> pRead;
+        {
+            std::lock_guard Lk(s_Residency.m_Lock);
+            if (s_Residency.m_ReadBuffers.empty()) pRead = std::make_unique<xfile::read_buffer>();
+            else { pRead = std::move(s_Residency.m_ReadBuffers.back()); s_Residency.m_ReadBuffers.pop_back(); }
+        }
+        const auto Err = xtexture_file::Load(J.m_Part0, J.m_bTailOnly ? std::wstring_view{} : std::wstring_view{ J.m_Part1 }, *pLoaded, TextureDecodeParallelFor, false, s_bFastRead ? pRead.get() : nullptr);
+        {
+            std::lock_guard Lk(s_Residency.m_Lock);
+            s_Residency.m_ReadBuffers.push_back(std::move(pRead));
+        }
+        if (Err)
         {
             xerr::LogMessage<xerr::default_states::FAILURE>(std::format("Texture {:X}: its big mips could not be read (it stays as it is)", J.m_Guid.m_Instance.m_Value));
             return 0;
