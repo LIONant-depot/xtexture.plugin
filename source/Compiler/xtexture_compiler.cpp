@@ -240,34 +240,8 @@ struct implementation final : xtexture_compiler::instance
                 }
             }
 
-            if (m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC3_A8)
-            {
-                for (auto& B : m_Bitmaps)
-                {
-                    for (auto& E : B.getMip<xcolori>(0))
-                    {
-                        auto O = E;
-                        E.m_R = 0xff;
-                        E.m_G = O.m_G;
-                        E.m_B = 0;
-                        E.m_A = O.m_R;
-                    }
-                }
-            }
-            else if (m_Descriptor.m_Compression == xtexture_rsc::compression_format::RG_BC5)
-            {
-                for (auto& B : m_Bitmaps)
-                {
-                    for (auto& E : B.getMip<xcolori>(0))
-                    {
-                        auto O = E;
-                        E.m_R = O.m_G;
-                        E.m_G = O.m_R;
-                        E.m_B = 0;
-                        E.m_A = 0;
-                    }
-                }
-            }
+            // The BC3 / BC5 channel packing is done after the mips (PackNormalChannels): the mips renormalize the xyz normal, and
+            // packed (z = 0) they shrank x and y at every level - the normal maps got flatter with distance
         }
 
         //
@@ -339,6 +313,27 @@ struct implementation final : xtexture_compiler::instance
             m_bCubeMap = true;
         }
 
+    }
+
+    //---------------------------------------------------------------------------------------------
+
+    // A tangent normal map's channels as its compression wants them, on every mip and face (after the mips: they need the xyz normal)
+    //   BC3: x in A, y in G (R = 1, B = 0)      BC5: x and y in G and R (B = A = 0)
+    void PackNormalChannels( xbitmap& Bitmap ) const
+    {
+        if (m_Descriptor.m_UsageType != xtexture_rsc::usage_type::TANGENT_NORMAL) return;
+        const bool bBC3 = m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC3_A8;
+        const bool bBC5 = m_Descriptor.m_Compression == xtexture_rsc::compression_format::RG_BC5;
+        if (!bBC3 && !bBC5) return;
+
+        for (int Face = 0; Face < static_cast<int>(Bitmap.getFaceCount()); ++Face)
+        for (int Mip = 0; Mip < Bitmap.getMipCount(); ++Mip)
+        for (auto& E : Bitmap.getMip<xcolori>(Mip, Face))
+        {
+            const auto O = E;
+            if (bBC3) { E.m_R = 0xff; E.m_G = O.m_G; E.m_B = 0; E.m_A = O.m_R; }
+            else      { E.m_R = O.m_G; E.m_G = O.m_R; E.m_B = 0; E.m_A = 0;    }
+        }
     }
 
     //---------------------------------------------------------------------------------------------
@@ -1702,6 +1697,8 @@ struct implementation final : xtexture_compiler::instance
                 , m_Descriptor.m_AlphaThreshold/255.f
                 );
             }
+
+            PackNormalChannels(m_Bitmaps[0]);
 
             int depth = m_Bitmaps[0].getFaceCount();
             int mip_levels = m_Bitmaps[0].getMipCount();
