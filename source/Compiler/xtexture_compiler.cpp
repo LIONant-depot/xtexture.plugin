@@ -1,4 +1,5 @@
 #include <limits>
+#include <chrono>
 #include <omp.h>
 #include "xtexture_compiler.h"
 #include "dependencies/xbmp_tools/src/xbmp_tools.h"
@@ -351,9 +352,10 @@ struct implementation final : xtexture_compiler::instance
         // which is 1.0) gets the CPU, the rest (and O0) the GPU. BC1 / BC3 / BC4 / BC5 match or beat the CPU on the GPU: always the GPU
         if (Fmt == xtexture_gpu::format::BC7 && Ops.fquality >= 0.75f) return false;
 
-        // Worth the GPU's start-up (~0.4 s to make a Vulkan device in each compiler process, measured 2026-10-31) only when the encode is big
-        // enough: a 1 MB BC1 compiled in 0.86 s on the CPU and 1.30 s with the GPU. Texels over every mip and face; BC7 costs ~5x more per block.
-        // ponytail: fixed thresholds for a 28-core PC; one GPU owner shared by the compilers removes the start-up and these with it
+        // Worth the GPU's start-up (~150 ms to make a Vulkan device in each compiler process, measured 2026-10-31) only when the encode is big
+        // enough. Texels over every mip and face; BC7 costs ~5x more per block.
+        // ponytail: fixed thresholds from a 28-core PC (a smaller CPU breaks even sooner); each compiler keeps its own GPU context on
+        // purpose - one shared GPU process would let one crash take every compile down (Tomas, 2026-10-31)
         {
             std::uint64_t Texels = 0;
             CMP_CMIPS     Mips;
@@ -364,7 +366,11 @@ struct implementation final : xtexture_compiler::instance
                     Texels += std::uint64_t(p->m_nWidth) * std::uint64_t(p->m_nHeight);
                 }
             // break-even on this PC: CPU BC1 ~87 ns/texel and BC7 ~313 ns/texel on 28 threads against ~0.4 s of start-up (lower on smaller CPUs)
-            if (Texels < (Fmt == xtexture_gpu::format::BC7 ? 1024u * 1024u : 4u * 1024u * 1024u)) return false;
+            // (XTEXTURE_GPU_MIN_TEXELS replaces the threshold: the calibration knob for another machine, 0 = always the GPU)
+            const char* pMin = std::getenv("XTEXTURE_GPU_MIN_TEXELS");
+            // (measured warm 2026-10-31: start-up ~150 ms - instance 121 ms is the NVIDIA driver itself, device 29 ms; a 1024^2 BC1 / BC5
+            //  already compiles as fast as on the CPU, a 2048^2 BC7 in 0.90 s vs 1.65 s. The first run after a rebuild is slower: driver caches)
+            if (Texels < (pMin ? std::strtoull(pMin, nullptr, 10) : (Fmt == xtexture_gpu::format::BC7 ? 256u * 1024u : 1024u * 1024u))) return false;
         }
 
         if (m_GPUState < 0)
@@ -374,6 +380,7 @@ struct implementation final : xtexture_compiler::instance
         }
         if (!m_GPUState) return false;
 
+        const auto tEncode = std::chrono::steady_clock::now();
         CMP_CMIPS CMips;
         Dst.m_Flags         = MS_FLAG_Default;
         Dst.m_format        = Ops.format;
@@ -404,6 +411,9 @@ struct implementation final : xtexture_compiler::instance
             }
         const auto* p0 = CMips.GetMipLevel(&Dst, 0, 0);
         Dst.dwWidth = p0->m_nWidth; Dst.dwHeight = p0->m_nHeight; Dst.dwDataSize = p0->m_dwLinearSize; Dst.pData = p0->m_pbData;
+
+        char Times[160]; m_GPU.getStartupTimes(Times, sizeof(Times));
+        LogMessage(msg_type::INFO, std::format("GPU start-up: {}; the whole GPU encode {:.0f} ms", Times, std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - tEncode).count()));
         return true;
     }
 

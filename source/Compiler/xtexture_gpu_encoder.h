@@ -24,6 +24,8 @@
     #include <dlfcn.h>
 #endif
 #include <algorithm>
+#include <chrono>
+#include <cstdio>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -63,6 +65,7 @@ namespace xtexture_gpu
         bool Init() noexcept
         {
             if (std::getenv("XTEXTURE_NO_GPU")) return false;
+            Mark();
         #if defined(_WIN32)
             m_hLib = LoadLibraryA("vulkan-1.dll");
             if (!m_hLib) return false;
@@ -78,7 +81,9 @@ namespace xtexture_gpu
 
             VkApplicationInfo App{ VK_STRUCTURE_TYPE_APPLICATION_INFO }; App.apiVersion = VK_API_VERSION_1_1; App.pApplicationName = "xtexture_compiler";
             VkInstanceCreateInfo Ici{ VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO }; Ici.pApplicationInfo = &App;
+            Lap(m_tLoader);
             if (CreateInstance(&Ici, nullptr, &m_Instance) != VK_SUCCESS) return false;
+            Lap(m_tInstance);
             #define XTEXTURE_GPU_LOAD_I(F) F = reinterpret_cast<PFN_##F>(GetInstanceProcAddr(m_Instance, #F)); if (!F) return false;
             XTEXTURE_GPU_VK_INSTANCE(XTEXTURE_GPU_LOAD_I)
 
@@ -104,6 +109,7 @@ namespace xtexture_gpu
             #define XTEXTURE_GPU_LOAD_D(F) F = reinterpret_cast<PFN_##F>(vkGetDeviceProcAddr(m_Device, #F)); if (!F) return false;
             XTEXTURE_GPU_VK_DEVICE(XTEXTURE_GPU_LOAD_D)
             vkGetDeviceQueue(m_Device, m_Family, 0, &m_Queue);
+            Lap(m_tDevice);
 
             VkCommandPoolCreateInfo Pci{ VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO }; Pci.queueFamilyIndex = m_Family; Pci.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
             if (vkCreateCommandPool(m_Device, &Pci, nullptr, &m_Pool) != VK_SUCCESS) return false;
@@ -128,6 +134,9 @@ namespace xtexture_gpu
         }
 
         const char* getDeviceName() const noexcept { return m_Name; }
+
+        // Where the start-up went (ms): loader, instance, device, pipelines (the formats made so far)
+        void getStartupTimes(char* p, std::size_t n) const noexcept { std::snprintf(p, n, "loader %.0f ms, instance %.0f ms, device %.0f ms, pipelines %.0f ms", m_tLoader, m_tInstance, m_tDevice, m_tPipelines); }
 
         // Encodes one RGBA8 image (Width x Height, rows of Width * 4 bytes) to blocks: ceil(W/4) x ceil(H/4) blocks of 8 (BC1, BC4) or 16 bytes.
         // false on any failure (the caller then encodes this one on the CPU)
@@ -315,6 +324,7 @@ namespace xtexture_gpu
         {
             auto& K = m_Kernels[int(Fmt)];
             if (K[0]) return true;
+            Mark();
             struct code { const std::uint32_t* p; std::size_t n; };
             code Codes[4]; int nCodes = 0;
             switch (Fmt)
@@ -341,6 +351,7 @@ namespace xtexture_gpu
                 vkDestroyShaderModule(m_Device, M, nullptr);
                 if (!bOk) return false;
             }
+            Lap(m_tPipelines);
             return true;
         }
 
@@ -390,6 +401,10 @@ namespace xtexture_gpu
         VkImageView             m_View      = VK_NULL_HANDLE;
         int                     m_ImageW = 0, m_ImageH = 0;
         char                    m_Name[256] = {};
+        std::chrono::steady_clock::time_point m_t0;
+        double                  m_tLoader = 0, m_tInstance = 0, m_tDevice = 0, m_tPipelines = 0;
+        void Mark() noexcept { m_t0 = std::chrono::steady_clock::now(); }
+        void Lap(double& Ms) noexcept { const auto t = std::chrono::steady_clock::now(); Ms += std::chrono::duration<double, std::milli>(t - m_t0).count(); m_t0 = t; }
         bool                    m_bReady    = false;
     };
 }
@@ -402,6 +417,7 @@ namespace xtexture_gpu       // built without the Vulkan headers: always the CPU
     public:
         bool        Init() noexcept { return false; }
         const char* getDeviceName() const noexcept { return ""; }
+        void        getStartupTimes(char* p, std::size_t n) const noexcept { if (n) p[0] = 0; }
         bool        Encode(format, const std::uint8_t*, int, int, float, std::vector<std::uint8_t>&) noexcept { return false; }
     };
 }
