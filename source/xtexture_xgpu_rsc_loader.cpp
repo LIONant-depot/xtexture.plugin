@@ -134,9 +134,7 @@ namespace
         double FullMB = 0, ResidentMB = 0;
         for (const auto& [Key, T] : s_Residency.m_Textures) { FullMB += T.Bytes(0) / 1048576.0; ResidentMB += T.Bytes(T.m_Resident) / 1048576.0; }
         XPROFILE_PLOT("Texture streaming saved MB", FullMB - ResidentMB);
-        XPROFILE_PLOT_LIMIT("Texture streaming saved MB", FullMB);
-        XPROFILE_PLOT("Texture streaming saved %", FullMB > 0 ? 100.0 * (FullMB - ResidentMB) / FullMB : 0.0);
-        XPROFILE_PLOT_LIMIT("Texture streaming saved %", 100.0);
+        XPROFILE_PLOT_LIMIT("Texture streaming saved MB", FullMB);        // (its maximum: all of it - Max mode shows the share saved)
     }
 
     // a transition's end however it ends: made (Make ran), or not (the read failed, the texture was released or compiled again since)
