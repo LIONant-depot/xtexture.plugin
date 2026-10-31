@@ -15,6 +15,7 @@
 #include "dependencies/xmath/source/bridge/xmath_to_xproperty.h"
 #include "dependencies/xresource_mgr/source/xresource_mgr.h"
 #include "plugins/xtexture.plugin/source/xtexture_xgpu_rsc_loader.h"
+#include "plugins/xtexture.plugin/source/xtexture_file.h"
 #include <filesystem>
 #include <cwctype>
 #include <cstdio>
@@ -1018,6 +1019,7 @@ struct mesh_mgr
         mesh_mgr                        m_Meshes{};
         draw_options                    m_DrawOptions{};
         draw_controls                   m_DrawControls{m_DrawOptions};
+        std::unique_ptr<xtexture_file::loaded> m_pLoaded{};      // the compiled texture (both parts, assembled); the inspector borrows its bitmap
         e05::bitmap_inspector           m_BitmapInspector{};
         material_mgr::material_instance m_UserMaterial{};
         material_mgr::material_instance m_BackgroundMaterial{};
@@ -1046,8 +1048,21 @@ struct mesh_mgr
                 return;
             }
 
-            m_BitmapInspector.Load(m_ResourcePath, true);
-            if (!m_BitmapInspector.m_pBitmap || m_BitmapInspector.m_pBitmap->getFormat() == xbitmap::format::INVALID)
+            // the texture file v2: the resource file and its ".1" (xtexture_file), not a plain xbitmap stream
+            m_BitmapInspector.clear();
+            auto pLoaded = std::make_unique<xtexture_file::loaded>();
+            if (auto Err = xtexture_file::Load(m_ResourcePath, m_ResourcePath + L".1", *pLoaded); Err)
+            {
+                printf("Texture preview: could not load the compiled texture: %s\n", Err.getMessage().data());
+                m_pLoaded.reset();
+                return;
+            }
+            std::error_code Ec;
+            std::size_t FileSize = std::filesystem::file_size(m_ResourcePath, Ec);
+            if (const auto S1 = std::filesystem::file_size(m_ResourcePath + L".1", Ec); !Ec) FileSize += S1;
+            m_pLoaded = std::move(pLoaded);
+            m_BitmapInspector.Borrow(m_ResourcePath, m_pLoaded->m_Bitmap, FileSize);
+            if (m_BitmapInspector.m_pBitmap->getFormat() == xbitmap::format::INVALID)
                 return;
 
             m_Materials.UpdateFromBitmap(*m_pDevice, m_UserMaterial, *m_BitmapInspector.m_pBitmap);
