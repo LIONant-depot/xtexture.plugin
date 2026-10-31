@@ -121,6 +121,7 @@ namespace xtexture_file
         xbitmap                                 m_Bitmap;
         std::vector<std::span<const std::byte>> m_MipFaceData;
         std::array<void*, 4>                    m_pFree {};
+        bool                                    m_bPart1Skipped = false;   // the texture has a part 1, not read (Part1Path empty): m_Bitmap is its tail
 
         ~loaded() noexcept { for (void* p : m_pFree) if (p) xserializer::default_memory_handler_v.Free(xserializer::mem_type{ .m_bUnique = true }, p); }
     };
@@ -128,6 +129,7 @@ namespace xtexture_file
     // Reads a texture file, version 2 (part 0 + part 1) or version 1 (a plain xbitmap).
     //   ParallelFor (optional): the big pack's blocks are decoded at once through it (see xserializer::stream::setParallelFor)
     //   bAssemble:              a v2 texture with a part 1 also gets its pixels in m_Bitmap in the xbitmap layout (one more copy; tools)
+    //   Part1Path empty:        the tail only (m_bPart1Skipped tells whether there is more)
     inline xerr Load(const std::wstring_view Part0Path, const std::wstring_view Part1Path, loaded& Out, const xserializer::stream::parallel_for& ParallelFor = {}, bool bAssemble = true) noexcept
     {
         // a bitmap that holds its pixels: the pieces point into it
@@ -154,7 +156,7 @@ namespace xtexture_file
         Out.m_pFree = { pP0, pP0->m_Tail.m_pData };
         const xbitmap& Tail = pP0->m_Tail;
 
-        if (pP0->m_nPart1Mips == 0) { View(Tail); return {}; }
+        if (pP0->m_nPart1Mips == 0 || Part1Path.empty()) { Out.m_bPart1Skipped = pP0->m_nPart1Mips != 0; View(Tail); return {}; }
 
         part1* pP1 = nullptr;
         xserializer::stream S1; S1.setParallelFor(ParallelFor);

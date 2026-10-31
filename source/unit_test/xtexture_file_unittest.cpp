@@ -76,6 +76,21 @@ static void RoundTrip(const wchar_t* pName, std::uint32_t W, std::uint32_t H, in
         CHECK(Same(B, P.m_Bitmap));
         // (fixed blocks hold 64 KB of input each, so 8+ blocks; MEDIUM's dynamic blocks hold up to 4x that of this compressible data)
         if (bExpectPart1 && Level == xserializer::compression_level::FAST && B.getFrameSize() >= 8 * 64 * 1024) CHECK(nJobs > 0);
+
+        // the tail only (the runtime loader's first step: no part 1 read): the last mips, the same bytes as the full texture's
+        xtexture_file::loaded T;
+        CHECK(!xtexture_file::Load(P0, {}, T, {}, false));
+        CHECK(T.m_bPart1Skipped == bExpectPart1);
+        const int nSkipped = B.getMipCount() - T.m_Bitmap.getMipCount();
+        CHECK(T.m_Bitmap.getFaceCount() == B.getFaceCount() && T.m_Bitmap.isCubemap() == B.isCubemap() && T.m_Bitmap.getFormat() == B.getFormat());
+        CHECK(bExpectPart1 ? nSkipped > 0 && T.m_Bitmap.getWidth() == std::max(1u, B.getWidth() >> nSkipped) : nSkipped == 0);
+        CHECK(std::max(T.m_Bitmap.getWidth(), T.m_Bitmap.getHeight()) <= (bExpectPart1 ? xtexture_file::tail_max_size_v : std::max(B.getWidth(), B.getHeight())));
+        for (int f = 0; f < T.m_Bitmap.getFaceCount(); ++f)
+            for (int m = 0; m < T.m_Bitmap.getMipCount(); ++m)
+            {
+                const auto Mip = B.getMip<std::byte>(m + nSkipped, f), Tail = T.m_Bitmap.getMip<std::byte>(m, f);
+                CHECK(Mip.size() == Tail.size() && 0 == std::memcmp(Mip.data(), Tail.data(), Mip.size()));
+            }
     }
     std::printf("round trip %ls %ux%u faces %d: %s\n", pName, W, H, nFaces, bExpectPart1 ? "part 0 + part 1" : "part 0 only");
 }
