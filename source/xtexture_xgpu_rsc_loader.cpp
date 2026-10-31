@@ -128,6 +128,15 @@ namespace
         XPROFILE_PLOT("Texture jobs queued", static_cast<double>(s_Residency.m_Waiting.size()));
         XPROFILE_PLOT("Texture budget MB", s_Residency.m_Budget / 1048576.0);
         if (s_Residency.m_Budget) XPROFILE_PLOT_LIMIT("Texture big mips MB", s_Residency.m_Budget / 1048576.0);
+
+        // what streaming saves: the big mips of every loaded texture at full size minus what is resident (the fewer mips a texture
+        // keeps, the more) - Tomas: "a real number, one we want to see always as high as possible"
+        double FullMB = 0, ResidentMB = 0;
+        for (const auto& [Key, T] : s_Residency.m_Textures) { FullMB += T.Bytes(0) / 1048576.0; ResidentMB += T.Bytes(T.m_Resident) / 1048576.0; }
+        XPROFILE_PLOT("Texture streaming saved MB", FullMB - ResidentMB);
+        XPROFILE_PLOT_LIMIT("Texture streaming saved MB", FullMB);
+        XPROFILE_PLOT("Texture streaming saved %", FullMB > 0 ? 100.0 * (FullMB - ResidentMB) / FullMB : 0.0);
+        XPROFILE_PLOT_LIMIT("Texture streaming saved %", 100.0);
     }
 
     // a transition's end however it ends: made (Make ran), or not (the read failed, the texture was released or compiled again since)
