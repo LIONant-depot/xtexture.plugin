@@ -20,6 +20,19 @@
 #include <span>
 #include <vector>
 
+// The profiler (xprofile, Tracy): the file's steps as zones, the disk read vs the decode as plots - where xprofile is part of the build
+// (the tools that read texture files are built without it: empty macros)
+#if __has_include("xprofile.h")
+    #include "xprofile.h"
+#else
+    #ifndef XPROFILE_SCOPE
+        #define XPROFILE_SCOPE(NAME)
+    #endif
+    #ifndef XPROFILE_PLOT
+        #define XPROFILE_PLOT(NAME, VALUE) do {} while (0)
+    #endif
+#endif
+
 namespace xtexture_file
 {
     inline constexpr std::uint32_t  tail_max_size_v = 128;          // a mip this size or smaller (both sides) is in the tail
@@ -147,7 +160,8 @@ namespace xtexture_file
         const auto View = [&](const xbitmap& B) { std::memcpy(static_cast<void*>(&Out.m_Bitmap), &B, sizeof(xbitmap)); Out.m_Bitmap.m_Flags.m_bOwnsMemory = false; PiecesOf(Out.m_Bitmap); };
 
         part0* pP0 = nullptr;
-        if (auto Err = xserializer::stream{}.Load(Part0Path, pP0); Err)
+        XPROFILE_SCOPE("Texture file");
+        if (auto Err = [&] { XPROFILE_SCOPE("Texture part 0"); return xserializer::stream{}.Load(Part0Path, pP0); }(); Err)
         {
             if (Err.getState<xserializer::state>() != xserializer::state::WRONG_VERSION) return Err;
 
@@ -171,9 +185,16 @@ namespace xtexture_file
         xserializer::stream S1; S1.setParallelFor(ParallelFor);
         if (pPart1Buffer)
         {
+            // (plots: the disk's MB/s of the file as stored, the decode's MB/s of what it gives - which one a texture waits on)
             std::span<const std::byte> Bytes;
-            if (auto Err = xfile::ReadWholeFile(Part1Path, *pPart1Buffer, Bytes); Err) return Err;
-            if (auto Err = S1.Load(xfile::BufferPath(Bytes), pP1); Err) return Err;
+            const auto t0 = std::chrono::steady_clock::now();
+            if (auto Err = [&] { XPROFILE_SCOPE("Texture part 1: disk read"); return xfile::ReadWholeFile(Part1Path, *pPart1Buffer, Bytes); }(); Err) return Err;
+            const auto t1 = std::chrono::steady_clock::now();
+            if (auto Err = [&] { XPROFILE_SCOPE("Texture part 1: decode"); return S1.Load(xfile::BufferPath(Bytes), pP1); }(); Err) return Err;
+            const auto t2 = std::chrono::steady_clock::now();
+            const double ReadS = std::chrono::duration<double>(t1 - t0).count(), DecodeS = std::chrono::duration<double>(t2 - t1).count();
+            if (ReadS > 0)   XPROFILE_PLOT("Texture disk read MB/s", Bytes.size() / 1048576.0 / ReadS);
+            if (DecodeS > 0) XPROFILE_PLOT("Texture decode MB/s", pP1->m_DataSize / 1048576.0 / DecodeS);
         }
         else if (auto Err = S1.Load(Part1Path, pP1); Err) return Err;
         Out.m_pFree[2] = pP1; Out.m_pFree[3] = pP1->m_pData;

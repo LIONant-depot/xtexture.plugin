@@ -120,6 +120,15 @@ namespace
     inline residency s_Residency;
     inline const bool s_bFastRead = std::getenv("XTEXTURE_CACHED_READ") == nullptr;     // XTEXTURE_CACHED_READ=1: part 1 through the file cache as before (A/B)
 
+    // the profiler's plots of the residency (s_Residency.m_Lock held): whenever its numbers change
+    void PlotResidency(void) noexcept
+    {
+        XPROFILE_PLOT("Texture big mips MB", s_Residency.m_Bytes / 1048576.0);
+        XPROFILE_PLOT("Texture in flight MB", s_Residency.m_Reserved / 1048576.0);
+        XPROFILE_PLOT("Texture jobs queued", static_cast<double>(s_Residency.m_Waiting.size()));
+        XPROFILE_PLOT("Texture budget MB", s_Residency.m_Budget / 1048576.0);
+    }
+
     // a transition's end however it ends: made (Make ran), or not (the read failed, the texture was released or compiled again since)
     struct transition_end
     {
@@ -137,6 +146,7 @@ namespace
     // manager's thread: with the mips from m_Top down, or (m_bExtend) the current image's view of all its mips once the big ones are in
     std::uint64_t RunJob(job& J) noexcept
     {
+        XPROFILE_SCOPE("Texture residency job");
         auto pEnd    = std::make_shared<transition_end>(J.m_Key, J.m_Gen, J.m_Bytes);
         auto pLoaded = std::make_shared<xtexture_file::loaded>();
         std::unique_ptr<xfile::read_buffer> pRead;
@@ -159,12 +169,14 @@ namespace
         J.m_pMgr->QueueReplace(J.m_Guid, J.m_pOld, [pLoaded, pEnd, Top = J.m_bTailOnly ? 0 : J.m_Top, Device = J.m_Device, Key = J.m_Key, Gen = J.m_Gen, ResidentTop = J.m_Top
                                                    , bExtend = J.m_bExtend, pOld = J.m_pOld]() mutable -> void*
         {
+            XPROFILE_SCOPE("Texture make (xGPU)");
             xtexture_file::loaded& L = *pLoaded;
             const auto Done = [&](xgpu::texture* pNew, std::uint64_t Bytes)       // (s_Residency.m_Lock held)
             {
                 pEnd->m_bMade = true;
                 s_Residency.m_Reserved -= pEnd->m_Bytes;
                 s_Residency.m_Bytes    += pEnd->m_Bytes;
+                PlotResidency();
                 s_Residency.m_DataBytes[pNew] = Bytes;
                 if (auto It = s_Residency.m_Textures.find(Key); It != s_Residency.m_Textures.end() && It->second.m_Gen == Gen)
                 {
@@ -254,6 +266,7 @@ namespace
         const std::uint64_t Bytes   = bExtend ? 0 : T.Bytes(T.m_Wanted);
         if (R.m_Budget && Bytes && R.m_Bytes + R.m_Reserved + Bytes > R.m_Budget) return false;
         R.m_Reserved += Bytes;
+        PlotResidency();
         T.m_bMoving   = true;
         SubmitJob({ Key, T.m_Gen, T.m_pMgr, T.m_Guid, T.m_pCurrent, T.m_Wanted, Bytes, T.m_Wanted >= T.m_nPart1, bExtend, T.m_Device, T.m_Part0, T.m_Part1 });
         return true;
@@ -314,6 +327,7 @@ namespace xtexture_residency
 
 xresource::loader< xrsc::texture_type_guid_v >::data_type* xresource::loader< xrsc::texture_type_guid_v >::Load( xresource::mgr& Mgr, const full_guid& GUID )
 {
+    XPROFILE_SCOPE("Texture load (tail)");
     auto&           UserData    = Mgr.getUserData<resource_mgr_user_data>();
     auto            Texture     = std::make_unique<xgpu::texture>();
     xtexture_file::loaded Loaded;
@@ -372,6 +386,7 @@ xresource::loader< xrsc::texture_type_guid_v >::data_type* xresource::loader< xr
         T.m_ImageTop = bInPlace ? Top : -1;
         const std::uint64_t Bytes = T.Bytes(bInPlace ? Top : T.m_Resident);      // (the image as allocated: the whole of it in place)
         s_Residency.m_Bytes += Bytes;
+        PlotResidency();
         s_Residency.m_DataBytes[Texture.get()] = Bytes;
         TryStart(Key, T);           // (no wait for the first load; over the budget: Update starts it later)
     }
@@ -388,7 +403,7 @@ void xresource::loader< xrsc::texture_type_guid_v >::Destroy(xresource::mgr& Mgr
         // its bytes leave the budget now that xGPU has it (its own death march frees the image after the frames that could use it); the
         // texture itself is gone when this was its current data (released: not replaced)
         std::lock_guard Lk(s_Residency.m_Lock);
-        if (auto It = s_Residency.m_DataBytes.find(&Data); It != s_Residency.m_DataBytes.end()) { s_Residency.m_Bytes -= It->second; s_Residency.m_DataBytes.erase(It); }
+        if (auto It = s_Residency.m_DataBytes.find(&Data); It != s_Residency.m_DataBytes.end()) { s_Residency.m_Bytes -= It->second; s_Residency.m_DataBytes.erase(It); PlotResidency(); }
         if (auto It = s_Residency.m_Textures.find({ &Mgr, GUID.m_Instance.m_Value }); It != s_Residency.m_Textures.end() && It->second.m_pCurrent == &Data) s_Residency.m_Textures.erase(It);
     }
     auto& UserData = Mgr.getUserData<resource_mgr_user_data>();
