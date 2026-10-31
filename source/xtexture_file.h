@@ -31,6 +31,9 @@
     #ifndef XPROFILE_PLOT
         #define XPROFILE_PLOT(NAME, VALUE) do {} while (0)
     #endif
+    #ifndef XPROFILE_PLOT_LIMIT
+        #define XPROFILE_PLOT_LIMIT(NAME, MAX) do {} while (0)
+    #endif
 #endif
 
 namespace xtexture_file
@@ -195,6 +198,10 @@ namespace xtexture_file
             const double ReadS = std::chrono::duration<double>(t1 - t0).count(), DecodeS = std::chrono::duration<double>(t2 - t1).count();
             if (ReadS > 0)   XPROFILE_PLOT("Texture disk read MB/s", Bytes.size() / 1048576.0 / ReadS);
             if (DecodeS > 0) XPROFILE_PLOT("Texture decode MB/s", pP1->m_DataSize / 1048576.0 / DecodeS);
+            // their theoretical maxima (the Profiler tab's Max scale; editable there per machine): measured on the reference PC
+            // 2026-10-31 - its NVMe (Samsung 980 PRO) rated 7000 MB/s (6.6 GB/s measured with 4+ requests), zstd on all cores 17.8 GB/s
+            XPROFILE_PLOT_LIMIT("Texture disk read MB/s", 7000);
+            XPROFILE_PLOT_LIMIT("Texture decode MB/s", 17800);
         }
         else if (auto Err = S1.Load(Part1Path, pP1); Err) return Err;
         Out.m_pFree[2] = pP1; Out.m_pFree[3] = pP1->m_pData;

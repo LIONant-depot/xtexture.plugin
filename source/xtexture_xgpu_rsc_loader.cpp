@@ -127,6 +127,7 @@ namespace
         XPROFILE_PLOT("Texture in flight MB", s_Residency.m_Reserved / 1048576.0);
         XPROFILE_PLOT("Texture jobs queued", static_cast<double>(s_Residency.m_Waiting.size()));
         XPROFILE_PLOT("Texture budget MB", s_Residency.m_Budget / 1048576.0);
+        if (s_Residency.m_Budget) XPROFILE_PLOT_LIMIT("Texture big mips MB", s_Residency.m_Budget / 1048576.0);
     }
 
     // a transition's end however it ends: made (Make ran), or not (the read failed, the texture was released or compiled again since)
