@@ -40,4 +40,14 @@ target_compile_definitions(${TARGET_PROJECT} PRIVATE XRESOURCE_PIPELINE_NO_COMPI
 find_package(OpenMP REQUIRED)
 target_link_libraries(${TARGET_PROJECT} PRIVATE OpenMP::OpenMP_CXX)
 
+# GPU block compression (source/Compiler/xtexture_gpu_encoder.h): only the Vulkan headers - the Vulkan loader is opened at run time, so
+# the compiler still runs (on the CPU) where there is no Vulkan driver; without the headers it is built CPU only
+find_package(Vulkan QUIET)
+if(Vulkan_FOUND)
+  target_include_directories(${TARGET_PROJECT} PRIVATE ${Vulkan_INCLUDE_DIRS})
+endif()
+if(UNIX)
+  target_link_libraries(${TARGET_PROJECT} PRIVATE ${CMAKE_DL_LIBS})
+endif()
+
 ProcessComponents()

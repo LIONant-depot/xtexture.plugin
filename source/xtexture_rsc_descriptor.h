@@ -70,8 +70,6 @@ namespace xtexture_rsc
     , xproperty::settings::enum_item("RGB_SHDR_BC6",        compression_format::RGB_SHDR_BC6)
     , xproperty::settings::enum_item("RGB_UHDR_BC6",        compression_format::RGB_UHDR_BC6)
     , xproperty::settings::enum_item("RGBA_BC7",            compression_format::RGBA_BC7, compression_format_bc7_help_v)
-    , xproperty::settings::enum_item("RGB_SUPER_COMPRESS",  compression_format::RGB_SUPER_COMPRESS)
-    , xproperty::settings::enum_item("RGBA_SUPER_COMPRESS", compression_format::RGBA_SUPER_COMPRESS)
     };
 
     enum class compression_format_hdr_color : std::uint8_t
@@ -97,7 +95,6 @@ namespace xtexture_rsc
     { xproperty::settings::enum_item("RGBA_UNCOMPRESSED",   compression_format_color::RGBA_UNCOMPRESSED, compression_format_uncompressed_help_v)
     , xproperty::settings::enum_item("RGB_BC1",             compression_format_color::RGB_BC1, compression_format_bc1_help_v)
     , xproperty::settings::enum_item("RGB_BC7",             compression_format_color::RGB_BC7, compression_format_bc7_help_v)
-    , xproperty::settings::enum_item("RGB_SUPER_COMPRESS",  compression_format_color::RGB_SUPER_COMPRESS)
     };
 
     // Blended opacity: never BC1 (its 1-bit alpha cannot hold soft opacity)
@@ -112,7 +109,6 @@ namespace xtexture_rsc
     { xproperty::settings::enum_item("RGBA_BC7",            compression_format_color_a::RGBA_BC7, compression_format_bc7_help_v)
     , xproperty::settings::enum_item("RGBA_BC3_A8",         compression_format_color_a::RGBA_BC3_A8, compression_format_bc3_help_v)
     , xproperty::settings::enum_item("RGBA_UNCOMPRESSED",   compression_format_color_a::RGBA_UNCOMPRESSED, compression_format_uncompressed_help_v)
-    , xproperty::settings::enum_item("RGBA_SUPER_COMPRESS", compression_format_color_a::RGBA_SUPER_COMPRESS)
     };
 
     // A cutout: BC7 (smooth alpha edges, for the sharpened alpha test / TAA) or BC1 with 1-bit alpha (half the size, budget assets:
@@ -127,6 +123,21 @@ namespace xtexture_rsc
     { xproperty::settings::enum_item("RGBA_BC7",            compression_format_color_cutout::RGBA_BC7, compression_format_bc7_help_v)
     , xproperty::settings::enum_item("RGBA_BC1_A1",         compression_format_color_cutout::RGBA_BC1_A1, compression_format_bc1_a_help_v)
     , xproperty::settings::enum_item("RGBA_UNCOMPRESSED",   compression_format_color_cutout::RGBA_UNCOMPRESSED, compression_format_uncompressed_help_v)
+    };
+
+    // ORME: BC7 (default), BC3 (faster; O, R, M share one color block), BC1 when there is no emissive (no alpha), uncompressed
+    enum class compression_format_orme : std::uint8_t
+    { RGBA_UNCOMPRESSED     = static_cast<std::uint8_t>(compression_format::RGBA_UNCOMPRESSED)
+    , RGB_BC1               = static_cast<std::uint8_t>(compression_format::RGB_BC1)
+    , RGBA_BC3_A8           = static_cast<std::uint8_t>(compression_format::RGBA_BC3_A8)
+    , RGBA_BC7              = static_cast<std::uint8_t>(compression_format::RGBA_BC7)
+    };
+
+    static constexpr auto compression_format_orme_v = std::array
+    { xproperty::settings::enum_item("RGBA_BC7",            compression_format_orme::RGBA_BC7, compression_format_bc7_help_v)
+    , xproperty::settings::enum_item("RGBA_BC3_A8",         compression_format_orme::RGBA_BC3_A8, "8 bits per pixel like BC7 and much faster to encode; Occlusion, Roughness and Metallic share one BC1-style color block, so unrelated channels bleed into each other (roughness most visibly); Emissive alone in the alpha block")
+    , xproperty::settings::enum_item("RGB_BC1",             compression_format_orme::RGB_BC1, "Half the size, no alpha: only when the Emissive is a constant 0")
+    , xproperty::settings::enum_item("RGBA_UNCOMPRESSED",   compression_format_orme::RGBA_UNCOMPRESSED, compression_format_uncompressed_help_v)
     };
 
     enum class compression_format_tangent_normal : std::uint8_t
@@ -153,7 +164,6 @@ namespace xtexture_rsc
                                                                                                             "Normal.xy = Normal.rg * 2.0 - 1.0;\n"
                                                                                                             "Normal.z  = sqrt(1.0 - min(1,dot(Normal.xy, Normal.xy)));")
     , xproperty::settings::enum_item("RGBA_BC7",            compression_format_tangent_normal::RGBA_BC7)
-    , xproperty::settings::enum_item("RGBA_SUPER_COMPRESS", compression_format_tangent_normal::RGBA_SUPER_COMPRESS)
     };
 
     // The saved names (the first string) never change; the editor shows the display names
@@ -164,6 +174,7 @@ namespace xtexture_rsc
     , TANGENT_NORMAL        // BC5 compress (R,G,A), B set to black, should be linear
     , INTENSITY             // Things like MASKs (Data expected to be in R) Keep other channels black for better results. Should be linear.
     , COLOR_AND_CUTOUT      // Color with an alpha test (foliage, fences, hair cards): the mips keep the coverage at the Alpha Threshold
+    , ORME                  // Occlusion, Roughness, Metallic, Emissive in R, G, B, A (linear data; the ORME input titles the four)
     };
 
     static constexpr auto type_v = std::array
@@ -174,6 +185,7 @@ namespace xtexture_rsc
     , xproperty::settings::enum_item("HDR_COLOR",          usage_type::HDR_COLOR,        "A high dynamic range color image (linear float)", "HDR Color")
     , xproperty::settings::enum_item("TANGENT_NORMAL",     usage_type::TANGENT_NORMAL,   "A tangent-space normal map (linear)", "Normal Map")
     , xproperty::settings::enum_item("INTENSITY",          usage_type::INTENSITY,        "Data, not color: masks, roughness, packed channels (linear)", "Mask / Data")
+    , xproperty::settings::enum_item("ORME",               usage_type::ORME,             "Occlusion, Roughness, Metallic, Emissive packed in R, G, B, A for the PBR materials (linear)", "ORME")
     };
 
     enum class compositing_from : std::uint8_t
@@ -534,6 +546,78 @@ namespace xtexture_rsc
         )
     };
 
+    //---------------------------------------------------------------------------------------------
+    // ORME: Occlusion, Roughness, Metallic, Emissive packed in R, G, B, A (what the PBR materials read: ORME.r occlusion, ORME.a emission).
+    // Four titled entries instead of a free Mix; the compiler turns it into the equivalent mix_source (ToMix)
+    struct orme_channel
+    {
+        compositing_from    m_CopyFrom  { compositing_from::CUSTOM_CONSTANT };
+        std::wstring        m_FileName  {};
+        float               m_Constant  { 0.f };
+        bool                m_bInvert   { false };      // copy 1 - value (a glossiness map for the roughness)
+
+        static constexpr orme_channel Constant(float V) noexcept { orme_channel C; C.m_Constant = V; return C; }
+
+        mix ToMix(compositing_to To) const noexcept
+        {
+            mix M; M.m_CopyFrom = m_CopyFrom; M.m_CopyTo = To; M.m_FileName = m_FileName; M.m_Constant = m_Constant; M.m_bInvert = m_bInvert;
+            return M;
+        }
+
+        void Validate(std::vector<std::string>& Errors, const char* pName) const noexcept
+        {
+            if (m_CopyFrom != compositing_from::CUSTOM_CONSTANT && m_FileName.empty()) Errors.push_back(std::format("ORME {}: pick a file or use a constant", pName));
+            if (m_CopyFrom == compositing_from::RGBA || m_CopyFrom == compositing_from::RGB) Errors.push_back(std::format("ORME {}: copy one channel (R, G, B or A) of the file", pName));
+        }
+
+        XPROPERTY_DEF
+        ("ORME Channel", orme_channel
+        , obj_member< "Copy From", &orme_channel::m_CopyFrom, member_enum_span<compositing_from_v>, member_help<"The channel of the file (R, G, B or A), or CUSTOM_CONSTANT for one value everywhere"> >
+        , obj_member< "FileName"
+            , &orme_channel::m_FileName
+            , member_ui<std::wstring>::file_dialog<image_filter_v, true, 1>
+            , member_dynamic_flags<+[](const orme_channel& O) { xproperty::flags::type F = {}; F.m_bDontShow = O.m_CopyFrom == compositing_from::CUSTOM_CONSTANT; return F; }>>
+        , obj_member< "Constant"
+            , &orme_channel::m_Constant
+            , member_ui<float>::edit_box<0.f, 1.f>
+            , member_dynamic_flags<+[](const orme_channel& O) { xproperty::flags::type F = {}; F.m_bDontShow = O.m_CopyFrom != compositing_from::CUSTOM_CONSTANT; return F; }>>
+        , obj_member< "Invert"
+            , &orme_channel::m_bInvert
+            , member_help<"Copy 1 - value: a glossiness map is the roughness upside down">
+            , member_dynamic_flags<+[](const orme_channel& O) { xproperty::flags::type F = {}; F.m_bDontShow = O.m_CopyFrom == compositing_from::CUSTOM_CONSTANT; return F; }>>
+        )
+    };
+
+    struct orme_input
+    {
+        orme_channel m_Occlusion = orme_channel::Constant(1.0f);    // no occlusion
+        orme_channel m_Roughness = orme_channel::Constant(0.5f);
+        orme_channel m_Metallic  = orme_channel::Constant(0.0f);
+        orme_channel m_Emissive  = orme_channel::Constant(0.0f);    // not emissive
+
+        mix_source ToMix() const noexcept
+        {
+            mix_source S;
+            S.m_Inputs = { m_Occlusion.ToMix(compositing_to::R), m_Roughness.ToMix(compositing_to::G)
+                         , m_Metallic.ToMix(compositing_to::B),  m_Emissive.ToMix(compositing_to::A) };
+            return S;
+        }
+
+        void Validate(std::vector<std::string>& Errors) const noexcept
+        {
+            m_Occlusion.Validate(Errors, "Occlusion"); m_Roughness.Validate(Errors, "Roughness");
+            m_Metallic.Validate(Errors, "Metallic");   m_Emissive.Validate(Errors, "Emissive");
+        }
+
+        XPROPERTY_DEF
+        ("ORMEInput", orme_input
+        , obj_member< "Occlusion (R)", &orme_input::m_Occlusion, member_help<"Ambient occlusion: 1 = none"> >
+        , obj_member< "Roughness (G)", &orme_input::m_Roughness, member_help<"Roughness (invert a glossiness map)"> >
+        , obj_member< "Metallic (B)",  &orme_input::m_Metallic,  member_help<"Metalness: 0 dielectric, 1 metal"> >
+        , obj_member< "Emissive (A)",  &orme_input::m_Emissive,  member_help<"Emission strength: 0 = not emissive (the material multiplies it by the albedo)"> >
+        )
+    };
+
     enum class variant_enum : std::uint8_t
     { SINGLE_INPUT
     , SINGLE_INPUT_ARRAY
@@ -543,6 +627,7 @@ namespace xtexture_rsc
     , CUBE_INPUT_ARRAY
     , CUBE_INPUT_MIX
     , CUBE_INPUT_MIX_ARRAY
+    , ORME_INPUT
     };
 
     static constexpr auto varient_enum_list_v = std::array
@@ -554,6 +639,7 @@ namespace xtexture_rsc
     , xproperty::settings::enum_item("CUBE_INPUT_ARRAY",        variant_enum::CUBE_INPUT_ARRAY)
     , xproperty::settings::enum_item("CUBE_INPUT_MIX",          variant_enum::CUBE_INPUT_MIX)
     , xproperty::settings::enum_item("CUBE_INPUT_MIX_ARRAY",    variant_enum::CUBE_INPUT_MIX_ARRAY)
+    , xproperty::settings::enum_item("ORME_INPUT",              variant_enum::ORME_INPUT, "Occlusion, Roughness, Metallic, Emissive: four titled entries", "ORME (4 channels)")
     };
 
     using input_variant = std::variant
@@ -565,6 +651,7 @@ namespace xtexture_rsc
     , cube_input_array
     , cube_input_mix
     , cube_input_mix_array
+    , orme_input
     >;
 
     enum wrap_type : std::uint8_t
@@ -606,12 +693,14 @@ namespace xtexture_rsc
             compression_format_color            m_CompressionColor;     
             compression_format_color_a          m_CompressionColorA;
             compression_format_color_cutout     m_CompressionColorCutout;
+            compression_format_orme             m_CompressionORME;
             compression_format_tangent_normal   m_CompressionNormal;
             compression_format_hdr_color        m_CompressionHDRColor;
         };
         
         float                       m_Quality                   { 0.5f };
         bool                        m_bSRGB                     { true };
+        bool                        m_bSuperCompression         { false };     // a smaller file on top of the chosen format (RDO / Basis: a later phase)
         bool                        m_bGenerateMips             { true };
         int                         m_MipCustomMinSize          {1};
         bool                        m_bFillAveColorByAlpha      { false };
@@ -629,6 +718,18 @@ namespace xtexture_rsc
         bool                        m_ToCubeMapUseBilinear      { true };
 
         constexpr bool isCutout ( void ) const noexcept { return m_UsageType == usage_type::COLOR_AND_CUTOUT; }
+        // Where Super Compression applies (Tomas, 2026-10-31): not normal maps, not HDR, not uncompressed data (no block format to work on)
+        constexpr bool canSuperCompress ( void ) const noexcept
+        {
+            return m_UsageType != usage_type::TANGENT_NORMAL && m_UsageType != usage_type::HDR_COLOR
+                && m_Compression != compression_format::RGBA_UNCOMPRESSED && m_Compression != compression_format::R_UNCOMPRESSED;
+        }
+        // The four cube inputs by name, not by position (an "index() >= CUBE_INPUT" broke when ORME_INPUT was appended after them)
+        constexpr bool isCubeInput ( void ) const noexcept
+        {
+            const auto i = static_cast<variant_enum>(m_InputVariant.index());
+            return i == variant_enum::CUBE_INPUT || i == variant_enum::CUBE_INPUT_ARRAY || i == variant_enum::CUBE_INPUT_MIX || i == variant_enum::CUBE_INPUT_MIX_ARRAY;
+        }
         constexpr bool hasAlpha ( void ) const noexcept { return m_UsageType == usage_type::COLOR_AND_ALPHA || m_UsageType == usage_type::COLOR_AND_CUTOUT; }
 
         virtual void SetupFromSource(std::string_view FileName) override
@@ -665,6 +766,19 @@ namespace xtexture_rsc
 
             if (isCutout() && m_Compression != compression_format::RGBA_BC7 && m_Compression != compression_format::RGBA_BC1_A1 && m_Compression != compression_format::RGBA_UNCOMPRESSED)
                 Errors.push_back("Color + Cutout compresses to BC7, BC1 (1-bit alpha) or uncompressed");
+
+            if (m_UsageType == usage_type::ORME)
+            {
+                if (m_bSRGB) Errors.push_back("ORME is linear data: turn SRGB off");
+                if (m_Compression != compression_format::RGBA_BC7 && m_Compression != compression_format::RGBA_BC3_A8 && m_Compression != compression_format::RGB_BC1 && m_Compression != compression_format::RGBA_UNCOMPRESSED)
+                    Errors.push_back("ORME compresses to BC7, BC3, BC1 (no emissive) or uncompressed");
+                if (const auto* p = std::get_if<orme_input>(&m_InputVariant); p && m_Compression == compression_format::RGB_BC1
+                    && (p->m_Emissive.m_CopyFrom != compositing_from::CUSTOM_CONSTANT || p->m_Emissive.m_Constant != 0.0f))
+                    Errors.push_back("ORME with BC1 has no alpha: the Emissive would be lost. Use BC7 or BC3");
+            }
+
+            if (m_Compression == compression_format::RGB_SUPER_COMPRESS || m_Compression == compression_format::RGBA_SUPER_COMPRESS)
+                Errors.push_back("Super compression is now an option on top of a format: pick BC7 (or another format) and check Super Compression");
 
             if(m_bTillableFilter)
             {
@@ -709,12 +823,19 @@ namespace xtexture_rsc
                 {
                     O.m_UsageType = UsageType;
 
+                    // Leaving ORME: its four titled channels mean nothing to another usage, back to a single image (index compare: a template-id
+                    // here would end the macro's template argument list)
+                    if (UsageType != usage_type::ORME && O.m_InputVariant.index() == static_cast<std::size_t>(variant_enum::ORME_INPUT)) O.m_InputVariant = single_input{};
+
                     // Setup useful defaults
                     switch (UsageType)
                     {
                     case usage_type::COLOR:             O.m_Compression = compression_format::RGB_BC1;      O.m_bSRGB = true;  O.m_bFillAveColorByAlpha = false; break;
                     case usage_type::COLOR_AND_ALPHA:   O.m_Compression = compression_format::RGBA_BC7;     O.m_bSRGB = true;  O.m_bFillAveColorByAlpha = true;  break;
                     case usage_type::COLOR_AND_CUTOUT:  O.m_Compression = compression_format::RGBA_BC7;     O.m_bSRGB = true;  O.m_bFillAveColorByAlpha = true;  break;
+                    case usage_type::ORME:              O.m_Compression = compression_format::RGBA_BC7;     O.m_bSRGB = false; O.m_bFillAveColorByAlpha = false;
+                                                        // (an index compare: a template-id here would end the macro's template argument list)
+                                                        if (O.m_InputVariant.index() != static_cast<std::size_t>(variant_enum::ORME_INPUT)) O.m_InputVariant = orme_input{};  break;
                     case usage_type::HDR_COLOR:         O.m_Compression = compression_format::RGB_UHDR_BC6; O.m_bSRGB = false; O.m_bFillAveColorByAlpha = false; break;
                     case usage_type::INTENSITY:         O.m_Compression = compression_format::RGB_BC1;      O.m_bSRGB = false; O.m_bFillAveColorByAlpha = false; break;
                     case usage_type::TANGENT_NORMAL:    O.m_Compression = compression_format::RG_BC5;       O.m_bSRGB = false; O.m_bFillAveColorByAlpha = false; break;
@@ -760,6 +881,7 @@ namespace xtexture_rsc
                     case variant_enum::CUBE_INPUT_ARRAY:        O.m_InputVariant = cube_input_array{};      break;
                     case variant_enum::CUBE_INPUT_MIX:          O.m_InputVariant = cube_input_mix{};        break;
                     case variant_enum::CUBE_INPUT_MIX_ARRAY:    O.m_InputVariant = cube_input_mix_array{};  break;
+                    case variant_enum::ORME_INPUT:              O.m_InputVariant = orme_input{};            break;
                     default: assert(false);
                     }
                 }
@@ -835,6 +957,17 @@ namespace xtexture_rsc
             , member_help<"BC7 (default): smooth alpha edges, for crisp and stable cut-out edges. "
                           "BC1 with 1-bit alpha: half the size, for distant or budget assets (blocks with cut-out texels keep only 3 colors)."
             >>
+        , obj_member<"ORME Compression"
+            , &descriptor::m_CompressionORME
+            , member_enum_span<compression_format_orme_v>
+            , member_dynamic_flags<+[](const descriptor& O)
+            { xproperty::flags::type Flags{};
+                Flags.m_bDontShow = O.m_UsageType != usage_type::ORME;
+                Flags.m_bDontSave = true;
+                return Flags;
+            }>
+            , member_help<"BC7 (default) keeps the four channels apart best; BC3 is faster to encode; BC1 only without emissive">
+            >
         , obj_member<"Tangent Normal Compression"
             , &descriptor::m_CompressionNormal
             , member_enum_span<compression_format_tangent_normal_v>
@@ -865,6 +998,12 @@ namespace xtexture_rsc
                           "file size. It's like choosing between different ways to save your picture "
                           "to make it smaller without losing too much quality."
             >>
+        , obj_member<"Super Compression"
+            , &descriptor::m_bSuperCompression
+            , member_dynamic_flags<+[](const descriptor& O) { xproperty::flags::type Flags{}; Flags.m_bDontShow = !O.canSuperCompress(); return Flags; }>
+            , member_help<"A smaller file on top of the chosen compression (the GPU still gets that format). Off by default: it loses more quality than the plain format. "
+                          "Not for normal maps, HDR or uncompressed textures. (Not active yet: compiled without it, with a warning.)">
+            >
         , obj_member<"AlphaThreshold"
             , &descriptor::m_AlphaThreshold 
             , member_dynamic_flags < +[](const descriptor& O)
@@ -880,7 +1019,8 @@ namespace xtexture_rsc
             , &descriptor::m_Quality
             , member_ui<float>::scroll_bar<0, 1>
             , member_help<"Quality affects the level of detail in the texture. "
-                            "Higher quality means more detail, but will take longer to compute."
+                            "Higher quality means more detail, but will take longer to compute. "
+                            "BC7: below 0.75 it is compressed on the GPU (fast), from 0.75 on the CPU (slower, the best result - most visible with an alpha channel)."
             >>
         , obj_member<"SRGB"
             , &descriptor::m_bSRGB
@@ -983,7 +1123,7 @@ namespace xtexture_rsc
             , member_dynamic_flags < +[](const descriptor& O)
             {
                 xproperty::flags::type Flags{};
-                Flags.m_bDontShow = O.m_InputVariant.index() >= static_cast<std::size_t>(variant_enum::CUBE_INPUT);
+                Flags.m_bDontShow = O.isCubeInput();
                 return Flags;
             } 
             >>
@@ -1055,6 +1195,8 @@ namespace xtexture_rsc
     XPROPERTY_REG(cube_input_mix)
     XPROPERTY_REG(cube_input_mix_array)
     XPROPERTY_REG(mix)
+    XPROPERTY_REG(orme_channel)
+    XPROPERTY_REG(orme_input)
 
     //--------------------------------------------------------------------------------------
 

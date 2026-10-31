@@ -6,6 +6,8 @@
 #include "../xtexture_rsc_descriptor.h"
 #include "dependencies/xproperty/source/sprop/property_sprop_xtextfile_serializer.h"
 #include "compressonator.h"   // cmp_compressonatorlib/compressonator.h (the case matters off Windows)
+#include "common.h"           // cmp_compressonatorlib/common.h: CMP_CMIPS (the GPU path allocates its mip set as CMP_ProcessTexture does)
+#include "xtexture_gpu_encoder.h"
 #include <iostream>
 #include "half.h"
 #include "dependencies/xmath/source/xmath_flinear.h"
@@ -31,6 +33,8 @@ struct implementation final : xtexture_compiler::instance
     xbitmap                                         m_FinalBitmap;
     void*                                           m_pDDSData;
     bool                                            m_HasMixes;
+    xtexture_gpu::encoder                           m_GPU;              // block compression on the GPU (made the first time a texture can use it)
+    int                                             m_GPUState = -1;    // -1 not tried yet, 0 no GPU, 1 ready
     bool                                            m_bCubeMap;
 
     //---------------------------------------------------------------------------------------------
@@ -60,6 +64,13 @@ struct implementation final : xtexture_compiler::instance
         //
         if (auto Err = DoValidation(); Err )
             return Err;
+
+        if (m_Descriptor.m_bSuperCompression && m_Descriptor.canSuperCompress())
+            LogMessage(msg_type::WARNING, "Super Compression is not active yet (texture pipeline plan, P2): compiled with the plain format");
+
+        // The ORME input is its four titled channels: from here on it is the equivalent mix (O -> R, R -> G, M -> B, E -> A)
+        if (const auto* pORME = std::get_if<xtexture_rsc::orme_input>(&m_Descriptor.m_InputVariant))
+            m_Descriptor.m_InputVariant = pORME->ToMix();
 
         // The OpenMP loops (xbmp_tools filters) get the threads the editor gave this compile (-THREADS)
         omp_set_num_threads(getThreadCount());
@@ -313,6 +324,87 @@ struct implementation final : xtexture_compiler::instance
             m_bCubeMap = true;
         }
 
+    }
+
+    //---------------------------------------------------------------------------------------------
+
+    // Block compression on the GPU (xtexture_gpu_encoder.h: AMD's CMP_Core kernels, the same algorithms as the CPU path): BC1, BC3, BC4,
+    // BC5, BC7 from 8-bit sources. Fills Dst as CMP_ProcessTexture would (one level per mip and face, CMP's own allocations, so CMP_FreeMipSet
+    // and the debug DDS export work). false: the CPU path runs - no GPU / no Vulkan / XTEXTURE_NO_GPU, BC1 with 1-bit alpha (its alpha
+    // threshold is a CPU option), BC6H (AMD's GPU kernel is a stub), float sources, or a GPU failure
+    bool EncodeOnGPU(CMP_MipSet& Src, CMP_MipSet& Dst, const KernelOptions& Ops)
+    {
+        xtexture_gpu::format Fmt;
+        switch (m_Descriptor.m_Compression)
+        {
+        case xtexture_rsc::compression_format::RGB_BC1:     Fmt = xtexture_gpu::format::BC1; break;
+        case xtexture_rsc::compression_format::RGBA_BC3_A8: Fmt = xtexture_gpu::format::BC3; break;
+        case xtexture_rsc::compression_format::R_BC4:       Fmt = xtexture_gpu::format::BC4; break;
+        case xtexture_rsc::compression_format::RG_BC5:      Fmt = xtexture_gpu::format::BC5; break;
+        case xtexture_rsc::compression_format::RGBA_BC7:    Fmt = xtexture_gpu::format::BC7; break;
+        default: return false;
+        }
+        if (Src.m_ChannelFormat != CF_8bit) return false;
+
+        // The Quality slider chooses BC7's encoder (Tomas, 2026-10-31): the GPU's BC7 (AMD's fixed search: it ignores the quality) is 0.2-1 dB
+        // under the CPU's on opaque textures and 1.6-3 dB with an alpha that carries its own data (ORME, cutouts) - so a high Quality (and Oz,
+        // which is 1.0) gets the CPU, the rest (and O0) the GPU. BC1 / BC3 / BC4 / BC5 match or beat the CPU on the GPU: always the GPU
+        if (Fmt == xtexture_gpu::format::BC7 && Ops.fquality >= 0.75f) return false;
+
+        // Worth the GPU's start-up (~0.4 s to make a Vulkan device in each compiler process, measured 2026-10-31) only when the encode is big
+        // enough: a 1 MB BC1 compiled in 0.86 s on the CPU and 1.30 s with the GPU. Texels over every mip and face; BC7 costs ~5x more per block.
+        // ponytail: fixed thresholds for a 28-core PC; one GPU owner shared by the compilers removes the start-up and these with it
+        {
+            std::uint64_t Texels = 0;
+            CMP_CMIPS     Mips;
+            for (int Level = 0; Level < Src.m_nMipLevels; ++Level)
+                for (int Face = 0; Face < CMP_MaxFacesOrSlices(&Src, Level); ++Face)
+                {
+                    const auto* p = Mips.GetMipLevel(&Src, Level, Face);
+                    Texels += std::uint64_t(p->m_nWidth) * std::uint64_t(p->m_nHeight);
+                }
+            // break-even on this PC: CPU BC1 ~87 ns/texel and BC7 ~313 ns/texel on 28 threads against ~0.4 s of start-up (lower on smaller CPUs)
+            if (Texels < (Fmt == xtexture_gpu::format::BC7 ? 1024u * 1024u : 4u * 1024u * 1024u)) return false;
+        }
+
+        if (m_GPUState < 0)
+        {
+            m_GPUState = m_GPU.Init() ? 1 : 0;
+            LogMessage(msg_type::INFO, m_GPUState ? std::format("Block compression on the GPU: {}", m_GPU.getDeviceName()) : std::string("Block compression on the CPU (no GPU)"));
+        }
+        if (!m_GPUState) return false;
+
+        CMP_CMIPS CMips;
+        Dst.m_Flags         = MS_FLAG_Default;
+        Dst.m_format        = Ops.format;
+        Dst.m_nHeight       = Src.m_nHeight;
+        Dst.m_nWidth        = Src.m_nWidth;
+        CMP_Format2FourCC(Dst.m_format, &Dst);
+        Dst.m_ChannelFormat = CF_Compressed;
+        Dst.m_nMaxMipLevels = Src.m_nMaxMipLevels;
+        Dst.m_nMipLevels    = 1;
+        Dst.m_nBlockWidth   = 4;
+        Dst.m_nBlockHeight  = 4;
+        Dst.m_nBlockDepth   = 1;
+        Dst.m_nDepth        = Src.m_nDepth;
+        Dst.m_TextureType   = Src.m_TextureType;
+        if (!CMips.AllocateMipSet(&Dst, CF_Compressed, TDT_ARGB, Dst.m_TextureType, Src.m_nWidth, Src.m_nHeight, Dst.m_nDepth)) return false;
+        Dst.m_nMipLevels = Src.m_nMipLevels;
+
+        auto Fail = [&] { LogMessage(msg_type::WARNING, "The GPU block compression failed: compressing on the CPU"); CMP_FreeMipSet(&Dst); std::memset(&Dst, 0, sizeof(Dst)); return false; };
+        std::vector<std::uint8_t> Blocks;
+        for (int Level = 0; Level < Src.m_nMipLevels; ++Level)
+            for (int Face = 0; Face < CMP_MaxFacesOrSlices(&Src, Level); ++Face)
+            {
+                const auto* pIn = CMips.GetMipLevel(&Src, Level, Face);
+                if (!m_GPU.Encode(Fmt, pIn->m_pbData, pIn->m_nWidth, pIn->m_nHeight, Ops.fquality, Blocks)) return Fail();
+                auto* pOut = CMips.GetMipLevel(&Dst, Level, Face);
+                if (!CMips.AllocateCompressedMipLevelData(pOut, pIn->m_nWidth, pIn->m_nHeight, static_cast<CMP_DWORD>(Blocks.size()))) return Fail();
+                std::memcpy(pOut->m_pbData, Blocks.data(), Blocks.size());
+            }
+        const auto* p0 = CMips.GetMipLevel(&Dst, 0, 0);
+        Dst.dwWidth = p0->m_nWidth; Dst.dwHeight = p0->m_nHeight; Dst.dwDataSize = p0->m_dwLinearSize; Dst.pData = p0->m_pbData;
+        return true;
     }
 
     //---------------------------------------------------------------------------------------------
@@ -1884,7 +1976,10 @@ struct implementation final : xtexture_compiler::instance
                 s_total          = 0;
                 memset(&MipSetCompressed, 0, sizeof(CMP_MipSet));
 
-                if ( auto Status = CMP_ProcessTexture(&MipSet, &MipSetCompressed, KernelOps, [](CMP_FLOAT fProgress, CMP_DWORD_PTR, CMP_DWORD_PTR) ->bool
+                // The GPU when there is one and it has the format's kernel; Compressonator on the CPU otherwise (the same result layout)
+                if (EncodeOnGPU(MipSet, MipSetCompressed, KernelOps))
+                    displayProgressBar("Compression", 1);
+                else if ( auto Status = CMP_ProcessTexture(&MipSet, &MipSetCompressed, KernelOps, [](CMP_FLOAT fProgress, CMP_DWORD_PTR, CMP_DWORD_PTR) ->bool
                 {
                     if (fProgress >= 100) 
                     {
