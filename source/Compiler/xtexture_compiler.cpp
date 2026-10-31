@@ -79,14 +79,19 @@ struct implementation final : xtexture_compiler::instance
         //
         // Compile the textures
         //
+        // the time of each stage, logged at the end (where a compile spends its time)
+        auto        tStage = std::chrono::steady_clock::now();
+        std::string Stages;
+        auto        Stage  = [&](const char* pName) { const auto t = std::chrono::steady_clock::now(); Stages += std::format(" {} {:.0f} ms,", pName, std::chrono::duration<double, std::milli>(t - tStage).count()); tStage = t; };
+
         displayProgressBar("Processing ", 0.0f);
         DumpAllFileNamesIntoHash();
         displayProgressBar("Processing ", 0.2f);
-        LoopThrowTheHashAndLoadImages();
+        LoopThrowTheHashAndLoadImages();                    Stage("load");
         displayProgressBar("Processing ", 0.4f);
-        if (m_HasMixes) CollapseMixes();
+        if (m_HasMixes) CollapseMixes();                    Stage("mixes");
         displayProgressBar("Processing ", 0.6f);
-        RunGenericFilters();
+        RunGenericFilters();                                Stage("filters");
         displayProgressBar("Processing ", 1.0f);
 
         //
@@ -106,7 +111,7 @@ struct implementation final : xtexture_compiler::instance
         {
             LogMessage(msg_type::INFO, "using Compressonator as the compression compiler");
             UseCompressonatorHDRFriendlyFormat();
-            UseCompressonator();
+            UseCompressonator();                            Stage("mips and compression");
         }
 
         //
@@ -123,6 +128,8 @@ struct implementation final : xtexture_compiler::instance
             }
         }
         displayProgressBar("Serializing", 1);
+        Stage("serialize");
+        LogMessage(msg_type::INFO, std::format("Stages:{}", Stages));
 
         return {};
     }
@@ -1732,6 +1739,7 @@ struct implementation final : xtexture_compiler::instance
         //
         memcpy(MipSet.pData, reinterpret_cast<CMP_BYTE*>(m_Bitmaps[0].getMip<std::byte>(0).data()), MipSet.dwDataSize);
 
+        const auto tMips = std::chrono::steady_clock::now();
         if (true)
         {
             xbmp::tools::mips::mips_filter_type FilterType;
@@ -1800,6 +1808,7 @@ struct implementation final : xtexture_compiler::instance
             }
 
             PackNormalChannels(m_Bitmaps[0]);
+            LogMessage(msg_type::INFO, std::format("Mips: {:.0f} ms", std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - tMips).count()));
 
             int depth = m_Bitmaps[0].getFaceCount();
             int mip_levels = m_Bitmaps[0].getMipCount();

@@ -357,9 +357,12 @@ namespace xtexture_gpu
 
         void Release() noexcept
         {
-            if (m_Device)
+            // (an Init that stopped half way can leave a device without its functions: then only the device itself is destroyed)
+            // (vkCmdCopyBuffer is the last one loaded)
+            if (m_Device && !vkCmdCopyBuffer) { if (vkDestroyDevice) vkDestroyDevice(m_Device, nullptr); }
+            else if (m_Device)
             {
-                vkQueueWaitIdle(m_Queue);
+                if (m_Queue) vkQueueWaitIdle(m_Queue);
                 for (auto& K : m_Kernels) for (auto& P : K) if (P) vkDestroyPipeline(m_Device, P, nullptr);
                 for (buffer* b : { &m_Staging, &m_Out, &m_Read, &m_Dummy, &m_Err0, &m_Err1, &m_Cb }) Free(*b);
                 if (m_View)     vkDestroyImageView(m_Device, m_View, nullptr);
