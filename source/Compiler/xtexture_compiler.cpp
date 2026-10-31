@@ -82,7 +82,7 @@ struct implementation final : xtexture_compiler::instance
         //
         if ( false && 
              m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC1_A1 
-          && m_Descriptor.m_UsageType   == xtexture_rsc::usage_type::COLOR_AND_ALPHA )
+          && m_Descriptor.hasAlpha() )
         {
             // Turns out that Compressanator can not handle Color and Alpha compression well in this format
             // It makes the color black for the transparent pixels...
@@ -180,7 +180,7 @@ struct implementation final : xtexture_compiler::instance
         //
         // If the user ask us to fill the average color to all the pixels that have alpha...
         // 
-        if (m_Descriptor.m_UsageType == xtexture_rsc::usage_type::COLOR_AND_ALPHA && m_Descriptor.m_bFillAveColorByAlpha)
+        if (m_Descriptor.hasAlpha() && m_Descriptor.m_bFillAveColorByAlpha)
         {
             for (auto& B : m_Bitmaps)
             {
@@ -1132,7 +1132,7 @@ struct implementation final : xtexture_compiler::instance
 
         Params.m_alpha_component = ( m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC1_A1 
                                   || m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC3_A8)
-                                   && m_Descriptor.m_UsageType  == xtexture_rsc::usage_type::COLOR_AND_ALPHA ? 3 : 0;
+                                   && m_Descriptor.hasAlpha() ? 3 : 0;
         Params.m_format          = TableConvertFormat[static_cast<std::int32_t>(m_Descriptor.m_Compression)];
 
         if ( Params.m_format == crn_format::cCRNFmtInvalid )
@@ -1176,7 +1176,7 @@ struct implementation final : xtexture_compiler::instance
         else 
             Params.m_flags &= ~crn_comp_flags::cCRNCompFlagGrayscaleSampling;
 
-        if ( m_Descriptor.m_UsageType == xtexture_rsc::usage_type::COLOR_AND_ALPHA 
+        if ( m_Descriptor.hasAlpha() 
           && m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC1_A1 )
             Params.m_flags |= cCRNCompFlagDXT1AForTransparency;
 
@@ -1653,9 +1653,8 @@ struct implementation final : xtexture_compiler::instance
                 }
             }
 
-            bool AlphaToCoverrage = false;
-            if (m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC1_A1
-             && m_Descriptor.m_UsageType == xtexture_rsc::usage_type::COLOR_AND_ALPHA) AlphaToCoverrage = true;
+            // Cutouts keep their coverage at the Alpha Threshold across the mips (blended opacity is filtered as it is)
+            const bool AlphaToCoverrage = m_Descriptor.isCutout();
 
             if (bCubeMapBRDF)
             {
@@ -1802,7 +1801,7 @@ struct implementation final : xtexture_compiler::instance
 
             // Set alpha compatibility for textures that need it
             if (m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGBA_BC1_A1 
-             && m_Descriptor.m_UsageType == xtexture_rsc::usage_type::COLOR_AND_ALPHA )
+             && m_Descriptor.hasAlpha() )
             {
                 KernelOps.bc15.useAlphaThreshold = true;
                 KernelOps.bc15.alphaThreshold    = m_Descriptor.m_AlphaThreshold;

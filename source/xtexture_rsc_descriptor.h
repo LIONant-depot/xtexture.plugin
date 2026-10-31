@@ -100,20 +100,33 @@ namespace xtexture_rsc
     , xproperty::settings::enum_item("RGB_SUPER_COMPRESS",  compression_format_color::RGB_SUPER_COMPRESS)
     };
 
+    // Blended opacity: never BC1 (its 1-bit alpha cannot hold soft opacity)
     enum class compression_format_color_a : std::uint8_t
     { RGBA_UNCOMPRESSED     = static_cast<std::uint8_t>(compression_format::RGBA_UNCOMPRESSED)
-    , RGBA_BC1_A1           = static_cast<std::uint8_t>(compression_format::RGBA_BC1_A1)
     , RGBA_BC3_A8           = static_cast<std::uint8_t>(compression_format::RGBA_BC3_A8)
     , RGBA_BC7              = static_cast<std::uint8_t>(compression_format::RGBA_BC7)
     , RGBA_SUPER_COMPRESS   = static_cast<std::uint8_t>(compression_format::RGBA_SUPER_COMPRESS)
     };
 
     static constexpr auto compression_format_color_a_v = std::array
-    { xproperty::settings::enum_item("RGBA_UNCOMPRESSED",   compression_format_color_a::RGBA_UNCOMPRESSED, compression_format_uncompressed_help_v)
-    , xproperty::settings::enum_item("RGBA_BC1_A1",         compression_format_color_a::RGBA_BC1_A1, compression_format_bc1_a_help_v)
+    { xproperty::settings::enum_item("RGBA_BC7",            compression_format_color_a::RGBA_BC7, compression_format_bc7_help_v)
     , xproperty::settings::enum_item("RGBA_BC3_A8",         compression_format_color_a::RGBA_BC3_A8, compression_format_bc3_help_v)
-    , xproperty::settings::enum_item("RGBA_BC7",            compression_format_color_a::RGBA_BC7, compression_format_bc7_help_v)
+    , xproperty::settings::enum_item("RGBA_UNCOMPRESSED",   compression_format_color_a::RGBA_UNCOMPRESSED, compression_format_uncompressed_help_v)
     , xproperty::settings::enum_item("RGBA_SUPER_COMPRESS", compression_format_color_a::RGBA_SUPER_COMPRESS)
+    };
+
+    // A cutout: BC7 (smooth alpha edges, for the sharpened alpha test / TAA) or BC1 with 1-bit alpha (half the size, budget assets:
+    // a block with a cut-out texel keeps only 3 colors and those texels go black)
+    enum class compression_format_color_cutout : std::uint8_t
+    { RGBA_UNCOMPRESSED     = static_cast<std::uint8_t>(compression_format::RGBA_UNCOMPRESSED)
+    , RGBA_BC1_A1           = static_cast<std::uint8_t>(compression_format::RGBA_BC1_A1)
+    , RGBA_BC7              = static_cast<std::uint8_t>(compression_format::RGBA_BC7)
+    };
+
+    static constexpr auto compression_format_color_cutout_v = std::array
+    { xproperty::settings::enum_item("RGBA_BC7",            compression_format_color_cutout::RGBA_BC7, compression_format_bc7_help_v)
+    , xproperty::settings::enum_item("RGBA_BC1_A1",         compression_format_color_cutout::RGBA_BC1_A1, compression_format_bc1_a_help_v)
+    , xproperty::settings::enum_item("RGBA_UNCOMPRESSED",   compression_format_color_cutout::RGBA_UNCOMPRESSED, compression_format_uncompressed_help_v)
     };
 
     enum class compression_format_tangent_normal : std::uint8_t
@@ -143,20 +156,24 @@ namespace xtexture_rsc
     , xproperty::settings::enum_item("RGBA_SUPER_COMPRESS", compression_format_tangent_normal::RGBA_SUPER_COMPRESS)
     };
 
+    // The saved names (the first string) never change; the editor shows the display names
     enum class usage_type : std::uint8_t
-    { COLOR                 // Color 
-    , COLOR_AND_ALPHA       // Color
-    , HDR_COLOR             // High Dynamic Range Color 
+    { COLOR                 // Color
+    , COLOR_AND_ALPHA       // Color with blended opacity (glass, smoke, UI): alpha filtered as it is
+    , HDR_COLOR             // High Dynamic Range Color
     , TANGENT_NORMAL        // BC5 compress (R,G,A), B set to black, should be linear
     , INTENSITY             // Things like MASKs (Data expected to be in R) Keep other channels black for better results. Should be linear.
+    , COLOR_AND_CUTOUT      // Color with an alpha test (foliage, fences, hair cards): the mips keep the coverage at the Alpha Threshold
     };
 
     static constexpr auto type_v = std::array
-    { xproperty::settings::enum_item("COLOR",              usage_type::COLOR)
-    , xproperty::settings::enum_item("COLOR_AND_ALPHA",    usage_type::COLOR_AND_ALPHA)
-    , xproperty::settings::enum_item("HDR_COLOR",          usage_type::HDR_COLOR)
-    , xproperty::settings::enum_item("TANGENT_NORMAL",     usage_type::TANGENT_NORMAL)
-    , xproperty::settings::enum_item("INTENSITY",          usage_type::INTENSITY)
+    { xproperty::settings::enum_item("COLOR",              usage_type::COLOR,            "A color image (sRGB)", "Color")
+    , xproperty::settings::enum_item("COLOR_AND_ALPHA",    usage_type::COLOR_AND_ALPHA,  "A color image with soft, blended opacity: glass, smoke, decals, UI", "Color + Alpha (Blended)")
+    , xproperty::settings::enum_item("COLOR_AND_CUTOUT",   usage_type::COLOR_AND_CUTOUT, "A color image cut out by an alpha test: foliage, fences, hair cards. The mips keep the "
+                                                                                         "fraction of texels above the Alpha Threshold, so thin features do not vanish with distance", "Color + Cutout")
+    , xproperty::settings::enum_item("HDR_COLOR",          usage_type::HDR_COLOR,        "A high dynamic range color image (linear float)", "HDR Color")
+    , xproperty::settings::enum_item("TANGENT_NORMAL",     usage_type::TANGENT_NORMAL,   "A tangent-space normal map (linear)", "Normal Map")
+    , xproperty::settings::enum_item("INTENSITY",          usage_type::INTENSITY,        "Data, not color: masks, roughness, packed channels (linear)", "Mask / Data")
     };
 
     enum class compositing_from : std::uint8_t
@@ -587,8 +604,9 @@ namespace xtexture_rsc
         {
             compression_format                  m_Compression           { compression_format::RGB_BC1 };
             compression_format_color            m_CompressionColor;     
-            compression_format_color_a          m_CompressionColorA;    
-            compression_format_tangent_normal   m_CompressionNormal;    
+            compression_format_color_a          m_CompressionColorA;
+            compression_format_color_cutout     m_CompressionColorCutout;
+            compression_format_tangent_normal   m_CompressionNormal;
             compression_format_hdr_color        m_CompressionHDRColor;
         };
         
@@ -609,6 +627,9 @@ namespace xtexture_rsc
         bool                        m_bConvertToCubeMap         {false};
         std::uint32_t               m_ToCubeMapFaceResolution   { 1024 };
         bool                        m_ToCubeMapUseBilinear      { true };
+
+        constexpr bool isCutout ( void ) const noexcept { return m_UsageType == usage_type::COLOR_AND_CUTOUT; }
+        constexpr bool hasAlpha ( void ) const noexcept { return m_UsageType == usage_type::COLOR_AND_ALPHA || m_UsageType == usage_type::COLOR_AND_CUTOUT; }
 
         virtual void SetupFromSource(std::string_view FileName) override
         {
@@ -638,6 +659,12 @@ namespace xtexture_rsc
                     Errors.push_back("You have selected usage Normal but the compression you selected does not support Normal compression");
                 }
             }
+
+            if (m_UsageType == usage_type::COLOR_AND_ALPHA && m_Compression == compression_format::RGBA_BC1_A1)
+                Errors.push_back("Color + Alpha (Blended) can not use BC1: its 1-bit alpha can not hold soft opacity. Use BC7 or BC3, or Color + Cutout for an alpha test");
+
+            if (isCutout() && m_Compression != compression_format::RGBA_BC7 && m_Compression != compression_format::RGBA_BC1_A1 && m_Compression != compression_format::RGBA_UNCOMPRESSED)
+                Errors.push_back("Color + Cutout compresses to BC7, BC1 (1-bit alpha) or uncompressed");
 
             if(m_bTillableFilter)
             {
@@ -686,7 +713,8 @@ namespace xtexture_rsc
                     switch (UsageType)
                     {
                     case usage_type::COLOR:             O.m_Compression = compression_format::RGB_BC1;      O.m_bSRGB = true;  O.m_bFillAveColorByAlpha = false; break;
-                    case usage_type::COLOR_AND_ALPHA:   O.m_Compression = compression_format::RGBA_BC1_A1;  O.m_bSRGB = true;  O.m_bFillAveColorByAlpha = true;  break;
+                    case usage_type::COLOR_AND_ALPHA:   O.m_Compression = compression_format::RGBA_BC7;     O.m_bSRGB = true;  O.m_bFillAveColorByAlpha = true;  break;
+                    case usage_type::COLOR_AND_CUTOUT:  O.m_Compression = compression_format::RGBA_BC7;     O.m_bSRGB = true;  O.m_bFillAveColorByAlpha = true;  break;
                     case usage_type::HDR_COLOR:         O.m_Compression = compression_format::RGB_UHDR_BC6; O.m_bSRGB = false; O.m_bFillAveColorByAlpha = false; break;
                     case usage_type::INTENSITY:         O.m_Compression = compression_format::RGB_BC1;      O.m_bSRGB = false; O.m_bFillAveColorByAlpha = false; break;
                     case usage_type::TANGENT_NORMAL:    O.m_Compression = compression_format::RG_BC5;       O.m_bSRGB = false; O.m_bFillAveColorByAlpha = false; break;
@@ -795,6 +823,18 @@ namespace xtexture_rsc
                           "file size. It's like choosing between different ways to save your picture "
                           "to make it smaller without losing too much quality."
             >>
+        , obj_member<"Color+Cutout Compression"
+            , &descriptor::m_CompressionColorCutout
+            , member_enum_span<compression_format_color_cutout_v>
+            , member_dynamic_flags<+[](const descriptor& O)
+            { xproperty::flags::type Flags{};
+                Flags.m_bDontShow = O.m_UsageType != usage_type::COLOR_AND_CUTOUT;
+                Flags.m_bDontSave = true;
+                return Flags;
+            }>
+            , member_help<"BC7 (default): smooth alpha edges, for crisp and stable cut-out edges. "
+                          "BC1 with 1-bit alpha: half the size, for distant or budget assets (blocks with cut-out texels keep only 3 colors)."
+            >>
         , obj_member<"Tangent Normal Compression"
             , &descriptor::m_CompressionNormal
             , member_enum_span<compression_format_tangent_normal_v>
@@ -830,11 +870,11 @@ namespace xtexture_rsc
             , member_dynamic_flags < +[](const descriptor& O)
             {
                 xproperty::flags::type Flags{};
-                Flags.m_bDontShow = !(O.m_UsageType == usage_type::COLOR_AND_ALPHA && O.m_Compression == compression_format::RGBA_BC1_A1);
+                Flags.m_bDontShow = !O.isCutout();
                 return Flags;
             }>
-            , member_help<"Specifies the alpha threshold value, which determines how transparent parts of the texture are "
-                             "handled.It's like setting a cutoff point for what is considered see-through in your picture."
+            , member_help<"The alpha test's cutoff (0-255): texels below it are cut out. The mips keep the fraction of texels above it, "
+                          "so set it to the material's Alpha Cutoff (default 128 = 0.5)."
             >>
         , obj_member<"Quality"
             , &descriptor::m_Quality
@@ -901,7 +941,7 @@ namespace xtexture_rsc
                 , member_dynamic_flags < +[](const descriptor& O)
                 {
                     xproperty::flags::type Flags{};
-                    Flags.m_bDontShow = !(O.m_UsageType == usage_type::COLOR_AND_ALPHA && O.m_bFillAveColorByAlpha) || O.m_Compression == compression_format::RGBA_BC1_A1;
+                    Flags.m_bDontShow = !(O.m_UsageType == usage_type::COLOR_AND_ALPHA && O.m_bFillAveColorByAlpha);     // (a cutout shows its Alpha Threshold above)
                     return Flags;
                 }>
                 , member_help<"Specifies the alpha threshold value of alpha to start filling the average color"
@@ -909,7 +949,7 @@ namespace xtexture_rsc
             , member_dynamic_flags < +[](const descriptor& O)
             {
                 xproperty::flags::type Flags{};
-                Flags.m_bDontShow = O.m_UsageType != usage_type::COLOR_AND_ALPHA && O.m_UsageType != usage_type::INTENSITY;
+                Flags.m_bDontShow = !O.hasAlpha() && O.m_UsageType != usage_type::INTENSITY;
                 return Flags;
             }
             >>
