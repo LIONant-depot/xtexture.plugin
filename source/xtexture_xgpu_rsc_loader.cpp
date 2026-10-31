@@ -35,11 +35,15 @@ static void TextureDecodeParallelFor(std::size_t n, const std::function<void(std
 }
 
 //------------------------------------------------------------------
-// Residency (P3a/P3b): a texture's big mips (its part 1) load in the background. Load returns the tail (mips <= 128, part 0) at once; a
-// job reads the file and hands a new texture with the wanted mips to the manager (QueueReplace), which swaps it in on its own thread at
-// its next getResource - the references move over as after a recompile (MarkUpdated). Every change of residency is such a reallocation:
-// a texture wants its mips from Wanted down (original mip numbers: 0 = full size; at most its tail's first), Resident is what its
-// current data has. Up or down, the new image is made whole and replaces the old one, which goes when its last reference does.
+// Residency (P3a/P3b): a texture's big mips (its part 1) load in the background, and the new texture is handed to the manager
+// (QueueReplace), which swaps it in on its own thread at its next getResource - the references move over as after a recompile
+// (MarkUpdated). A texture wants its mips from Wanted down (original mip numbers: 0 = full size; at most its tail's first), Resident is
+// what its current data has.
+// - The first load (Tomas, 2026-10-31: the one asking wants that quality - no fragmentation, no copy): Load makes the image of the wanted
+//   size at once with only the tail's mips in it (xgpu setup::m_FirstMip, shown through those mips alone); the job uploads the big mips
+//   into that same image (device::ExtendTexture) - the replacement is a new view of it, nothing allocated again.
+// - Any later change (TextureResidency; a texture asked for less at first) is a reallocation: the new image is made whole with the
+//   wanted mips and replaces the old one, which goes when its last reference does.
 // - At most 2 jobs at a time (the others wait in a queue): they bound the memory in flight, and reading jobs never hold more than a
 //   couple of the scheduler's workers.
 // - The budget (setBudget / XTEXTURE_BUDGET_MB; 0: none) counts the big mips of every image from its creation until xGPU gets it back
@@ -65,6 +69,7 @@ namespace
         std::array<std::uint64_t, 16>           m_MipBytes      = {};       // the part 1 mips' bytes, all faces
         int                                     m_Resident      = 0;
         int                                     m_Wanted        = 0;
+        int                                     m_ImageTop      = -1;       // >= 0: its image was made from this mip with only the tail in (the first load): the big mips go into it
         bool                                    m_bMoving       = false;
         clock::time_point                       m_WantedAt      = {};
         clock::time_point                       m_MovedAt       = {};
@@ -86,6 +91,7 @@ namespace
         int                                     m_Top;
         std::uint64_t                           m_Bytes;
         bool                                    m_bTailOnly;
+        bool                                    m_bExtend;                  // the big mips into the current image (the first load), not a new one
         xgpu::device                            m_Device;
         std::wstring                            m_Part0, m_Part1;
     };
@@ -102,6 +108,7 @@ namespace
         int                                     m_DefaultTop = [] { const char* p = std::getenv("XTEXTURE_TOP_MIP"); return p ? std::max(0, std::atoi(p)) : 0; }();
         std::deque<job>                         m_Waiting;
         int                                     m_nInFlight = 0;
+        int                                     m_nInPlace  = 0;            // first loads whose big mips went into the image made at Load
         int                                     m_nDone     = 0;            // (since the queue was last empty: the log line when it empties)
         std::uint64_t                           m_LogBytes  = 0;
         clock::time_point                       m_Start     = {};
@@ -122,7 +129,7 @@ namespace
     };
 
     // the job: the file (part 0, and part 1 unless only the tail is wanted), decoded across the workers; the texture itself is made on the
-    // manager's thread, with the mips from m_Top down
+    // manager's thread: with the mips from m_Top down, or (m_bExtend) the current image's view of all its mips once the big ones are in
     std::uint64_t RunJob(job& J) noexcept
     {
         auto pEnd    = std::make_shared<transition_end>(J.m_Key, J.m_Gen, J.m_Bytes);
@@ -132,10 +139,43 @@ namespace
             xerr::LogMessage<xerr::default_states::FAILURE>(std::format("Texture {:X}: its big mips could not be read (it stays as it is)", J.m_Guid.m_Instance.m_Value));
             return 0;
         }
-        J.m_pMgr->QueueReplace(J.m_Guid, J.m_pOld, [pLoaded, pEnd, Top = J.m_bTailOnly ? 0 : J.m_Top, Device = J.m_Device, Key = J.m_Key, Gen = J.m_Gen, ResidentTop = J.m_Top]() mutable -> void*
+        std::uint64_t Read = 0; for (auto& P : pLoaded->m_MipFaceData) Read += P.size();
+        J.m_pMgr->QueueReplace(J.m_Guid, J.m_pOld, [pLoaded, pEnd, Top = J.m_bTailOnly ? 0 : J.m_Top, Device = J.m_Device, Key = J.m_Key, Gen = J.m_Gen, ResidentTop = J.m_Top
+                                                   , bExtend = J.m_bExtend, pOld = J.m_pOld]() mutable -> void*
         {
-            // the mips from Top down: the description's size and mip count, and their pieces (face-major)
             xtexture_file::loaded& L = *pLoaded;
+            const auto Done = [&](xgpu::texture* pNew, std::uint64_t Bytes)       // (s_Residency.m_Lock held)
+            {
+                pEnd->m_bMade = true;
+                s_Residency.m_Reserved -= pEnd->m_Bytes;
+                s_Residency.m_Bytes    += pEnd->m_Bytes;
+                s_Residency.m_DataBytes[pNew] = Bytes;
+                if (auto It = s_Residency.m_Textures.find(Key); It != s_Residency.m_Textures.end() && It->second.m_Gen == Gen)
+                {
+                    It->second.m_pCurrent = pNew;
+                    It->second.m_Resident = ResidentTop;
+                    It->second.m_ImageTop = -1;
+                    It->second.m_bMoving  = false;
+                    It->second.m_MovedAt  = clock::now();
+                }
+            };
+
+            // into the current image: the big mips (Top .. the tail's first, per face), then its new view (pOld is alive: Make runs only while it is the GUID's data)
+            if (bExtend)
+            {
+                std::vector<std::span<const std::byte>> Pieces;
+                const int nMips = L.m_Bitmap.getMipCount(), nFaces = L.m_Bitmap.getFaceCount();
+                for (int f = 0; f < nFaces; ++f) for (int m = Top; m < L.m_nPart1Mips; ++m) Pieces.push_back(L.m_MipFaceData[f * nMips + m]);
+                auto Texture = std::make_unique<xgpu::texture>();
+                if (Device.ExtendTexture(*Texture, *static_cast<xgpu::texture*>(pOld), Pieces)) return nullptr;
+                std::lock_guard Lk(s_Residency.m_Lock);
+                auto& Counted = s_Residency.m_DataBytes[pOld];          // (the image was counted with the first texture: it moves to this one, the image's last holder)
+                Done(Texture.get(), std::exchange(Counted, 0));
+                ++s_Residency.m_nInPlace;
+                return Texture.release();
+            }
+
+            // the mips from Top down: the description's size and mip count, and their pieces (face-major)
             xbitmap Desc;
             std::memcpy(static_cast<void*>(&Desc), &L.m_Bitmap, sizeof(xbitmap));
             std::vector<std::span<const std::byte>> Pieces;
@@ -153,20 +193,10 @@ namespace
             if (Err) return nullptr;
 
             std::lock_guard Lk(s_Residency.m_Lock);
-            pEnd->m_bMade = true;
-            s_Residency.m_Reserved -= pEnd->m_Bytes;
-            s_Residency.m_Bytes    += pEnd->m_Bytes;
-            s_Residency.m_DataBytes[Texture.get()] = pEnd->m_Bytes;
-            if (auto It = s_Residency.m_Textures.find(Key); It != s_Residency.m_Textures.end() && It->second.m_Gen == Gen)
-            {
-                It->second.m_pCurrent = Texture.get();
-                It->second.m_Resident = ResidentTop;
-                It->second.m_bMoving  = false;
-                It->second.m_MovedAt  = clock::now();
-            }
+            Done(Texture.get(), pEnd->m_Bytes);
             return Texture.release();
         });
-        return J.m_Bytes;
+        return Read;
     }
 
     void SubmitJob(job&& J) noexcept     // (s_Residency.m_Lock held)
@@ -204,11 +234,12 @@ namespace
     {
         auto& R = s_Residency;
         if (T.m_bMoving || T.m_Wanted == T.m_Resident) return false;
-        const std::uint64_t Bytes = T.Bytes(T.m_Wanted);
+        const bool          bExtend = T.m_ImageTop == T.m_Wanted;      // (the first load's image is that size already: its bytes are counted)
+        const std::uint64_t Bytes   = bExtend ? 0 : T.Bytes(T.m_Wanted);
         if (R.m_Budget && Bytes && R.m_Bytes + R.m_Reserved + Bytes > R.m_Budget) return false;
         R.m_Reserved += Bytes;
         T.m_bMoving   = true;
-        SubmitJob({ Key, T.m_Gen, T.m_pMgr, T.m_Guid, T.m_pCurrent, T.m_Wanted, Bytes, T.m_Wanted >= T.m_nPart1, T.m_Device, T.m_Part0, T.m_Part1 });
+        SubmitJob({ Key, T.m_Gen, T.m_pMgr, T.m_Guid, T.m_pCurrent, T.m_Wanted, Bytes, T.m_Wanted >= T.m_nPart1, bExtend, T.m_Device, T.m_Part0, T.m_Part1 });
         return true;
     }
 }
@@ -251,7 +282,7 @@ namespace xtexture_residency
     stats getStats(const xresource::mgr& Mgr) noexcept
     {
         std::lock_guard Lk(s_Residency.m_Lock);
-        stats S{ .m_Bytes = s_Residency.m_Bytes, .m_Reserved = s_Residency.m_Reserved, .m_Budget = s_Residency.m_Budget, .m_nWaitingJobs = int(s_Residency.m_Waiting.size()) };
+        stats S{ .m_Bytes = s_Residency.m_Bytes, .m_Reserved = s_Residency.m_Reserved, .m_Budget = s_Residency.m_Budget, .m_nWaitingJobs = int(s_Residency.m_Waiting.size()), .m_nInPlace = s_Residency.m_nInPlace };
         for (auto& [Key, T] : s_Residency.m_Textures)
         {
             if (Key.first != &Mgr) continue;
@@ -286,8 +317,26 @@ xresource::loader< xrsc::texture_type_guid_v >::data_type* xresource::loader< xr
     }
 
     // Create the actual texture from the file's pieces, copied once, into the upload ring (they are there when it returns: Loaded frees the file's memory - all of it; only
-    // the bitmap header was freed before, the pixels leaked on every load)
-    if (auto Err = xgpu::tools::bitmap::Create(*Texture, UserData.m_Device, Loaded.m_Bitmap, Loaded.m_MipFaceData); Err)
+    // the bitmap header was freed before, the pixels leaked on every load). With big mips still to come (only the tail was read): the image
+    // of the wanted size at once, only the tail's mips in it and shown - the job puts the big ones into the same image (ExtendTexture).
+    const bool bWhole   = Loaded.m_Bitmap.getFormat() == xbitmap::format::R8G8B8;         // (xGPU expands it from a whole bitmap: no part of its mips)
+    const int  Top      = bWhole ? 0 : std::min(s_Residency.m_DefaultTop, int(Loaded.m_nPart1Mips));
+    const bool bInPlace = Loaded.m_bPart1Skipped && !bWhole && Top < Loaded.m_nPart1Mips;
+    if (bInPlace)
+    {
+        xbitmap Desc;
+        std::memcpy(static_cast<void*>(&Desc), &Loaded.m_Bitmap, sizeof(xbitmap));
+        std::uint64_t FaceSize = Loaded.m_Bitmap.getFaceSize();
+        for (int m = Top; m < Loaded.m_nPart1Mips; ++m) FaceSize += Loaded.m_Part1MipSize[m];
+        Desc.m_Width    = std::max(1u, std::uint32_t(Loaded.m_Width) >> Top);
+        Desc.m_Height   = std::max(1u, std::uint32_t(Loaded.m_Height) >> Top);
+        Desc.m_nMips    = static_cast<std::uint8_t>(Loaded.m_nMips - Top);
+        Desc.m_FaceSize = static_cast<std::uint32_t>(FaceSize);
+        const auto Err  = xgpu::tools::bitmap::Create(*Texture, UserData.m_Device, Desc, Loaded.m_MipFaceData, Loaded.m_nPart1Mips - Top);
+        Desc.m_pData = nullptr; Desc.m_Flags.m_bOwnsMemory = false;     // (a view: it frees nothing)
+        if (Err) return nullptr;
+    }
+    else if (auto Err = xgpu::tools::bitmap::Create(*Texture, UserData.m_Device, Loaded.m_Bitmap, Loaded.m_MipFaceData); Err)
     {
         return nullptr;
     }
@@ -300,11 +349,12 @@ xresource::loader< xrsc::texture_type_guid_v >::data_type* xresource::loader< xr
         auto& T = s_Residency.m_Textures[Key];
         const auto Gen = T.m_Gen + 1;
         T = texture_state{ .m_pMgr = &Mgr, .m_Guid = GUID, .m_pCurrent = Texture.get(), .m_Gen = Gen, .m_nPart1 = Loaded.m_nPart1Mips
-                         , .m_bWhole = Loaded.m_Bitmap.getFormat() == xbitmap::format::R8G8B8, .m_Device = UserData.m_Device, .m_Part0 = Part0, .m_Part1 = Part1 };
+                         , .m_bWhole = bWhole, .m_Device = UserData.m_Device, .m_Part0 = Part0, .m_Part1 = Part1 };
         for (int m = 0; m < T.m_nPart1; ++m) T.m_MipBytes[m] = std::uint64_t(Loaded.m_Part1MipSize[m]) * Loaded.m_nFaces;
         T.m_Resident = Loaded.m_bPart1Skipped ? T.m_nPart1 : 0;
-        T.m_Wanted   = T.m_bWhole ? 0 : std::min(s_Residency.m_DefaultTop, T.m_nPart1);
-        const std::uint64_t Bytes = T.Bytes(T.m_Resident);
+        T.m_Wanted   = Top;
+        T.m_ImageTop = bInPlace ? Top : -1;
+        const std::uint64_t Bytes = T.Bytes(bInPlace ? Top : T.m_Resident);      // (the image as allocated: the whole of it in place)
         s_Residency.m_Bytes += Bytes;
         s_Residency.m_DataBytes[Texture.get()] = Bytes;
         TryStart(Key, T);           // (no wait for the first load; over the budget: Update starts it later)

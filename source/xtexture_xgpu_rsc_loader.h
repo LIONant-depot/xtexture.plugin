@@ -36,6 +36,7 @@ namespace xtexture_residency
         std::uint64_t   m_Reserved      = 0;        // the transitions in flight
         std::uint64_t   m_Budget        = 0;        // 0: none
         int             m_nWaitingJobs  = 0;
+        int             m_nInPlace      = 0;        // first loads whose big mips went into the image made at Load (all managers of this module)
         int             m_nTextures     = 0;        // with big mips, of this manager
         int             m_nMoving       = 0;
         int             m_nPending      = 0;        // wanting other mips, not moving yet (waiting for stability or the budget)
