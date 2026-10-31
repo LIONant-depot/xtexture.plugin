@@ -5,6 +5,7 @@
 #include "dependencies/xbmp_tools/src/xbmp_tools.h"
 #include "dependencies/crunch/inc/crnlib.h"
 #include "../xtexture_rsc_descriptor.h"
+#include "../xtexture_file.h"
 #include "dependencies/xproperty/source/sprop/property_sprop_xtextfile_serializer.h"
 #include "compressonator.h"   // cmp_compressonatorlib/compressonator.h (the case matters off Windows)
 #include "common.h"           // cmp_compressonatorlib/common.h: CMP_CMIPS (the GPU path allocates its mip set as CMP_ProcessTexture does)
@@ -2223,38 +2224,33 @@ struct implementation final : xtexture_compiler::instance
     void Serialize(const std::wstring_view FilePath)
     {
         //
-        // We serialize the final image as a xbmp because the file size is usually half the size of a DDS file
+        // The texture file, version 2 (xtexture_file.h): the resource file with the tail (mips of 128x128 and below) and its ".1"
+        // with the bigger mips - the runtime loads the tail first, the rest later (streaming)
         //
-        auto FinalPath = FilePath;
-
+        const auto Part1Path = std::format(L"{}.1", FilePath);
+        if ( auto Err = xtexture_file::Save( m_FinalBitmap, FilePath, Part1Path
+                                           ,     m_OptimizationType == optimization_type::O0 ? xserializer::compression_level::FAST 
+                                               : m_OptimizationType == optimization_type::O1 ? xserializer::compression_level::MEDIUM
+                                               : xserializer::compression_level::HIGH
+                                           ); Err )
         {
-            xserializer::stream Serializer;
-            if ( auto Err = Serializer.Save( FinalPath
-                                            , m_FinalBitmap
-                                            ,     m_OptimizationType == optimization_type::O0 ? xserializer::compression_level::FAST 
-                                                : m_OptimizationType == optimization_type::O1 ? xserializer::compression_level::MEDIUM
-                                                : xserializer::compression_level::HIGH
-                                            ); Err )
-            {
-                throw(std::runtime_error( std::string(Err.getMessage()) ));
-            }
+            throw(std::runtime_error( std::string(Err.getMessage()) ));
         }
 
         //
-        // Verify this can be loaded... 
+        // Verify this can be loaded, and that it is the texture we wrote
         //
         if( m_DebugType == debug_type::Dz )
         {
-            xbitmap* pTemp;
-            xserializer::stream Serializer;
-
-            if (auto Err = Serializer.Load(FinalPath, pTemp); Err)
+            xtexture_file::loaded Loaded;
+            if (auto Err = xtexture_file::Load(FilePath, Part1Path, Loaded); Err)
                 throw(std::runtime_error( std::string( Err.getMessage() ) ));
 
-            //
-            // OK Time to let things go...
-            //
-            xserializer::default_memory_handler_v.Free( { .m_bUnique = true }, pTemp );
+            const auto& B = Loaded.m_Bitmap;
+            if ( B.getWidth() != m_FinalBitmap.getWidth() || B.getHeight() != m_FinalBitmap.getHeight() || B.getMipCount() != m_FinalBitmap.getMipCount()
+              || B.getFaceCount() != m_FinalBitmap.getFaceCount() || B.getFormat() != m_FinalBitmap.getFormat() || B.m_Flags.m_Value != (m_FinalBitmap.m_Flags.m_Value & ~std::uint16_t{1 << 1})
+              || std::memcmp(B.getMip<std::byte>(0).data(), m_FinalBitmap.getMip<std::byte>(0).data(), m_FinalBitmap.getFrameSize()) )
+                throw(std::runtime_error("The texture file does not read back as written"));
         }
     }
 };
