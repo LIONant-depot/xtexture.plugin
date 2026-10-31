@@ -122,6 +122,10 @@ namespace xtexture_file
         std::vector<std::span<const std::byte>> m_MipFaceData;
         std::array<void*, 4>                    m_pFree {};
         bool                                    m_bPart1Skipped = false;   // the texture has a part 1, not read (Part1Path empty): m_Bitmap is its tail
+        // the whole texture's shape, whatever was read (a v1 file: all its mips, none in a part 1)
+        std::uint16_t                           m_Width = 0, m_Height = 0;
+        std::uint8_t                            m_nMips = 0, m_nPart1Mips = 0, m_nFaces = 0;
+        std::array<std::uint32_t, max_mips_v>   m_Part1MipSize{};           // one face's bytes of each part 1 mip
 
         ~loaded() noexcept { for (void* p : m_pFree) if (p) xserializer::default_memory_handler_v.Free(xserializer::mem_type{ .m_bUnique = true }, p); }
     };
@@ -151,10 +155,13 @@ namespace xtexture_file
             if (auto Err1 = S1.Load(Part0Path, pB); Err1) return Err1;
             Out.m_pFree = { pB, pB->m_pData };
             View(*pB);
+            Out.m_Width = std::uint16_t(pB->getWidth()); Out.m_Height = std::uint16_t(pB->getHeight()); Out.m_nMips = std::uint8_t(pB->getMipCount()); Out.m_nFaces = std::uint8_t(pB->getFaceCount());
             return {};
         }
         Out.m_pFree = { pP0, pP0->m_Tail.m_pData };
         const xbitmap& Tail = pP0->m_Tail;
+        Out.m_Width = pP0->m_Width; Out.m_Height = pP0->m_Height; Out.m_nMips = pP0->m_nMips; Out.m_nPart1Mips = pP0->m_nPart1Mips;
+        Out.m_nFaces = std::uint8_t(Tail.getFaceCount()); Out.m_Part1MipSize = pP0->m_Part1MipSize;
 
         if (pP0->m_nPart1Mips == 0 || Part1Path.empty()) { Out.m_bPart1Skipped = pP0->m_nPart1Mips != 0; View(Tail); return {}; }
 

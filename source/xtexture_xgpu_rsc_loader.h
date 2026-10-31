@@ -26,6 +26,27 @@ namespace xgpu
     struct texture;
 }
 
+// The textures' residency (xtexture_xgpu_rsc_loader.cpp): which of a texture's mips its GPU image holds. Top mips in the texture's own
+// numbering (0: full size), clamped to its tail; a change is a new image replacing the old one (the manager's QueueReplace). The manager's thread.
+namespace xtexture_residency
+{
+    struct stats
+    {
+        std::uint64_t   m_Bytes         = 0;        // the big mips of the images alive (old and new both during a transition)
+        std::uint64_t   m_Reserved      = 0;        // the transitions in flight
+        std::uint64_t   m_Budget        = 0;        // 0: none
+        int             m_nWaitingJobs  = 0;
+        int             m_nTextures     = 0;        // with big mips, of this manager
+        int             m_nMoving       = 0;
+        int             m_nPending      = 0;        // wanting other mips, not moving yet (waiting for stability or the budget)
+    };
+    void    Request     ( xresource::mgr& Mgr, const xresource::full_guid& Guid, int TopMip ) noexcept;
+    void    RequestAll  ( xresource::mgr& Mgr, int TopMip ) noexcept;
+    void    setBudget   ( std::uint64_t Bytes ) noexcept;
+    void    Update      ( xresource::mgr& Mgr ) noexcept;           // once a frame: starts the transitions that are due
+    stats   getStats    ( const xresource::mgr& Mgr ) noexcept;
+}
+
 template<>
 struct xresource::loader< xrsc::texture_type_guid_v >                  // Now we specify the loader and we must fill in all the information
 {
