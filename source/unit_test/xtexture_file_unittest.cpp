@@ -1,5 +1,6 @@
 // The texture file (xtexture_file.h): written and read back byte for byte - tail only, with a part 1, a cube map; a part 1 from another
 // compile is rejected; a version 1 file (a plain xbitmap) still loads. Built and run by xLION_Docs/tools/xtexture_file_test.py.
+#define XTEXTURE_BASIS_IMPLEMENTATION       // (the Basis transcoder in this test: files stored as UASTC / ETC1S / UASTC HDR are transcoded when they load)
 #include "plugins/xtexture.plugin/source/xtexture_file.h"
 #include <cstdio>
 #if defined(_WIN32)
@@ -104,6 +105,56 @@ static void RoundTrip(const wchar_t* pName, std::uint32_t W, std::uint32_t H, in
     std::printf("round trip %ls %ux%u faces %d: %s\n", pName, W, H, nFaces, bExpectPart1 ? "part 0 + part 1" : "part 0 only");
 }
 
+// A texture stored as UASTC HDR (stored_encoding::UASTC_HDR): every 4x4 block a solid-colour ASTC HDR block (a void extent: the colour of
+// its face and mip - the encoder is not in this test), BC7's 16 bytes per block geometry in the file. Load must give a BC6H texture (the
+// format of the GPU, not the stored BC7's) with each block transcoded as xtexture_basis::TranscodeUASTCHDR does, whole or tail only.
+static void UastcHdrCube(std::uint32_t W, int nFaces)
+{
+    const auto  Dir = std::filesystem::temp_directory_path() / L"xtexture_file_unittest";
+    const auto  P0 = (Dir / (nFaces == 6 ? L"uastc_hdr_cube" : L"uastc_hdr")).wstring(), P1 = P0 + L".1";
+    int nMips = 1; while ((W >> (nMips - 1)) > 1) ++nMips;
+    const auto Blocks = [&](int m) { const std::size_t n = std::max(1u, W >> m) + 3 >> 2; return n * n; };
+    std::uint64_t Face = 0; for (int m = 0; m < nMips; ++m) Face += Blocks(m) * 16;
+    std::vector<std::byte> Data(nMips * sizeof(std::int32_t) + Face * nFaces);
+    auto* pOffset = reinterpret_cast<std::int32_t*>(Data.data());
+    for (int m = 0, o = 0; m < nMips; o += int(Blocks(m) * 16), ++m) pOffset[m] = o;
+    for (int f = 0; f < nFaces; ++f)
+        for (int m = 0; m < nMips; ++m)
+            for (std::size_t b = 0; b < Blocks(m); ++b)
+            {
+                std::uint8_t Blk[16] = { 0xFC, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };      // (void extent, HDR: the whole block one colour)
+                const std::uint16_t Half[4] = { std::uint16_t(0x3C00 + f * 64 + m), std::uint16_t(0x4000 + m * 8 + (b & 7)), std::uint16_t(0x3800 + f), 0x3C00 };   // (RGBA, fp16)
+                std::memcpy(&Blk[8], Half, 8);
+                std::memcpy(&Data[nMips * sizeof(std::int32_t) + f * Face + pOffset[m] + b * 16], Blk, 16);
+            }
+    xbitmap B; B.setup(W, W, xbitmap::format::BC7_8RGBA, Face, Data, false, nMips, 1, nFaces == 6);     // (BC7's geometry: 16 bytes per block)
+    CHECK(!xtexture_file::Save(B, P0, P1, xserializer::compression_level::FAST, xtexture_file::stored_encoding::UASTC_HDR, xbitmap::format::BC6H_8RGB_UFLOAT));
+
+    xtexture_file::loaded L;
+    CHECK(!xtexture_file::Load(P0, P1, L, {}, false));
+    CHECK(L.m_Bitmap.getFormat() == xbitmap::format::BC6H_8RGB_UFLOAT && L.m_Bitmap.getFaceCount() == nFaces && L.m_Bitmap.getMipCount() == nMips && L.m_Bitmap.isCubemap() == (nFaces == 6));
+    CHECK(L.m_MipFaceData.size() == std::size_t(nFaces * nMips));
+    xtexture_file::loaded T;
+    CHECK(!xtexture_file::Load(P0, {}, T, {}, false));                 // (the tail alone: the texture's smaller mips, transcoded without the body)
+    CHECK(T.m_bPart1Skipped == (W > xtexture_file::tail_max_size_v) && T.m_Bitmap.getFormat() == xbitmap::format::BC6H_8RGB_UFLOAT);
+    const int nSkipped = nMips - T.m_Bitmap.getMipCount();
+    for (int f = 0; f < nFaces && L.m_MipFaceData.size() == std::size_t(nFaces * nMips); ++f)
+        for (int m = 0; m < nMips; ++m)
+        {
+            const auto Src = B.getMip<std::byte>(m, f);
+            std::vector<std::byte> Want(Blocks(m) * 16);
+            CHECK(xtexture_basis::TranscodeUASTCHDR(Src, Want, std::max(1u, W >> m), std::max(1u, W >> m), 0, std::uint32_t(Blocks(m))));
+            const auto& Got = L.m_MipFaceData[f * nMips + m];
+            CHECK(Got.size() == Want.size() && 0 == std::memcmp(Got.data(), Want.data(), Want.size()));
+            if (m >= nSkipped)
+            {
+                const auto Tail = T.m_Bitmap.getMip<std::byte>(m - nSkipped, f);
+                CHECK(Tail.size() == Want.size() && 0 == std::memcmp(Tail.data(), Want.data(), Want.size()));
+            }
+        }
+    std::printf("UASTC HDR file %u faces %d: loads as BC6H, whole and tail only\n", W, nFaces);
+}
+
 int main()
 {
     RoundTrip(L"tail_only", 128, 64, 1, false);
@@ -112,6 +163,10 @@ int main()
     RoundTrip(L"odd", 300, 129, 1, true);
 
     const auto Dir = std::filesystem::temp_directory_path() / L"xtexture_file_unittest";
+
+    UastcHdrCube(512, 1);
+    UastcHdrCube(256, 6);
+    UastcHdrCube(64, 6);
 
     // a part 1 from another compile is rejected
     {

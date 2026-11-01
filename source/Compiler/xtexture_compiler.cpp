@@ -8,6 +8,7 @@
 #include "../xtexture_file.h"
 #include "dependencies/basis_universal/encoder/basisu_enc.h"
 #include "dependencies/basis_universal/encoder/basisu_uastc_enc.h"
+#include "dependencies/basis_universal/encoder/basisu_uastc_hdr_4x4_enc.h"
 #include "dependencies/basis_universal/encoder/basisu_comp.h"
 #define XTEXTURE_BASIS_IMPLEMENTATION       // Basis's transcoder in the compiler (after the encoder's headers: its ASTC helpers once): the encoder needs it, and the file's read-back
 #include "../xtexture_basis.h"
@@ -76,6 +77,8 @@ struct implementation final : xtexture_compiler::instance
 
         if (m_Descriptor.m_SuperCompression == xtexture_rsc::super_compression::BASIS_UASTC && !UASTCTarget())
             LogMessage(msg_type::WARNING, "Super Compression BASIS_UASTC does not apply to this texture (its usage or format): compiled with the plain format");
+        if (m_Descriptor.m_SuperCompression == xtexture_rsc::super_compression::BASIS_UASTC_HDR && !UASTCHDRTarget())
+            LogMessage(msg_type::WARNING, "Super Compression BASIS_UASTC_HDR does not apply to this texture (it is for unsigned BC6H): compiled with the plain format");
         if (m_Descriptor.m_SuperCompression == xtexture_rsc::super_compression::BASIS_ETC1S && !ETC1STarget())
             LogMessage(msg_type::WARNING, "Super Compression BASIS_ETC1S does not apply to this texture (its usage or format): compiled with the plain format");
 
@@ -1786,6 +1789,72 @@ struct implementation final : xtexture_compiler::instance
         }
     }
 
+    // Super compression BASIS_UASTC_HDR applies: asked for, unsigned BC6H (UASTC HDR 4x4 transcodes into that only)
+    bool UASTCHDRTarget(void) const noexcept
+    {
+        return m_Descriptor.m_SuperCompression == xtexture_rsc::super_compression::BASIS_UASTC_HDR && m_Descriptor.canSuperCompress()
+            && m_Descriptor.m_UsageType == xtexture_rsc::usage_type::HDR_COLOR && m_Descriptor.m_Compression == xtexture_rsc::compression_format::RGB_UHDR_BC6;
+    }
+
+    // Every mip of MipSet (half float RGBA, MipSet's table order) as UASTC HDR 4x4 blocks (ASTC HDR, 16 bytes) into m_UASTC: each 4x4 block (a mip
+    // smaller than a block repeats its edge pixels) goes through Basis's encoder, which makes the candidates that also transcode to BC6H and
+    // we keep the one with the least combined error (as basis_compressor does, its default weight .65 for the BC6H error). Texels are made
+    // finite and non-negative and clamped to what an ASTC HDR block holds. The strength is the encoder's effort: 0 -> level 4 (slowest, most
+    // modes tried), 1 -> level 0 (fastest, one mode) - the HDR 4x4 encoder has no rate-distortion optimisation to turn up.
+    void EncodeUASTCHDR(const CMP_MipSet& MipSet)
+    {
+        static std::once_flag s_Init;
+        std::call_once(s_Init, [] { basisu::basisu_encoder_init(); });
+        basisu::uastc_hdr_4x4_codec_options Options;
+        Options.set_quality_level(basisu::uastc_hdr_4x4_codec_options::cMaxLevel - static_cast<int>(std::lround(basisu::uastc_hdr_4x4_codec_options::cMaxLevel * m_Descriptor.m_SuperCompressionStrength)));
+        Options.m_r_err_scale = Options.m_g_err_scale = 1.0f;
+        Options.m_bc6h_err_weight = 0.65f;
+        const int nLevels = MipSet.m_nMipLevels * MipSet.m_nDepth;
+        m_UASTC.assign(nLevels, {});
+        for (int i = 0; i < nLevels; ++i)
+        {
+            const auto& L  = *MipSet.m_pMipLevelTable[i];
+            const int   W  = L.m_nWidth, H = L.m_nHeight, BW = (W + 3) / 4, BH = (H + 3) / 4;
+            const auto* pPx = reinterpret_cast<const std::uint16_t*>(L.m_pbData);
+            m_UASTC[i].resize(std::size_t(BW) * BH * sizeof(basist::astc_blk));
+            auto*       pOut = reinterpret_cast<basist::astc_blk*>(m_UASTC[i].data());
+            std::atomic<bool> bFail{ false };
+            #pragma omp parallel
+            {
+                basisu::vector<basisu::astc_hdr_4x4_pack_results> Results;
+                #pragma omp for schedule(dynamic)
+                for (int by = 0; by < BH; ++by)
+                    for (int bx = 0; bx < BW; ++bx)
+                    {
+                        float                 Rgb[16 * 3];
+                        basist::half_float    Half[16 * 3];
+                        for (int y = 0; y < 4; ++y)
+                            for (int x = 0; x < 4; ++x)
+                                for (int c = 0; c < 3; ++c)
+                                {
+                                    const int   sx = std::min(bx * 4 + x, W - 1), sy = std::min(by * 4 + y, H - 1);
+                                    float       v  = basist::half_to_float(pPx[(std::size_t(sy) * W + sx) * 4 + c]);
+                                    if (!(v > 0.0f)) v = 0.0f;                                          // (negative, NaN, -0)
+                                    v = std::min(v, basist::ASTC_HDR_MAX_VAL);                          // (and Inf)
+                                    Rgb[(y * 4 + x) * 3 + c]  = v;
+                                    Half[(y * 4 + x) * 3 + c] = basisu::float_to_half_non_neg_no_nan_inf(v);
+                                }
+                        if (!basisu::astc_hdr_4x4_enc_block(Rgb, Half, Options, Results)) { bFail = true; continue; }
+                        double BestErr = 1e+30; int Best = 0;
+                        for (int k = 0; k < static_cast<int>(Results.size()); ++k)
+                        {
+                            basist::half_float Unpacked[16 * 3];
+                            basisu::unpack_bc6h(&Results[k].m_bc6h_block, Unpacked, false);
+                            const double Err = basisu::compute_block_error(16, Half, Unpacked, Options) * Options.m_bc6h_err_weight + Results[k].m_best_block_error * (1.0 - Options.m_bc6h_err_weight);
+                            if (k == 0 || Err < BestErr) { BestErr = Err; Best = k; }
+                        }
+                        basisu::astc_hdr_4x4_pack_results_to_block(pOut[std::size_t(by) * BW + bx], Results[Best]);
+                    }
+            }
+            if (bFail) throw std::runtime_error("Basis UASTC HDR encoding failed");
+        }
+    }
+
     void UseCompressonator(void)
     {
         constexpr static auto TextureConversionTable = []() consteval ->auto
@@ -2048,6 +2117,7 @@ struct implementation final : xtexture_compiler::instance
 
         // Super compression: the same mips as UASTC blocks (the file stores those; the GPU format's blocks below set its format and flags)
         if (UASTCTarget()) { EncodeUASTC(MipSet); m_StoredEncoding = xtexture_file::stored_encoding::UASTC; LogMessage(msg_type::INFO, std::format("Super Compression BASIS_UASTC, strength {:.2f}", m_Descriptor.m_SuperCompressionStrength)); }
+        if (UASTCHDRTarget()) { EncodeUASTCHDR(MipSet); m_StoredEncoding = xtexture_file::stored_encoding::UASTC_HDR; LogMessage(msg_type::INFO, std::format("Super Compression BASIS_UASTC_HDR, strength {:.2f}", m_Descriptor.m_SuperCompressionStrength)); }
         if (ETC1STarget()) { EncodeETC1S(MipSet); m_StoredEncoding = xtexture_file::stored_encoding::ETC1S; LogMessage(msg_type::INFO, std::format("Super Compression BASIS_ETC1S, strength {:.2f}", m_Descriptor.m_SuperCompressionStrength)); }
 
         //

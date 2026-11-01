@@ -5,7 +5,7 @@
 // The compiled texture file, version 2: the resource file (part 0) and its ".1" (part 1), both xserializer streams.
 //   part 0: the header, the mip sizes, and the tail - the mips of 128x128 and below - as an xbitmap of its own
 //   part 1: the bigger mips in one pack, smallest first (so "down to mip k" is a prefix of it), a cube map's faces of a mip together
-// Version 4: how the mips are stored - the GPU format's own blocks, or Basis UASTC / ETC1S (super compression, xtexture_basis.h) that
+// Version 4: how the mips are stored - the GPU format's own blocks, or Basis UASTC / ETC1S / UASTC HDR (super compression, xtexture_basis.h) that
 // Load transcodes into the GPU format; version 3 files (no such field: native) still load.
 // No part 1 when every mip is in the tail. Part 1 carries the generation of the compile that wrote it: a part 0 of another compile
 // (a hot reload in the middle of a load) rejects it. Version 1 (a plain xbitmap in the resource file) still loads.
@@ -52,6 +52,7 @@ namespace xtexture_file
     , UASTC                                                                 // Basis UASTC blocks (16 bytes per 4x4, the tail's xbitmap says BC7): transcoded into m_GpuFormat
     , ETC1S                                                                 // Basis ETC1S: each (face, mip) its slices (xtexture_basis::etc1s's layout; a mip's faces padded to one size),
                                                                             // face 0's smallest mip led by the codebooks all faces share ([u32 size][codebooks]): every load has them
+    , UASTC_HDR                                                             // Basis UASTC HDR 4x4 (an ASTC HDR block, 16 bytes per 4x4, the tail's xbitmap says BC7): transcoded into BC6H (unsigned)
     };
 
     struct part0
@@ -219,13 +220,13 @@ namespace xtexture_file
         Out.m_Width = pP0->m_Width; Out.m_Height = pP0->m_Height; Out.m_nMips = pP0->m_nMips; Out.m_nPart1Mips = pP0->m_nPart1Mips;
         Out.m_nFaces = std::uint8_t(Tail.getFaceCount()); Out.m_Part1MipSize = pP0->m_Part1MipSize;
 
-        // UASTC / ETC1S: the pieces read (every mip, or the tail's) transcoded into the GPU format, in the xbitmap layout of one
+        // UASTC / ETC1S / UASTC HDR: the pieces read (every mip, or the tail's) transcoded into the GPU format, in the xbitmap layout of one
         // allocation that replaces the stored one - m_Bitmap then describes the GPU format's texture (its pixels too)
         const auto Transcode = [&]() -> xerr
         {
             if (pP0->m_Encoding == stored_encoding::NATIVE) return {};
             XPROFILE_SCOPE("Texture Basis transcode");
-            const bool bETC1S = pP0->m_Encoding == stored_encoding::ETC1S;
+            const bool bETC1S = pP0->m_Encoding == stored_encoding::ETC1S, bHDR = pP0->m_Encoding == stored_encoding::UASTC_HDR;
             const auto  F      = static_cast<xbitmap::format>(pP0->m_GpuFormat);
             const int   DB     = xtexture_basis::TargetBlockBytes(F);
             if (DB == 0) return xerr::create_f<xserializer::state, "The texture's Basis data cannot be transcoded into its GPU format">();
@@ -255,7 +256,7 @@ namespace xtexture_file
                 std::uint32_t n = 0; if (Last.size() >= 4) std::memcpy(&n, Last.data(), 4);
                 if (Last.size() < 4 + std::size_t(n) || !Codebooks.Init(Last.subspan(4, n))) { xserializer::default_memory_handler_v.Free(xserializer::mem_type{ .m_bUnique = true }, pData); return xerr::create_f<xserializer::state, "The texture's ETC1S codebooks did not decode">(); }
             }
-            // a job per (face, mip) piece; UASTC's big mips cut in bands of 64 block rows (several jobs on one mip), ETC1S a job per mip
+            // a job per (face, mip) piece; UASTC's (and its HDR's) big mips cut in bands of 64 block rows (several jobs on one mip), ETC1S a job per mip
             struct job { int f, m; std::uint32_t r0, r1; };
             std::vector<job> Jobs;
             for (int f = 0; f < nFaces; ++f) for (int m = 0; m < nLocal; ++m)
@@ -270,6 +271,7 @@ namespace xtexture_file
                 const auto& J = Jobs[i];
                 std::span<std::byte> Dest{ pPixels + J.f * FaceSize + pOffset[J.m], Bytes(J.m) };
                 const bool b = bETC1S ? Codebooks.Transcode(MipBytes(J.f, J.m), Dest, Dim(J.m, false), Dim(J.m, true), static_cast<std::uint32_t>(Base + J.m), F)
+                                      : bHDR ? xtexture_basis::TranscodeUASTCHDR(Out.m_MipFaceData[J.f * nLocal + J.m], Dest, Dim(J.m, false), Dim(J.m, true), J.r0, J.r1)
                                       : xtexture_basis::TranscodeUASTC(Out.m_MipFaceData[J.f * nLocal + J.m], Dest, Dim(J.m, false), Dim(J.m, true), F, J.r0, J.r1);
                 if (!b) bOk = false;
             };

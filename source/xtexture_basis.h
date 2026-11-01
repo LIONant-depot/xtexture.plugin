@@ -1,7 +1,7 @@
 #ifndef XTEXTURE_BASIS_H
 #define XTEXTURE_BASIS_H
 
-// Basis Universal for the texture file (xtexture_file.h): UASTC blocks transcoded into the GPU's block format while a texture loads.
+// Basis Universal for the texture file (xtexture_file.h): UASTC (and UASTC HDR, for BC6H) blocks transcoded into the GPU's block format while a texture loads.
 // UASTC is 4x4 blocks of 16 bytes, each one standing alone (no codebooks): any mip transcodes by itself - a texture's tail without its
 // body, its body later - so streaming works as for a plain texture. Basis's own transcoder (its low-level per-block functions, no KTX2):
 // one module defines XTEXTURE_BASIS_IMPLEMENTATION before including this to compile the transcoder into it (the texture loader's .cpp
@@ -24,6 +24,7 @@ namespace xtexture_basis
         case xbitmap::format::BC3_8RGBA:    return 16;
         case xbitmap::format::BC5_8RG:      return 16;
         case xbitmap::format::BC7_8RGBA:    return 16;
+        case xbitmap::format::BC6H_8RGB_UFLOAT: return 16;                  // (UASTC HDR only: TranscodeUASTCHDR)
         default:                            return 0;
         }
     }
@@ -31,6 +32,9 @@ namespace xtexture_basis
     // One mip (Width x Height pixels) of UASTC blocks into Dest's blocks of the GPU format (TargetBlockBytes(F) each), rows of blocks
     // Row0 .. Row1 (the whole mip: 0 .. (Height + 3) / 4) - several calls on different rows can run at once. False: a bad block.
     bool TranscodeUASTC( std::span<const std::byte> Src, std::span<std::byte> Dest, std::uint32_t Width, std::uint32_t Height, xbitmap::format F, std::uint32_t Row0, std::uint32_t Row1 ) noexcept;
+
+    // The same for UASTC HDR 4x4 (an ASTC HDR block of 16 bytes, standing alone like UASTC's) into BC6H (unsigned)
+    bool TranscodeUASTCHDR( std::span<const std::byte> Src, std::span<std::byte> Dest, std::uint32_t Width, std::uint32_t Height, std::uint32_t Row0, std::uint32_t Row1 ) noexcept;
 
     // ETC1S: the texture's shared codebooks and Huffman tables (stored once - a cube map's faces share them too - with face 0's smallest
     // mip, in the tail: every load has them), decoded once, then any (face, mip) transcoded by itself - several at once (each call its
@@ -64,6 +68,8 @@ namespace xtexture_basis
     #else
         #include "dependencies/basis_universal/transcoder/basisu_transcoder.cpp"
     #endif
+    #include "dependencies/basis_universal/transcoder/basisu_transcoder_internal.h"
+    #include "dependencies/basis_universal/transcoder/basisu_astc_hdr_core.h"
     #include <cstring>
     #include <mutex>
 
@@ -76,7 +82,7 @@ namespace xtexture_basis
 
         const std::uint32_t BW = (Width + 3) / 4, BH = (Height + 3) / 4;
         const int           DB = TargetBlockBytes(F);
-        if (DB == 0 || Src.size() < std::size_t(BW) * BH * 16 || Dest.size() < std::size_t(BW) * BH * DB) return false;
+        if (DB == 0 || F == xbitmap::format::BC6H_8RGB_UFLOAT || Src.size() < std::size_t(BW) * BH * 16 || Dest.size() < std::size_t(BW) * BH * DB) return false;
         const auto* pSrc = reinterpret_cast<const basist::uastc_block*>(Src.data());
         bool bOk = true;
         for (std::uint32_t y = Row0; y < std::min(Row1, BH); ++y)
@@ -93,6 +99,21 @@ namespace xtexture_basis
                 default:                            bOk &= basist::transcode_uastc_to_bc7(B, pDest); break;
                 }
             }
+        return bOk;
+    }
+
+    bool TranscodeUASTCHDR( std::span<const std::byte> Src, std::span<std::byte> Dest, std::uint32_t Width, std::uint32_t Height, std::uint32_t Row0, std::uint32_t Row1 ) noexcept
+    {
+        static std::once_flag s_Init;
+        std::call_once(s_Init, [] { basist::basisu_transcoder_init(); });
+
+        const std::uint32_t BW = (Width + 3) / 4, BH = (Height + 3) / 4;
+        if (Src.size() < std::size_t(BW) * BH * 16 || Dest.size() < std::size_t(BW) * BH * 16) return false;
+        const auto* pSrc  = reinterpret_cast<const basist::astc_blk*>(Src.data());
+        auto*       pDest = reinterpret_cast<basist::bc6h_block*>(Dest.data());
+        bool bOk = true;
+        for (std::uint32_t y = Row0; y < std::min(Row1, BH); ++y)
+            for (std::uint32_t x = 0; x < BW; ++x) bOk &= basist::astc_hdr_transcode_to_bc6h(pSrc[y * BW + x], pDest[y * BW + x]);
         return bOk;
     }
 

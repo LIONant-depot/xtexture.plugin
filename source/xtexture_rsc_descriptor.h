@@ -698,16 +698,26 @@ namespace xtexture_rsc
     //                cost: colour bleeding and 4x4 blockiness where two hues meet in a block, banding on gradients, small details
     //                approximated (typically ~32-38 dB). For distant / background art, terrain layers, rough surfaces, mobile or web
     //                builds. Its codebooks go with the tail (part 0) so it streams too. For BC1, BC3, BC4, BC5, BC7 (2D and cube maps - the faces share the codebooks; not BC1's 1-bit alpha).
+    //   BASIS_UASTC_HDR  Basis Universal UASTC HDR 4x4 - for BC6H (unsigned HDR) textures only: HDR environment maps, sky domes, lightmaps.
+    //                (an ASTC HDR block of 16 bytes - the same size as BC6H's - that every block stands alone, so every mip does: streams like
+    //                a plain texture). Against NONE (BC6H's own blocks) it is NOT a different quality level but a different encoder: Basis's
+    //                picks from the ASTC HDR modes whose result also transcodes to BC6H and weighs both errors, so the result is close to
+    //                the plain BC6H file's quality (PSNR in the tone-mapped domain, the numbers are in the texture pipeline plan); the file
+    //                is smaller only where zstd finds the blocks' bits more alike than BC6H's. Use it when measured smaller for the
+    //                asset class; otherwise NONE. The strength is the encoder's effort level (0: slowest, best blocks; 1: fastest, simplest
+    //                block modes, lowest quality) - there is no rate-distortion optimisation in the HDR 4x4 encoder.
     enum class super_compression : std::uint8_t
     { NONE
     , BASIS_UASTC
     , BASIS_ETC1S
+    , BASIS_UASTC_HDR
     };
 
     static constexpr auto super_compression_v = std::array
     { xproperty::settings::enum_item("NONE",            super_compression::NONE)
     , xproperty::settings::enum_item("BASIS_UASTC",     super_compression::BASIS_UASTC)
     , xproperty::settings::enum_item("BASIS_ETC1S",     super_compression::BASIS_ETC1S)
+    , xproperty::settings::enum_item("BASIS_UASTC_HDR", super_compression::BASIS_UASTC_HDR)
     };
 
     struct descriptor final : xresource_pipeline::descriptor::base
@@ -749,7 +759,8 @@ namespace xtexture_rsc
         // Where Super Compression applies (Tomas, 2026-10-31): not normal maps, not HDR, not uncompressed data (no block format to work on)
         constexpr bool canSuperCompress ( void ) const noexcept
         {
-            return m_UsageType != usage_type::TANGENT_NORMAL && m_UsageType != usage_type::HDR_COLOR
+            return m_UsageType != usage_type::TANGENT_NORMAL
+                && (m_UsageType != usage_type::HDR_COLOR || m_Compression == compression_format::RGB_UHDR_BC6)       // (HDR: only UASTC HDR, into unsigned BC6H)
                 && m_Compression != compression_format::RGBA_UNCOMPRESSED && m_Compression != compression_format::R_UNCOMPRESSED;
         }
         // The four cube inputs by name, not by position (an "index() >= CUBE_INPUT" broke when ORME_INPUT was appended after them)
@@ -807,8 +818,13 @@ namespace xtexture_rsc
 
             if (m_Compression == compression_format::RGB_SUPER_COMPRESS || m_Compression == compression_format::RGBA_SUPER_COMPRESS)
                 Errors.push_back("Super compression is now an option on top of a format: pick BC7 (or another format) and choose a Super Compression");
+            if (m_SuperCompression == super_compression::BASIS_UASTC_HDR && m_Compression != compression_format::RGB_UHDR_BC6)
+                Errors.push_back("Super Compression BASIS_UASTC_HDR only applies to unsigned BC6H (RGB_UHDR_BC6) textures: use NONE");
             if (m_SuperCompression != super_compression::NONE && canSuperCompress())
             {
+                // the HDR method only for unsigned BC6H, the LDR ones never for HDR (no 8-bit conversion of an HDR texture)
+                if ((m_SuperCompression == super_compression::BASIS_UASTC_HDR) != (m_UsageType == usage_type::HDR_COLOR))
+                    Errors.push_back(m_UsageType == usage_type::HDR_COLOR ? "An HDR texture super compresses with BASIS_UASTC_HDR only (or NONE)" : "Super Compression BASIS_UASTC_HDR is for HDR (BC6H) textures: use NONE, BASIS_UASTC or BASIS_ETC1S");
                 // ETC1S transcodes into BC1, BC3, BC4, BC5 and BC7 (never BC1's 1-bit alpha); a cube map's faces share the codebooks
                 if (m_SuperCompression == super_compression::BASIS_ETC1S && m_Compression == compression_format::RGBA_BC1_A1)
                     Errors.push_back("Super Compression BASIS_ETC1S works for BC1, BC3, BC4, BC5 and BC7 textures (not BC1 with 1-bit alpha): use NONE");
@@ -1047,15 +1063,17 @@ namespace xtexture_rsc
                           "(BC7, BC3, BC5 only) - for hero assets, UI, detailed albedo, masks. "
                           "BASIS_ETC1S: the smallest files (often 2-3x smaller than UASTC) at a clear quality cost - one colour per block from shared "
                           "codebooks: colour bleeding, blockiness, banding - for distant or background art, terrain layers, rough surfaces. "
-                          "Not for normal maps, HDR or uncompressed textures.">
+                          "BASIS_UASTC_HDR: for unsigned BC6H HDR textures only (the only method that applies to them) - an ASTC HDR block of BC6H's size that "
+                          "transcodes into it: BC6H quality close to the plain file's, the file smaller only where zstd finds more to share; measure before using it. "
+                          "Not for normal maps or uncompressed textures.">
             >
         , obj_member<"SuperCompressionStrength"
             , &descriptor::m_SuperCompressionStrength
             , member_ui<float>::scroll_bar<0.0f, 1.0f>
             , member_dynamic_flags<+[](const descriptor& O) { xproperty::flags::type Flags{}; Flags.m_bDontShow = !O.canSuperCompress() || O.m_SuperCompression == super_compression::NONE; return Flags; }>
-            , member_help<"How hard super compression shrinks the file: 0 the best quality the method has (UASTC: no RDO; ETC1S: quality 255), "
+            , member_help<"How hard super compression shrinks the file: 0 the best quality the method has (UASTC: no RDO; ETC1S: quality 255; UASTC_HDR: the slowest, best encoder level), "
                           "1 the smallest file (UASTC: the strongest RDO - more blocks made alike so zstd finds more to share; ETC1S: quality 1 - "
-                          "smaller codebooks).">
+                          "smaller codebooks; UASTC_HDR: the fastest encoder level, simplest block modes - no RDO exists for it).">
             >
         , obj_member<"AlphaThreshold"
             , &descriptor::m_AlphaThreshold 
