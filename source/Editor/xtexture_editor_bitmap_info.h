@@ -1,0 +1,435 @@
+#pragma once
+// The texture editor's bitmap information (its own copy of xGPU's E05 example inspector: examples are not for the editor), with the
+// texture's resource reference, its stored encoding and its file's parts
+#include "plugins/xtexture.plugin/source/xtexture_xgpu_rsc_loader.h"
+#include "source/xGPU.h"
+#include <iostream>
+#include <fstream>
+
+#include "dependencies/xbitmap/source/xbitmap.h"
+#include "dependencies/xbmp_tools/src/xbmp_tools.h"
+#include "source/Tools/xgpu_basis_universal_texture_loader.h"
+#include "dependencies/xproperty/source/xcore/my_properties.h"
+#include "dependencies/xproperty/source/examples/imgui/xPropertyImGuiInspector.h"
+#include "dependencies/xserializer/source/xserializer.h"
+#include "dependencies/xstrtool/source/xstrtool.h"
+
+namespace xtexture_inspector
+{
+    //------------------------------------------------------------------------------------------------
+
+    struct bitmap_ivec2
+    {
+        std::uint32_t x, y;
+        XPROPERTY_DEF
+        ("ivec2", bitmap_ivec2, xproperty::settings::vector2_group
+        , obj_member_ro<"Width", &bitmap_ivec2::x >
+        , obj_member_ro<"Height", &bitmap_ivec2::y >
+        )
+    };
+    XPROPERTY_REG(bitmap_ivec2)
+
+    //------------------------------------------------------------------------------------------------
+    
+    inline void DebugMessage(std::string_view View)
+    {
+        printf("%s\n", View.data());
+    }
+
+    //------------------------------------------------------------------------------------------------
+
+    struct bitmap_info
+    {
+        void clear() noexcept
+        {
+            m_FileName.clear();
+            m_RscTexture = {}; m_StoredEncoding.clear(); m_Part0Size = m_Part1Size = 0;
+            m_MipMapSizes.clear();
+            if (m_pBitmap && m_pBitmap != &m_BitmapData && !m_bBorrowed)
+            {
+                xserializer::default_memory_handler_v.Free(xserializer::mem_type{ .m_bUnique = true }, m_pBitmap);
+            }
+            m_pBitmap   = &m_BitmapData;
+            m_bBorrowed = false;
+        }
+
+        // Shows a bitmap loaded by someone else (it must outlive this, or the next clear/Load)
+        void Borrow( std::wstring_view FileName, const xbitmap& Bitmap, std::size_t FileSize ) noexcept
+        {
+            clear();
+            m_FileName  = FileName;
+            m_FileName  = m_FileName.substr(m_FileName.find_last_of(L"/\\") + 1);
+            m_FileSize  = FileSize;
+            m_pBitmap   = const_cast<xbitmap*>(&Bitmap);
+            m_bBorrowed = true;
+            SetMipMapSizes();
+        }
+
+        ~bitmap_info()
+        {
+            clear();
+        }
+
+        void Load( std::wstring_view FileName, bool isXBMP = false ) noexcept
+        {
+            clear();
+
+            //
+            // Get the file name
+            //
+            m_FileName = FileName;
+            m_FileName = m_FileName.substr(m_FileName.find_last_of(L"/\\") + 1);
+            m_pBitmap  = &m_BitmapData;
+
+            //
+            // Load file
+            //
+            if (isXBMP || m_FileName.find(L".xbmp") != (~0ull) )
+            {
+                xserializer::stream Stream;
+                if ( auto Err = Stream.Load(FileName, m_pBitmap ); Err )
+                {
+                    assert(false);
+                    xtexture_inspector::DebugMessage(Err.getMessage());
+                    std::exit(Err.getStateUID());
+                }
+            }
+            else if( m_FileName.find(L".basis") != (~0ull) )
+            {
+                assert(false);
+                /*
+                Texture = xgpu::tools::basis_universal::basis_Loader(Device, pFileName);
+
+                auto Size = Texture.getTextureDimensions();
+                auto FrameSize = (Size[0] * Size[1]) / 4;
+                m_pBitmap->setup
+                ( Size[0]
+                , Size[1]
+                , xbitmap::format::BC1_4RGB
+                , FrameSize
+                , std::span( new std::byte [FrameSize], FrameSize + (Texture.getMipCount()*sizeof(int)))
+                , true
+                , Texture.getMipCount()
+                , 1
+                );
+                */
+            }
+            else if (m_FileName.find(L".dds") != (~0ull))
+            {
+                if (auto Err = xbmp::tools::loader::LoadDSS(*m_pBitmap, FileName); Err)
+                {
+                    assert(false);
+                    xtexture_inspector::DebugMessage(Err.getMessage());
+                    std::exit(Err.getStateUID());
+                }
+            }
+            else if (auto Err = xbmp::tools::loader::LoadSTDImage(*m_pBitmap, FileName); Err)
+            {
+                assert(false);
+                xtexture_inspector::DebugMessage(Err.getMessage());
+                std::exit(Err.getStateUID());
+            }
+
+            //
+            // Determine the size of the file
+            //
+            {
+                std::ifstream file(std::filesystem::path(std::wstring(FileName)), std::ios::binary | std::ios::ate);
+                m_FileSize = file.tellg();
+            }
+
+            SetMipMapSizes();
+        }
+
+        void SetMipMapSizes() noexcept
+        {
+            m_MipMapSizes.resize(m_pBitmap->getMipCount());
+            for (int i = 0; i < m_pBitmap->getMipCount(); ++i)
+            {
+                m_MipMapSizes[i].x = std::max(1u, m_pBitmap->getWidth() >> i);
+                m_MipMapSizes[i].y = std::max(1u, m_pBitmap->getHeight() >> i);
+            }
+        }
+
+        std::wstring            m_FileName;
+        std::size_t             m_FileSize;
+        xbitmap                 m_BitmapData;
+        xbitmap*                m_pBitmap = &m_BitmapData;
+        std::vector<bitmap_ivec2>      m_MipMapSizes;
+        bool                    m_bBorrowed = false;
+
+        constexpr static bool isNotValid(const xtexture_inspector::bitmap_info& O) noexcept
+        {
+            return O.m_pBitmap == nullptr || O.m_pBitmap->getFormat() == xbitmap::format::INVALID;
+        }
+
+        inline static std::string ConvertToCommas( std::size_t Value ) noexcept
+        {
+            std::array<char, 50> buffer;
+            snprintf(buffer.data(), buffer.size(), "%10.0zu", Value);
+            const auto len      = static_cast<int>(strlen(buffer.data()));
+            std::array<char, 50> result;
+            int new_len = static_cast<int>(result.size() - 1);
+
+            result[new_len] = '\0';
+            int  j = new_len - 1;
+            auto k = 0;
+            for (int i = len - 1; i >= 0; i--) 
+            {
+                if (k == 3) 
+                {
+                    if (buffer[i] != ' ') result[j--] = ',';
+                    k = 0;
+                }
+                result[j--] = buffer[i];
+                k++;
+            }
+            return std::format( "{} bytes", &result[j+1]);
+        }
+
+        // The texture's own (the editor fills them): its resource reference (in place of the file name), how its file stores the mips, the
+        // file's two parts (FileSize split)
+        xrsc::texture_ref       m_RscTexture{};
+        std::string             m_StoredEncoding;
+        std::size_t             m_Part0Size = 0, m_Part1Size = 0;
+
+        XPROPERTY_DEF
+        ( "Bitmap Info", bitmap_info
+        , obj_member
+            < "RscTexture"
+            , &bitmap_info::m_RscTexture
+            , member_flags<xproperty::flags::SHOW_READONLY>
+            , member_help<"The texture resource">
+            , member_dynamic_flags<+[](const bitmap_info& O) { xproperty::flags::type F{}; F.m_bDontShow = O.m_RscTexture.empty(); return F; }
+            >>
+        , obj_member_ro
+            < "FileName"
+            , &bitmap_info::m_FileName
+            , member_help<"The file name of the image (a texture's resource reference shows instead)">
+            , member_dynamic_flags<+[](const bitmap_info& O) { xproperty::flags::type F{}; F.m_bDontShow = !O.m_RscTexture.empty(); return F; }
+            >>
+        , obj_member_ro
+            < "Size"
+            , +[](bitmap_info& I) ->bitmap_ivec2&
+            {
+                static bitmap_ivec2 Out;
+                {}
+                Out.x = I.m_pBitmap->getWidth();
+                Out.y = I.m_pBitmap->getHeight();
+                return Out;
+            }
+            , member_help<"Image Size in pixels" 
+            >>
+        , obj_member_ro
+            < "Format"
+            ,  +[](bitmap_info& I, bool bRead, std::string& Out )
+            {
+                assert(bRead);
+                switch (I.m_pBitmap->getFormat())
+                {
+                    case xbitmap::format::R4G4B4A4:             Out = "R4G4B4A4";               break;
+                    case xbitmap::format::R5G6B5:               Out = "R5G6B5";                 break;
+                    case xbitmap::format::B5G5R5A1:             Out = "B5G5R5A1";               break;
+                    case xbitmap::format::R8G8B8:               Out = "R8G8B8";                 break;
+                    case xbitmap::format::R8G8B8U8:             Out = "R8G8B8U8";               break;
+                    case xbitmap::format::R8G8B8A8:             Out = "R8G8B8A8";               break;
+                    case xbitmap::format::B8G8R8A8:             Out = "B8G8R8A8";               break;
+                    case xbitmap::format::B8G8R8U8:             Out = "B8G8R8U8";               break;
+                    case xbitmap::format::U8R8G8B8:             Out = "U8R8G8B8";               break;
+
+                    case xbitmap::format::R32G32B32A32_FLOAT:   Out = "R32G32B32A32_FLOAT";     break;
+                    case xbitmap::format::R32G32B32_FLOAT:      Out = "R32G32B32_FLOAT";        break;
+                    case xbitmap::format::R32G32_FLOAT:         Out = "R32G32_FLOAT";           break;
+                    case xbitmap::format::R32_FLOAT:            Out = "R32_FLOAT";              break;
+
+                    case xbitmap::format::R16G16B16A16_SFLOAT:  Out = "R16G16B16A16_SFLOAT";    break;
+                    case xbitmap::format::R16G16_SFLOAT:        Out = "R16G16_SFLOAT";          break;
+                    case xbitmap::format::R16_SFLOAT:           Out = "R16_SFLOAT";             break;
+
+                    case xbitmap::format::BC1_4RGB:             Out = "BC1_4RGB / DXT1";        break;
+                    case xbitmap::format::BC1_4RGBA1:           Out = "BC1_4RGBA1 / DXT1";      break;
+                    case xbitmap::format::BC2_8RGBA:            Out = "BC2_8RGBA / DXT3";       break;
+                    case xbitmap::format::BC3_8RGBA:            Out = "BC3_8RGBA / DXT5";       break;
+                    case xbitmap::format::BC3_81Y0X_NORMAL:     Out = "BC3_81Y0X_NORMAL";       break;
+                    case xbitmap::format::BC4_4R:               Out = "BC4_4R";                 break;
+                    case xbitmap::format::BC5_8RG:              Out = "BC5_8RG";                break;
+                    case xbitmap::format::BC5_8YX_NORMAL:       Out = "BC5_8YX_NORMAL";         break;
+                    case xbitmap::format::BC6H_8RGB_SFLOAT:     Out = "BC6H_8RGB_SFLOAT";       break;
+                    case xbitmap::format::BC6H_8RGB_UFLOAT:     Out = "BC6H_8RGB_UFLOAT";       break;
+                    case xbitmap::format::BC7_8RGBA:            Out = "BC7_8RGBA";              break;
+                    default: Out = "Unexpected format"; break;
+                }
+            }
+            , member_help<"Format from xcore bitmap of the image" 
+            >>
+        , obj_member_ro
+            < "isSigned"
+            ,  +[](bitmap_info& I, bool bRead, bool& Out )
+            {
+                Out = I.m_pBitmap->isSigned();
+            }
+            , member_help < "If the pixel format contains signed data"
+            >>
+        , obj_member_ro
+            < "UAddress Mode"
+            ,  +[](bitmap_info& I, bool bRead, std::string& Out )
+            {
+                assert(bRead);
+                switch (I.m_pBitmap->getUWrapMode())
+                {
+                case xbitmap::wrap_mode::CLAMP_TO_EDGE: Out = "CLAMP_TO_EDGE"; break;
+                case xbitmap::wrap_mode::MIRROR:        Out = "MIRROR"; break;
+                case xbitmap::wrap_mode::WRAP:          Out = "WRAP"; break;
+                default: Out = "Unexpected wrap"; break;
+                }
+            }
+            , member_help<"How the texture repeats along U (horizontally): clamped to the edge, mirrored, or wrapped"
+            >>
+        , obj_member_ro
+            < "VAddress Mode"
+            ,  +[](bitmap_info& I, bool bRead, std::string& Out )
+            {
+                assert(bRead);
+                switch (I.m_pBitmap->getVWrapMode())
+                {
+                case xbitmap::wrap_mode::CLAMP_TO_EDGE: Out = "CLAMP_TO_EDGE"; break;
+                case xbitmap::wrap_mode::MIRROR:        Out = "MIRROR"; break;
+                case xbitmap::wrap_mode::WRAP:          Out = "WRAP"; break;
+                default: Out = "Unexpected wrap"; break;
+                }
+            }
+            , member_help<"How the texture repeats along V (vertically): clamped to the edge, mirrored, or wrapped"
+            >>
+        , obj_member_ro
+            < "DataSize"
+            , +[](bitmap_info& I, bool, std::string& Out)
+            {
+                if (I.m_pBitmap->getDataSize() == 0) 
+                {
+                    Out = "No Bitmap loaded";
+                    return;
+                }
+                Out = ConvertToCommas(I.m_pBitmap->getDataSize());
+            }
+            , member_help<"Size in bytes of the image in memory" 
+            >>
+        , obj_member_ro
+            < "FileSize"
+            , +[](bitmap_info& I, bool, std::string& Out)
+            {
+                if (I.m_pBitmap->getDataSize() == 0) 
+                {
+                    Out = "No Bitmap loaded";
+                    return;
+                }
+                Out = ConvertToCommas(I.m_FileSize);
+            }
+            , member_help<"Size in bytes of the file"
+            >>
+        , obj_member_ro
+            < "Stored Encoding"
+            , &bitmap_info::m_StoredEncoding
+            , member_help<"How the file stores the mips: NATIVE (the GPU format's blocks, zstd packed) or a Basis super compression (UASTC, ETC1S, UASTC_HDR) transcoded into Format at load">
+            , member_dynamic_flags<+[](const bitmap_info& O) { xproperty::flags::type F{}; F.m_bDontShow = O.m_StoredEncoding.empty(); return F; }
+            >>
+        , obj_member_ro
+            < "File Parts"
+            , +[](bitmap_info& I, bool, std::string& Out) { const auto A = ConvertToCommas(I.m_Part0Size); Out = A.substr(0, A.find(' ')) + " + " + (I.m_Part1Size ? ConvertToCommas(I.m_Part1Size) : std::string("none")); }
+            , member_help<"FileSize split: the resource file (the header and the small mips, always loaded) + its '.1' (the big mips, streamed)">
+            , member_dynamic_flags<+[](const bitmap_info& O) { xproperty::flags::type F{}; F.m_bDontShow = O.m_StoredEncoding.empty(); return F; }
+            >>
+        , obj_member_ro
+            < "Disk Compression"
+            , +[](bitmap_info& I, bool, float& Out)
+            {
+                if (I.m_pBitmap->getDataSize()) Out = (1.0f - (I.m_FileSize / (float)I.m_pBitmap->getDataSize())) * 100.0f;
+                else Out = 0;
+            }
+            , member_ui<float>::drag_bar<0, 0, 100, "%.2f%%">
+            , member_help<"How much the file is compressed in disk"
+            >>
+        , obj_member_ro
+            < "HasAlphaChannel"
+            , +[](bitmap_info& I, bool, bool& Out)
+            {
+                if (isNotValid(I))
+                {
+                    Out = "No Bitmap loaded";
+                    return;
+                }
+                Out = I.m_pBitmap->hasAlphaChannel();
+            }
+            , member_help<"Checks if the data has an alpha channel" 
+            >>
+        , obj_member_ro
+            < "SRGB"
+            , +[](bitmap_info& I, bool, bool& Out)
+            {
+                Out = !I.m_pBitmap->isLinearSpace();
+            }
+            , member_help<"Check if the data is in Gamma space (if true) or Linear Space (if false)" 
+            >>
+        , obj_member_ro
+            < "FrameCount"
+            , +[](bitmap_info& I, bool, int& Out)
+            {
+                if (isNotValid(I))
+                {
+                    Out = 0;
+                    return;
+                }
+                Out = static_cast<int>(I.m_pBitmap->getFrameCount());
+            }
+            , member_help<"Tells how many frames there is in this file" 
+            >>
+        , obj_member_ro
+            < "FrameSize"
+            , +[](bitmap_info& I, bool, std::string& Out)
+            {
+                if (I.m_pBitmap->getDataSize() == 0)
+                {
+                    Out = "No Bitmap loaded";
+                    return;
+                }
+                Out = ConvertToCommas(I.m_pBitmap->getFrameSize());
+            }
+            , member_help<"How big a frame in the file is" 
+            >>
+        , obj_member_ro
+            < "isCubeMap"
+            , +[](bitmap_info& I, bool, bool& Out)
+            {
+                Out = I.m_pBitmap->isCubemap();
+            }
+            , member_help<"Check if the image is a cube map" 
+            >>
+        , obj_member_ro
+            < "NumFaces"
+            , +[](bitmap_info& I, bool, int& Out)
+                {
+                    Out = static_cast<int>(I.m_pBitmap->getFaceCount());
+                }
+                , member_help<"If we have loaded a cubemap how many faces the file contains" 
+                >>
+        , obj_member_ro
+            < "FaceSize"
+            , +[](bitmap_info& I, bool, std::string& Out)
+            {
+                if (I.m_pBitmap->getDataSize() == 0)
+                {
+                    Out = "No Bitmap loaded";
+                    return;
+                }
+                Out = ConvertToCommas(I.m_pBitmap->getFaceSize());
+            }
+            , member_help<"How many bytes does a face of the cubemap / texture array is in this file" 
+            >>
+        , obj_member_ro
+            < "Mips"
+            , &bitmap_info::m_MipMapSizes
+            , member_help<"Tells how many mip map the image has" 
+            >>
+        );
+    };
+    XPROPERTY_REG2(bitmap_info_props, xtexture_inspector::bitmap_info)
+}

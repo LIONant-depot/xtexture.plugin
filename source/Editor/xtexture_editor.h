@@ -750,8 +750,6 @@ namespace xtexture_editor
 
             m_ViewerInspector.AppendComponent(*xproperty::getObject(m_Preview.m_DrawOptions), &m_Preview.m_DrawOptions);
 
-            m_ViewerInspector.AppendComponent(*xproperty::getObject(m_Preview.m_Storage), &m_Preview.m_Storage);      // (first: its RscTexture where the bitmap's file name was)
-
             m_ViewerInspector.AppendComponent(*xproperty::getObject(m_Preview.m_BitmapInspector), &m_Preview.m_BitmapInspector);
 
 

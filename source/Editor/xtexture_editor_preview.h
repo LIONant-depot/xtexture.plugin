@@ -5,7 +5,7 @@
 // Texture-editor preview mechanics taught by E10_TextureResourcePipeline.cpp, hosted inside
 // the NEW editor-framework session (plugin document/commands/UI). xresource_editor itself is not modified.
 // Safe load: bitmap_inspector::Load + xgpu::tools::bitmap::Create (not getResource on library guids).
-#include "source/Examples/E05_Textures/E05_BitmapInspector.h"
+#include "plugins/xtexture.plugin/source/Editor/xtexture_editor_bitmap_info.h"
 #include "source/Tools/xgpu_imgui_breach.h"
 #include "source/Tools/xgpu_view.h"
 #include "dependencies/xprim_geom/source/xprim_geom.h"
@@ -1012,91 +1012,6 @@ struct mesh_mgr
         return ResourcePath;
     }
 
-    // What the compiled file says about how the texture is stored: the encoding (super compression), the GPU format it becomes,
-    // the bytes on disk (part 0 + part 1) next to the GPU's size (what the transcoded texture takes in memory) and their ratio.
-    // The mips / faces / dimensions stay in "Bitmap Info" (they come from the loaded bitmap).
-    struct texture_storage
-    {
-        xrsc::texture_ref               m_RscTexture{};             // the texture itself (its thumbnail and name, the standard resource reference)
-        xtexture_file::stored_encoding  m_Encoding  = xtexture_file::stored_encoding::NATIVE;
-        xbitmap::format                 m_GpuFormat = xbitmap::format::INVALID;
-        std::size_t                     m_Part0Size = 0;        // the file
-        std::size_t                     m_Part1Size = 0;        // its ".1" (0: the texture has none)
-        std::size_t                     m_GpuSize   = 0;        // the bitmap's data, in the GPU format
-        bool                            m_bValid    = false;
-
-        static const char* EncodingName(xtexture_file::stored_encoding E) noexcept
-        {
-            switch (E)
-            {
-                case xtexture_file::stored_encoding::NATIVE:     return "NATIVE";
-                case xtexture_file::stored_encoding::UASTC:      return "UASTC";
-                case xtexture_file::stored_encoding::ETC1S:      return "ETC1S";
-                case xtexture_file::stored_encoding::UASTC_HDR:  return "UASTC_HDR";
-                default:                                         return "Unexpected encoding";
-            }
-        }
-
-        static const char* FormatName(xbitmap::format F) noexcept
-        {
-            switch (F)
-            {
-                case xbitmap::format::BC1_4RGB:             return "BC1_4RGB";
-                case xbitmap::format::BC1_4RGBA1:           return "BC1_4RGBA1";
-                case xbitmap::format::BC2_8RGBA:            return "BC2_8RGBA";
-                case xbitmap::format::BC3_8RGBA:            return "BC3_8RGBA";
-                case xbitmap::format::BC3_81Y0X_NORMAL:     return "BC3_81Y0X_NORMAL";
-                case xbitmap::format::BC4_4R:               return "BC4_4R";
-                case xbitmap::format::BC5_8RG:              return "BC5_8RG";
-                case xbitmap::format::BC5_8YX_NORMAL:       return "BC5_8YX_NORMAL";
-                case xbitmap::format::BC6H_8RGB_SFLOAT:     return "BC6H_8RGB_SFLOAT";
-                case xbitmap::format::BC6H_8RGB_UFLOAT:     return "BC6H_8RGB_UFLOAT";
-                case xbitmap::format::BC7_8RGBA:            return "BC7_8RGBA";
-                case xbitmap::format::R8G8B8A8:             return "R8G8B8A8";
-                case xbitmap::format::R16G16B16A16_SFLOAT:  return "R16G16B16A16_SFLOAT";
-                case xbitmap::format::R32G32B32A32_FLOAT:   return "R32G32B32A32_FLOAT";
-                default:                                    return "Unexpected format";
-            }
-        }
-
-        XPROPERTY_DEF
-        ( "Storage", texture_storage
-        , obj_member<"RscTexture", &texture_storage::m_RscTexture, member_flags<xproperty::flags::SHOW_READONLY>, member_help<"The texture resource">>
-        , obj_member_ro
-            < "Stored Encoding"
-            , +[](texture_storage& S, bool, std::string& Out) { Out = S.m_bValid ? EncodingName(S.m_Encoding) : "No texture loaded"; }
-            , member_help<"How the compiled file stores the mips: NATIVE (the GPU format's blocks, zstd packed), or one of the Basis super compressions "
-                          "(UASTC, ETC1S, UASTC_HDR) that the loader transcodes into the GPU format"
-            >>
-        , obj_member_ro
-            < "GPU Format"
-            , +[](texture_storage& S, bool, std::string& Out) { Out = S.m_bValid ? FormatName(S.m_GpuFormat) : "No texture loaded"; }
-            , member_help<"The format the GPU gets: what the stored mips are transcoded into (the stored format itself when NATIVE)"
-            >>
-        , obj_member_ro
-            < "Part 0"
-            , +[](texture_storage& S, bool, std::string& Out) { Out = S.m_bValid ? e05::bitmap_inspector::ConvertToCommas(S.m_Part0Size) : "No texture loaded"; }
-            , member_help<"Size of the resource file: the header and the small mips (always loaded)"
-            >>
-        , obj_member_ro
-            < "Part 1"
-            , +[](texture_storage& S, bool, std::string& Out) { Out = !S.m_bValid ? "No texture loaded" : S.m_Part1Size ? e05::bitmap_inspector::ConvertToCommas(S.m_Part1Size) : "none"; }
-            , member_help<"Size of the '.1' file: the big mips (streamed in as the texture needs them)"
-            >>
-        , obj_member_ro
-            < "Total On Disk"
-            , +[](texture_storage& S, bool, std::string& Out) { Out = S.m_bValid ? e05::bitmap_inspector::ConvertToCommas(S.m_Part0Size + S.m_Part1Size) : "No texture loaded"; }
-            , member_help<"Part 0 + part 1"
-            >>
-        , obj_member_ro
-            < "GPU Size"
-            , +[](texture_storage& S, bool, std::string& Out) { Out = S.m_bValid ? e05::bitmap_inspector::ConvertToCommas(S.m_GpuSize) : "No texture loaded"; }
-            , member_help<"What the texture takes in memory once transcoded into the GPU format, all its mips and faces (no zstd, no super compression)"
-            >>
-        );      // (how much the disk copy saves: Bitmap Info's Disk Compression)
-    };
-    XPROPERTY_REG(texture_storage)
-
     struct runtime
     {
         xgpu::device*                  m_pDevice = nullptr;
@@ -1105,8 +1020,8 @@ struct mesh_mgr
         draw_options                    m_DrawOptions{};
         draw_controls                   m_DrawControls{m_DrawOptions};
         std::unique_ptr<xtexture_file::loaded> m_pLoaded{};      // the compiled texture (both parts, assembled); the inspector borrows its bitmap
-        e05::bitmap_inspector           m_BitmapInspector{};
-        texture_storage                 m_Storage{};
+        xtexture_inspector::bitmap_info m_BitmapInspector{};
+        std::uint64_t                   m_TextureInstance = 0;     // (the loaded texture's: Bitmap Info's RscTexture, set after Borrow)
         material_mgr::material_instance m_UserMaterial{};
         material_mgr::material_instance m_BackgroundMaterial{};
         std::wstring                    m_ResourcePath{};
@@ -1126,15 +1041,13 @@ struct mesh_mgr
         void LoadFromDescriptorPath(const std::wstring& DescriptorPath) noexcept
         {
             m_bHasTexture = false;
-            m_Storage = {};
             if (!m_pDevice) return;
             m_ResourcePath = ResourcePathFromDescriptorPath(DescriptorPath);
             {   // the texture's own reference: its descriptor's folder name is its instance guid (<guid hex>.desc)
                 std::filesystem::path D(DescriptorPath);
                 if (D.extension() != L".desc") D = D.parent_path();
-                m_Storage.m_RscTexture.m_Instance.m_Value = std::wcstoull(D.stem().wstring().c_str(), nullptr, 16);
+                m_TextureInstance = std::wcstoull(D.stem().wstring().c_str(), nullptr, 16);
             }
-            m_BitmapInspector.m_bShowFileName = false;
             if (m_ResourcePath.empty() || !std::filesystem::exists(m_ResourcePath))
             {
                 m_BitmapInspector.clear();
@@ -1152,14 +1065,15 @@ struct mesh_mgr
             }
             std::error_code Ec;
             std::size_t FileSize = std::filesystem::file_size(m_ResourcePath, Ec);
-            m_Storage.m_Part0Size = Ec ? 0 : FileSize;
-            if (const auto S1 = std::filesystem::file_size(m_ResourcePath + L".1", Ec); !Ec) { FileSize += S1; m_Storage.m_Part1Size = S1; }
+            const std::size_t Part0 = Ec ? 0 : FileSize; std::size_t Part1 = 0;
+            if (const auto S1 = std::filesystem::file_size(m_ResourcePath + L".1", Ec); !Ec) { FileSize += S1; Part1 = S1; }
             m_pLoaded = std::move(pLoaded);
-            m_Storage.m_Encoding  = m_pLoaded->m_Encoding;
-            m_Storage.m_GpuFormat = m_pLoaded->m_Bitmap.getFormat();
-            m_Storage.m_GpuSize   = m_pLoaded->m_Bitmap.getDataSize();
-            m_Storage.m_bValid    = true;
+            const auto Encoding = m_pLoaded->m_Encoding;
             m_BitmapInspector.Borrow(m_ResourcePath, m_pLoaded->m_Bitmap, FileSize);
+            m_BitmapInspector.m_RscTexture.m_Instance.m_Value = m_TextureInstance;
+            m_BitmapInspector.m_StoredEncoding = Encoding == xtexture_file::stored_encoding::UASTC ? "UASTC" : Encoding == xtexture_file::stored_encoding::ETC1S ? "ETC1S"
+                                               : Encoding == xtexture_file::stored_encoding::UASTC_HDR ? "UASTC_HDR" : "NATIVE";
+            m_BitmapInspector.m_Part0Size = Part0; m_BitmapInspector.m_Part1Size = Part1;
             if (m_BitmapInspector.m_pBitmap->getFormat() == xbitmap::format::INVALID)
                 return;
 
