@@ -1093,17 +1093,7 @@ struct mesh_mgr
             , +[](texture_storage& S, bool, std::string& Out) { Out = S.m_bValid ? e05::bitmap_inspector::ConvertToCommas(S.m_GpuSize) : "No texture loaded"; }
             , member_help<"What the texture takes in memory once transcoded into the GPU format, all its mips and faces (no zstd, no super compression)"
             >>
-        , obj_member_ro
-            < "Disk / GPU"
-            , +[](texture_storage& S, bool, std::string& Out)
-            {
-                if (!S.m_bValid || S.m_GpuSize == 0) { Out = "No texture loaded"; return; }
-                const double Disk = double(S.m_Part0Size + S.m_Part1Size);
-                Out = std::format("{:.2f}%  ({:.2f} : 1)", 100.0 * Disk / double(S.m_GpuSize), double(S.m_GpuSize) / Disk);
-            }
-            , member_help<"The file's bytes over the GPU size: how much smaller the disk copy is (lower is smaller)"
-            >>
-        );
+        );      // (how much the disk copy saves: Bitmap Info's Disk Compression)
     };
     XPROPERTY_REG(texture_storage)
 
