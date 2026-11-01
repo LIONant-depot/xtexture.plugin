@@ -683,6 +683,33 @@ namespace xtexture_rsc
     , xproperty::settings::enum_item("CUBE_MAP_GGX_ROUGHNESS",   mipmap_filter::CUBE_MAP_GGX_ROUGHNESS)
     };
 
+    // Super compression: a smaller file on top of the chosen compression format - the GPU always gets that format (BC1, BC5, BC7, ...);
+    // the file stores something smaller and the runtime transcodes it into the format while loading (no runtime cost after the load,
+    // streaming unchanged). Which one (texture pipeline plan, section 3; Tomas 2026-11-01):
+    //   NONE         The format's own blocks (zstd around them). The best quality: what the encoder made reaches the GPU as is.
+    //   BASIS_UASTC  Basis Universal UASTC (4x4 blocks of 16 bytes, like BC7) tuned by RDO so zstd shrinks it further. Near the plain
+    //                format's quality (each block keeps up to 3 colour lines, fine per-pixel weights, alpha): typically ~40-45 dB on
+    //                albedo, about BC7's. Measured on a 4K BC7: 65% of plain at strength 0.5 (45 dB vs 54), 62% at 1 (43 dB).
+//                Only for the 16-byte formats (BC7, BC3, BC5): against BC1/BC4 (8 bytes a block) the file grows.
+    //                Every block stands alone, so every mip does: streams like a plain texture. The choice for hero assets, UI,
+    //                detailed albedo, masks.
+    //   BASIS_ETC1S  Basis Universal ETC1S: one base colour per block with 4 brightness steps, the colours and patterns picked from
+    //                codebooks shared by the whole texture. The smallest files (often 2-3x smaller than UASTC), at a clear quality
+    //                cost: colour bleeding and 4x4 blockiness where two hues meet in a block, banding on gradients, small details
+    //                approximated (typically ~32-38 dB). For distant / background art, terrain layers, rough surfaces, mobile or web
+    //                builds. Its codebooks go with the tail (part 0) so it streams too. (Not built yet: the next step after UASTC.)
+    enum class super_compression : std::uint8_t
+    { NONE
+    , BASIS_UASTC
+    , BASIS_ETC1S
+    };
+
+    static constexpr auto super_compression_v = std::array
+    { xproperty::settings::enum_item("NONE",            super_compression::NONE)
+    , xproperty::settings::enum_item("BASIS_UASTC",     super_compression::BASIS_UASTC)
+    , xproperty::settings::enum_item("BASIS_ETC1S",     super_compression::BASIS_ETC1S)
+    };
+
     struct descriptor final : xresource_pipeline::descriptor::base
     {
         input_variant               m_InputVariant  {};
@@ -700,7 +727,8 @@ namespace xtexture_rsc
         
         float                       m_Quality                   { 0.5f };
         bool                        m_bSRGB                     { true };
-        bool                        m_bSuperCompression         { false };     // a smaller file on top of the chosen format (RDO / Basis: a later phase)
+        super_compression           m_SuperCompression          { super_compression::NONE };   // a smaller file on top of the chosen format (see super_compression)
+        float                       m_SuperCompressionStrength  { 0.5f };      // 0: the best quality the method has, 1: the smallest file
         bool                        m_bGenerateMips             { true };
         int                         m_MipCustomMinSize          {1};
         bool                        m_bFillAveColorByAlpha      { false };
@@ -778,7 +806,17 @@ namespace xtexture_rsc
             }
 
             if (m_Compression == compression_format::RGB_SUPER_COMPRESS || m_Compression == compression_format::RGBA_SUPER_COMPRESS)
-                Errors.push_back("Super compression is now an option on top of a format: pick BC7 (or another format) and check Super Compression");
+                Errors.push_back("Super compression is now an option on top of a format: pick BC7 (or another format) and choose a Super Compression");
+            if (m_SuperCompression != super_compression::NONE && canSuperCompress())
+            {
+                if (m_SuperCompression == super_compression::BASIS_ETC1S)
+                    Errors.push_back("Super Compression BASIS_ETC1S is not built yet: use BASIS_UASTC or NONE");
+                // UASTC is 16 bytes a block: smaller files only against the 16-byte formats - against BC1 / BC4 (8 bytes) it is bigger
+                // (a 4K BC1 measured 158% of plain at the strongest RDO) and cannot look better than them
+                if (m_SuperCompression == super_compression::BASIS_UASTC && m_Compression != compression_format::RGBA_BC7
+                    && m_Compression != compression_format::RGBA_BC3_A8 && m_Compression != compression_format::RG_BC5)
+                    Errors.push_back("Super Compression BASIS_UASTC only makes BC7, BC3 or BC5 files smaller (its blocks are 16 bytes: BC1/BC4 files would grow): use NONE (or BASIS_ETC1S when it exists)");
+            }
 
             if(m_bTillableFilter)
             {
@@ -998,11 +1036,24 @@ namespace xtexture_rsc
                           "file size. It's like choosing between different ways to save your picture "
                           "to make it smaller without losing too much quality."
             >>
-        , obj_member<"Super Compression"
-            , &descriptor::m_bSuperCompression
+        , obj_member<"SuperCompression"
+            , &descriptor::m_SuperCompression
+            , member_enum_span<super_compression_v>
             , member_dynamic_flags<+[](const descriptor& O) { xproperty::flags::type Flags{}; Flags.m_bDontShow = !O.canSuperCompress(); return Flags; }>
-            , member_help<"A smaller file on top of the chosen compression (the GPU still gets that format). Off by default: it loses more quality than the plain format. "
-                          "Not for normal maps, HDR or uncompressed textures. (Not active yet: compiled without it, with a warning.)">
+            , member_help<"A smaller file on top of the chosen compression: the GPU still gets that format, the file stores something smaller that is "
+                          "transcoded into it while loading. NONE (default): the format's own blocks, the best quality. "
+                          "BASIS_UASTC: near the plain format's quality (each 4x4 block keeps several colours and alpha), files about 60-65% of plain BC7 + zstd "
+                          "(BC7, BC3, BC5 only) - for hero assets, UI, detailed albedo, masks. "
+                          "BASIS_ETC1S: the smallest files (often 2-3x smaller than UASTC) at a clear quality cost - one colour per block from shared "
+                          "codebooks: colour bleeding, blockiness, banding - for distant or background art, terrain layers, rough surfaces (not built yet). "
+                          "Not for normal maps, HDR or uncompressed textures.">
+            >
+        , obj_member<"SuperCompressionStrength"
+            , &descriptor::m_SuperCompressionStrength
+            , member_ui<float>::scroll_bar<0.0f, 1.0f>
+            , member_dynamic_flags<+[](const descriptor& O) { xproperty::flags::type Flags{}; Flags.m_bDontShow = !O.canSuperCompress() || O.m_SuperCompression == super_compression::NONE; return Flags; }>
+            , member_help<"How hard super compression shrinks the file: 0 the best quality the method has (UASTC: no RDO), 1 the smallest file "
+                          "(UASTC: the strongest RDO - more blocks made alike so zstd finds more to share, at some quality).">
             >
         , obj_member<"AlphaThreshold"
             , &descriptor::m_AlphaThreshold 

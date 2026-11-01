@@ -3,6 +3,8 @@
 #include "dependencies/xbitmap/source/xbitmap.h"
 #include "dependencies/xbitmap/source/bridges/xserializer/xbitmap_to_xserializer.h"
 #include "xtexture_file.h"
+#define XTEXTURE_BASIS_IMPLEMENTATION       // the Basis transcoder (UASTC -> the GPU format) compiled into the module this loader is in
+#include "xtexture_basis.h"
 #include "dependencies/xscheduler/source/xscheduler.h"
 #include "dependencies/xresource_guid/source/bridges/xresource_xproperty_bridge.h"
 #include <chrono>

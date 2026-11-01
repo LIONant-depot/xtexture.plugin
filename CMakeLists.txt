@@ -36,6 +36,13 @@ add_subdirectory("Build/dependency" "${CMAKE_CURRENT_BINARY_DIR}/xtexture_compil
 # build/dependency/CMakeLists.txt already applies for the identical reason.
 target_compile_definitions(${TARGET_PROJECT} PRIVATE XRESOURCE_PIPELINE_NO_COMPILER)
 
+# "dependencies/<lib>/..." includes resolve against this folder first: a library's own nested dependencies/ (xserializer's, from building it
+# alone: an old xfile) matched first through its include root and the compiler built against stale headers
+target_include_directories(${TARGET_PROJECT} BEFORE PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+
+# Basis Universal (super compression): no SSE4.1 code paths (no per-file flags), no OpenCL, no KTX2 zstd (the texture file's zstd is xserializer's)
+target_compile_definitions(${TARGET_PROJECT} PRIVATE BASISU_SUPPORT_SSE=0 BASISU_SUPPORT_OPENCL=0 BASISD_SUPPORT_KTX2_ZSTD=0)
+
 # ADD SUPPORT FOR OPEN_MP
 find_package(OpenMP REQUIRED)
 target_link_libraries(${TARGET_PROJECT} PRIVATE OpenMP::OpenMP_CXX)

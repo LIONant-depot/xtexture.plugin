@@ -6,6 +6,10 @@
 #include "dependencies/crunch/inc/crnlib.h"
 #include "../xtexture_rsc_descriptor.h"
 #include "../xtexture_file.h"
+#define XTEXTURE_BASIS_IMPLEMENTATION       // Basis's transcoder in the compiler: the encoder needs it, and the file's read-back
+#include "../xtexture_basis.h"
+#include "dependencies/basis_universal/encoder/basisu_enc.h"
+#include "dependencies/basis_universal/encoder/basisu_uastc_enc.h"
 #include "dependencies/xproperty/source/sprop/property_sprop_xtextfile_serializer.h"
 #include "compressonator.h"   // cmp_compressonatorlib/compressonator.h (the case matters off Windows)
 #include "common.h"           // cmp_compressonatorlib/common.h: CMP_CMIPS (the GPU path allocates its mip set as CMP_ProcessTexture does)
@@ -33,6 +37,7 @@ struct implementation final : xtexture_compiler::instance
     std::unordered_map<std::wstring, int>           m_BitmapHash;
     std::vector<xbitmap>                            m_Bitmaps;
     xbitmap                                         m_FinalBitmap;
+    std::vector<std::vector<std::byte>>             m_UASTC;            // super compression BASIS_UASTC: each mip's UASTC blocks (MipSet's order: mip * faces + face); empty: plain
     void*                                           m_pDDSData;
     bool                                            m_HasMixes;
     xtexture_gpu::encoder                           m_GPU;              // block compression on the GPU (made the first time a texture can use it)
@@ -67,8 +72,8 @@ struct implementation final : xtexture_compiler::instance
         if (auto Err = DoValidation(); Err )
             return Err;
 
-        if (m_Descriptor.m_bSuperCompression && m_Descriptor.canSuperCompress())
-            LogMessage(msg_type::WARNING, "Super Compression is not active yet (texture pipeline plan, P2): compiled with the plain format");
+        if (m_Descriptor.m_SuperCompression == xtexture_rsc::super_compression::BASIS_UASTC && !UASTCTarget())
+            LogMessage(msg_type::WARNING, "Super Compression BASIS_UASTC does not apply to this texture (its usage or format): compiled with the plain format");
 
         // The ORME input is its four titled channels: from here on it is the equivalent mix (O -> R, R -> G, M -> B, E -> A)
         if (const auto* pORME = std::get_if<xtexture_rsc::orme_input>(&m_Descriptor.m_InputVariant))
@@ -1628,6 +1633,63 @@ struct implementation final : xtexture_compiler::instance
 
     //---------------------------------------------------------------------------------------------
 
+    // Super compression BASIS_UASTC applies: the descriptor asks for it, the texture may have it, and UASTC transcodes into its format
+    bool UASTCTarget(void) const noexcept
+    {
+        using cf = xtexture_rsc::compression_format;
+        const auto C = m_Descriptor.m_Compression;
+        return m_Descriptor.m_SuperCompression == xtexture_rsc::super_compression::BASIS_UASTC && m_Descriptor.canSuperCompress()
+            && (C == cf::RGBA_BC3_A8 || C == cf::RG_BC5 || C == cf::RGBA_BC7);       // (16-byte blocks: against BC1/BC4 UASTC files grow)
+    }
+
+    // Every mip of MipSet (8-bit RGBA, MipSet's table order) as UASTC blocks into m_UASTC: each 4x4 block encoded (a mip smaller than a
+    // block repeats its edge pixels), then RDO over the mip's blocks when the strength is above 0 - blocks made more alike so zstd
+    // (the file's xserializer packs) shares more of them, each kept within an error bound. Formats without alpha get an opaque alpha
+    // (UASTC spends no bits on it).
+    void EncodeUASTC(const CMP_MipSet& MipSet)
+    {
+        static std::once_flag s_Init;
+        std::call_once(s_Init, [] { basisu::basisu_encoder_init(); });
+        using cf = xtexture_rsc::compression_format;
+        const bool  bAlpha  = m_Descriptor.m_Compression == cf::RGBA_BC3_A8 || m_Descriptor.m_Compression == cf::RGBA_BC7;
+        // (0: no RDO; quadratic, the size falls fastest at the low end - a 4K BC7: 0.5 -> 65% of plain, 1 -> 62%; basisu's default lambda 0.5)
+        const float Lambda  = 3.0f * m_Descriptor.m_SuperCompressionStrength * m_Descriptor.m_SuperCompressionStrength;
+        const int   nLevels = MipSet.m_nMipLevels * MipSet.m_nDepth;
+        const int   nThreads = std::max(1, getThreadCount());
+        basisu::job_pool Pool(nThreads);
+        m_UASTC.assign(nLevels, {});
+        for (int i = 0; i < nLevels; ++i)
+        {
+            const auto&    L   = *MipSet.m_pMipLevelTable[i];
+            const int      W   = L.m_nWidth, H = L.m_nHeight, BW = (W + 3) / 4, BH = (H + 3) / 4;
+            const auto*    pPx = reinterpret_cast<const std::uint8_t*>(L.m_pbData);
+            std::vector<basist::uastc_block> Blocks(std::size_t(BW) * BH);
+            std::vector<basisu::color_rgba>  Pixels(std::size_t(BW) * BH * 16);
+            #pragma omp parallel for schedule(dynamic)
+            for (int by = 0; by < BH; ++by)
+                for (int bx = 0; bx < BW; ++bx)
+                {
+                    basisu::color_rgba* pB = &Pixels[(std::size_t(by) * BW + bx) * 16];
+                    for (int y = 0; y < 4; ++y)
+                        for (int x = 0; x < 4; ++x)
+                        {
+                            const int      sx = std::min(bx * 4 + x, W - 1), sy = std::min(by * 4 + y, H - 1);
+                            const auto*    p  = pPx + (std::size_t(sy) * W + sx) * 4;
+                            pB[y * 4 + x].set(p[0], p[1], p[2], bAlpha ? p[3] : 255);
+                        }
+                    basisu::encode_uastc(reinterpret_cast<const std::uint8_t*>(pB), Blocks[std::size_t(by) * BW + bx], basisu::cPackUASTCLevelDefault);
+                }
+            if (Lambda > 0)
+            {
+                basisu::uastc_rdo_params Params;
+                Params.m_lambda = Lambda;
+                basisu::uastc_rdo(static_cast<std::uint32_t>(Blocks.size()), Blocks.data(), Pixels.data(), Params, basisu::cPackUASTCLevelDefault, &Pool, nThreads);
+            }
+            m_UASTC[i].resize(Blocks.size() * sizeof(basist::uastc_block));
+            std::memcpy(m_UASTC[i].data(), Blocks.data(), m_UASTC[i].size());
+        }
+    }
+
     void UseCompressonator(void)
     {
         constexpr static auto TextureConversionTable = []() consteval ->auto
@@ -1887,6 +1949,9 @@ struct implementation final : xtexture_compiler::instance
                 CMP_GenerateMIPLevelsEx(&MipSet, &CFilterParam);
             }
         }
+
+        // Super compression: the same mips as UASTC blocks (the file stores those; the GPU format's blocks below set its format and flags)
+        if (UASTCTarget()) { EncodeUASTC(MipSet); LogMessage(msg_type::INFO, std::format("Super Compression BASIS_UASTC, strength {:.2f}", m_Descriptor.m_SuperCompressionStrength)); }
 
         //
         // Set the compression type
@@ -2228,11 +2293,34 @@ struct implementation final : xtexture_compiler::instance
         // with the bigger mips - the runtime loads the tail first, the rest later (streaming)
         //
         const auto Part1Path = std::format(L"{}.1", FilePath);
-        if ( auto Err = xtexture_file::Save( m_FinalBitmap, FilePath, Part1Path
-                                           ,     m_OptimizationType == optimization_type::O0 ? xserializer::compression_level::FAST 
-                                               : m_OptimizationType == optimization_type::O1 ? xserializer::compression_level::MEDIUM
-                                               : xserializer::compression_level::HIGH
-                                           ); Err )
+        const auto Level     =   m_OptimizationType == optimization_type::O0 ? xserializer::compression_level::FAST
+                               : m_OptimizationType == optimization_type::O1 ? xserializer::compression_level::MEDIUM
+                               : xserializer::compression_level::HIGH;
+        // Super compression BASIS_UASTC: the file stores the mips' UASTC blocks (an xbitmap of BC7's geometry - the same 16 bytes per
+        // block - with the texture's flags), the runtime transcodes them into m_FinalBitmap's format
+        xbitmap UASTC;
+        if (!m_UASTC.empty())
+        {
+            const int nMips = m_FinalBitmap.getMipCount(), nFaces = m_FinalBitmap.getFaceCount();
+            std::size_t FaceSize = 0;
+            for (int m = 0; m < nMips; ++m) FaceSize += m_UASTC[std::size_t(m) * nFaces].size();
+            const std::size_t Size = nMips * sizeof(std::int32_t) + FaceSize * nFaces;
+            auto* pData = new std::byte[Size];
+            auto* pOffset = reinterpret_cast<std::int32_t*>(pData);
+            for (int m = 0, Offset = 0; m < nMips; Offset += static_cast<int>(m_UASTC[std::size_t(m) * nFaces].size()), ++m) pOffset[m] = Offset;
+            for (int f = 0; f < nFaces; ++f)
+                for (int m = 0; m < nMips; ++m)
+                {
+                    const auto& U = m_UASTC[std::size_t(m) * nFaces + f];
+                    std::memcpy(pData + nMips * sizeof(std::int32_t) + f * FaceSize + pOffset[m], U.data(), U.size());
+                }
+            UASTC.setup(m_FinalBitmap.getWidth(), m_FinalBitmap.getHeight(), xbitmap::format::BC7_8RGBA, FaceSize, { pData, Size }, true, nMips, 1, m_FinalBitmap.isCubemap());
+            const auto Format = UASTC.getFormat();
+            UASTC.m_Flags = m_FinalBitmap.m_Flags; UASTC.m_Flags.m_bOwnsMemory = true; UASTC.m_ClampColor = m_FinalBitmap.m_ClampColor;
+            UASTC.setFormat(Format);
+        }
+        if ( auto Err = m_UASTC.empty() ? xtexture_file::Save(m_FinalBitmap, FilePath, Part1Path, Level)
+                                        : xtexture_file::Save(UASTC, FilePath, Part1Path, Level, xtexture_file::stored_encoding::UASTC, m_FinalBitmap.getFormat()); Err )
         {
             throw(std::runtime_error( std::string(Err.getMessage()) ));
         }
@@ -2246,10 +2334,12 @@ struct implementation final : xtexture_compiler::instance
             if (auto Err = xtexture_file::Load(FilePath, Part1Path, Loaded); Err)
                 throw(std::runtime_error( std::string( Err.getMessage() ) ));
 
+            // (UASTC: what reads back is the transcode - another encoder's blocks than m_FinalBitmap's: the same texture, not the same bytes)
             const auto& B = Loaded.m_Bitmap;
             if ( B.getWidth() != m_FinalBitmap.getWidth() || B.getHeight() != m_FinalBitmap.getHeight() || B.getMipCount() != m_FinalBitmap.getMipCount()
               || B.getFaceCount() != m_FinalBitmap.getFaceCount() || B.getFormat() != m_FinalBitmap.getFormat() || B.m_Flags.m_Value != (m_FinalBitmap.m_Flags.m_Value & ~std::uint16_t{1 << 1})
-              || std::memcmp(B.getMip<std::byte>(0).data(), m_FinalBitmap.getMip<std::byte>(0).data(), m_FinalBitmap.getFrameSize()) )
+              || B.getFrameSize() != m_FinalBitmap.getFrameSize()
+              || (m_UASTC.empty() && std::memcmp(B.getMip<std::byte>(0).data(), m_FinalBitmap.getMip<std::byte>(0).data(), m_FinalBitmap.getFrameSize())) )
                 throw(std::runtime_error("The texture file does not read back as written"));
         }
     }

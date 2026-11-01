@@ -95,6 +95,46 @@ DefineInterfaceComponent(crunch "dependencies/Crunch"
   "crnlib/lzma_Threads.cpp"
 )
 
+# Basis Universal's encoder (super compression: UASTC, xtexture_basis.h): its own library's source list; its transcoder comes through
+# xtexture_basis.h (XTEXTURE_BASIS_IMPLEMENTATION in the compiler) - one copy of it for the encoder and the file's read-back; its tinyexr is
+# xbmp_tools' (the same library, compiled once)
+DefineInterfaceComponent(basis_universal "dependencies"
+  "**encoder"
+  "encoder/basisu_backend.cpp"
+  "encoder/basisu_basis_file.cpp"
+  "encoder/basisu_comp.cpp"
+  "encoder/basisu_enc.cpp"
+  "encoder/basisu_etc.cpp"
+  "encoder/basisu_frontend.cpp"
+  "encoder/basisu_gpu_texture.cpp"
+  "encoder/basisu_pvrtc1_4.cpp"
+  "encoder/basisu_resampler.cpp"
+  "encoder/basisu_resample_filters.cpp"
+  "encoder/basisu_ssim.cpp"
+  "encoder/basisu_uastc_enc.cpp"
+  "encoder/basisu_bc7e_scalar.cpp"
+  "encoder/basisu_dds_export.cpp"
+  "encoder/basisu_bc7enc.cpp"
+  "encoder/basisu_kernels_sse.cpp"
+  "encoder/basisu_bc15_spmd.cpp"
+  "encoder/basisu_bc15_spmd_sse.cpp"
+  "encoder/basisu_opencl.cpp"
+  "encoder/basisu_uastc_hdr_4x4_enc.cpp"
+  "encoder/basisu_astc_hdr_6x6_enc.cpp"
+  "encoder/basisu_astc_hdr_common.cpp"
+  "encoder/basisu_astc_ldr_common.cpp"
+  "encoder/basisu_astc_ldr_encode.cpp"
+  "encoder/basisu_astc_ldr_fencode.cpp"
+  "encoder/basisu_xbc7_encode.cpp"
+  "encoder/jpgd.cpp"
+  "encoder/pvpngreader.cpp"
+  "encoder/3rdparty/android_astc_decomp.cpp"
+)
+
+# its jpgd is another version than crunch's (both define jpgd::...): Basis's two files that have it use their own namespace name
+set_source_files_properties("${CMAKE_SOURCE_DIR}/dependencies/basis_universal/encoder/jpgd.cpp" "${CMAKE_SOURCE_DIR}/dependencies/basis_universal/encoder/basisu_enc.cpp"
+  DIRECTORY "${CMAKE_SOURCE_DIR}" PROPERTIES COMPILE_DEFINITIONS jpgd=basisu_jpgd)
+
 # Define compressonator
 DefineInterfaceComponent(compressonator "dependencies"
   "**applications/_libs"

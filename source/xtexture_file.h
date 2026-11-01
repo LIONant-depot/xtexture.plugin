@@ -5,6 +5,8 @@
 // The compiled texture file, version 2: the resource file (part 0) and its ".1" (part 1), both xserializer streams.
 //   part 0: the header, the mip sizes, and the tail - the mips of 128x128 and below - as an xbitmap of its own
 //   part 1: the bigger mips in one pack, smallest first (so "down to mip k" is a prefix of it), a cube map's faces of a mip together
+// Version 4: how the mips are stored - the GPU format's own blocks, or Basis UASTC blocks (super compression, xtexture_basis.h) that
+// Load transcodes into the GPU format; version 3 files (no such field: native) still load.
 // No part 1 when every mip is in the tail. Part 1 carries the generation of the compile that wrote it: a part 0 of another compile
 // (a hot reload in the middle of a load) rejects it. Version 1 (a plain xbitmap in the resource file) still loads.
 // The compiler writes with Save, the runtime loader reads with Load (xtexture_xgpu_rsc_loader.cpp).
@@ -12,7 +14,9 @@
 #include "dependencies/xbitmap/source/xbitmap.h"
 #include "dependencies/xbitmap/source/bridges/xserializer/xbitmap_to_xserializer.h"
 #include "dependencies/xserializer/source/xserializer.h"
+#include "xtexture_basis.h"
 #include <array>
+#include <atomic>
 #include <chrono>
 #include <cstring>
 #include <filesystem>
@@ -42,9 +46,15 @@ namespace xtexture_file
     inline constexpr std::uint32_t  tail_max_size_v = 128;          // a mip this size or smaller (both sides) is in the tail
     inline constexpr int            max_mips_v      = 16;
 
+    // how the file's mips are stored
+    enum class stored_encoding : std::uint8_t
+    { NATIVE                                                                // the GPU format's own blocks
+    , UASTC                                                                 // Basis UASTC blocks (16 bytes per 4x4, the tail's xbitmap says BC7): transcoded into m_GpuFormat
+    };
+
     struct part0
     {
-        static constexpr std::uint16_t      xserializer_version_v = 3;     // (a plain xbitmap, version 1 files, is 2)
+        static constexpr std::uint16_t      xserializer_version_v = 4;     // (version 3: no encoding; a plain xbitmap, version 1 files, is 2)
 
         xbitmap                             m_Tail;                         // mips m_nPart1Mips .. m_nMips-1 (all of them when there is no part 1)
         std::uint64_t                       m_Generation    {};             // part 1 must carry the same
@@ -53,6 +63,14 @@ namespace xtexture_file
         std::uint16_t                       m_Height        {};
         std::uint8_t                        m_nMips         {};
         std::uint8_t                        m_nPart1Mips    {};             // mips 0 .. m_nPart1Mips-1 are in part 1
+        stored_encoding                     m_Encoding      { stored_encoding::NATIVE };
+        std::uint32_t                       m_GpuFormat     {};             // the xbitmap::format the GPU gets (the tail's own format when NATIVE)
+    };
+
+    // a version 3 part 0 (no encoding: native) - the same memory, read without the last two fields
+    struct part0_v3 : part0
+    {
+        static constexpr std::uint16_t      xserializer_version_v = 3;
     };
 
     struct part1
@@ -68,7 +86,9 @@ namespace xtexture_file
     // Writes a texture (one frame; every mip of a face together, the xbitmap layout) as part 0 + part 1. Part 1 first, then part 0
     // through a temporary file and a rename, so a reader never sees a part 0 whose part 1 is not there yet. A part 1 left from an
     // older compile is deleted when this one needs none.
-    inline xerr Save(const xbitmap& Bitmap, const std::wstring_view Part0Path, const std::wstring_view Part1Path, xserializer::compression_level Level) noexcept
+    //   Encoding UASTC: Bitmap holds UASTC blocks (its format BC7: the same 16 bytes per 4x4 block), GpuFormat what Load transcodes them into
+    inline xerr Save(const xbitmap& Bitmap, const std::wstring_view Part0Path, const std::wstring_view Part1Path, xserializer::compression_level Level
+                    , stored_encoding Encoding = stored_encoding::NATIVE, xbitmap::format GpuFormat = xbitmap::format::INVALID) noexcept
     {
         const int nMips = Bitmap.getMipCount(), nFaces = Bitmap.getFaceCount();
         if (Bitmap.getFrameCount() != 1 || nMips > max_mips_v) return xerr::create_f<xserializer::state, "A texture file has one frame and at most 16 mips">();
@@ -77,6 +97,8 @@ namespace xtexture_file
         P0.m_Width  = static_cast<std::uint16_t>(Bitmap.getWidth());
         P0.m_Height = static_cast<std::uint16_t>(Bitmap.getHeight());
         P0.m_nMips  = static_cast<std::uint8_t>(nMips);
+        P0.m_Encoding  = Encoding;
+        P0.m_GpuFormat = static_cast<std::uint32_t>(Encoding == stored_encoding::NATIVE || GpuFormat == xbitmap::format::INVALID ? Bitmap.getFormat() : GpuFormat);
         while (P0.m_nPart1Mips < nMips - 1 && std::max(Bitmap.getWidth() >> P0.m_nPart1Mips, Bitmap.getHeight() >> P0.m_nPart1Mips) > tail_max_size_v) ++P0.m_nPart1Mips;
         P0.m_Generation = std::random_device{}() ^ (std::uint64_t(std::random_device{}()) << 32) ^ std::uint64_t(std::chrono::steady_clock::now().time_since_epoch().count());
 
@@ -165,7 +187,19 @@ namespace xtexture_file
 
         part0* pP0 = nullptr;
         XPROFILE_SCOPE("Texture file");
-        if (auto Err = [&] { XPROFILE_SCOPE("Texture part 0"); return xserializer::stream{}.Load(Part0Path, pP0); }(); Err)
+        auto LoadP0 = [&]() -> xerr
+        {
+            XPROFILE_SCOPE("Texture part 0");
+            auto Err = xserializer::stream{}.Load(Part0Path, pP0);
+            if (!Err || Err.getState<xserializer::state>() != xserializer::state::WRONG_VERSION) return Err;
+            part0_v3* pV3 = nullptr;                                            // version 3: native blocks
+            if (auto Err3 = xserializer::stream{}.Load(Part0Path, pV3); Err3) return Err3;
+            pP0 = pV3;
+            pP0->m_Encoding  = stored_encoding::NATIVE;
+            pP0->m_GpuFormat = static_cast<std::uint32_t>(pP0->m_Tail.getFormat());
+            return {};
+        };
+        if (auto Err = LoadP0(); Err)
         {
             if (Err.getState<xserializer::state>() != xserializer::state::WRONG_VERSION) return Err;
 
@@ -183,7 +217,58 @@ namespace xtexture_file
         Out.m_Width = pP0->m_Width; Out.m_Height = pP0->m_Height; Out.m_nMips = pP0->m_nMips; Out.m_nPart1Mips = pP0->m_nPart1Mips;
         Out.m_nFaces = std::uint8_t(Tail.getFaceCount()); Out.m_Part1MipSize = pP0->m_Part1MipSize;
 
-        if (pP0->m_nPart1Mips == 0 || Part1Path.empty()) { Out.m_bPart1Skipped = pP0->m_nPart1Mips != 0; View(Tail); return {}; }
+        // UASTC: the pieces read (every mip, or the tail's) transcoded into the GPU format, in the xbitmap layout of one allocation
+        // that replaces the UASTC one - m_Bitmap then describes the GPU format's texture (its pixels too)
+        const auto Transcode = [&]() -> xerr
+        {
+            if (pP0->m_Encoding != stored_encoding::UASTC) return {};
+            XPROFILE_SCOPE("Texture UASTC transcode");
+            const auto  F      = static_cast<xbitmap::format>(pP0->m_GpuFormat);
+            const int   DB     = xtexture_basis::TargetBlockBytes(F);
+            if (DB == 0) return xerr::create_f<xserializer::state, "The texture's UASTC cannot be transcoded into its GPU format">();
+            const int   nFaces = Out.m_nFaces, nLocal = static_cast<int>(Out.m_MipFaceData.size()) / std::max(1, nFaces);
+            const int   Base   = Out.m_bPart1Skipped ? pP0->m_nPart1Mips : 0;     // the first mip read
+            const auto  Dim    = [&](int m, bool bH) { return std::max(1u, std::uint32_t(bH ? pP0->m_Height : pP0->m_Width) >> (Base + m)); };
+            const auto  Bytes  = [&](int m) { return std::size_t((Dim(m, false) + 3) / 4) * ((Dim(m, true) + 3) / 4) * DB; };
+            std::size_t FaceSize = 0;
+            for (int m = 0; m < nLocal; ++m) FaceSize += Bytes(m);
+            const std::size_t Size  = nLocal * sizeof(std::int32_t) + FaceSize * nFaces;
+            auto* const pData   = static_cast<std::byte*>(xserializer::default_memory_handler_v.Allocate(xserializer::mem_type{ .m_bUnique = true }, Size, 16));
+            auto* const pOffset = reinterpret_cast<std::int32_t*>(pData);
+            std::byte* const pPixels = pData + nLocal * sizeof(std::int32_t);
+            for (int m = 0, Offset = 0; m < nLocal; Offset += static_cast<int>(Bytes(m)), ++m) pOffset[m] = Offset;
+            // a job per (face, mip) piece; the big mips cut in bands of 64 block rows (several jobs on one mip)
+            struct job { int f, m; std::uint32_t r0, r1; };
+            std::vector<job> Jobs;
+            for (int f = 0; f < nFaces; ++f) for (int m = 0; m < nLocal; ++m)
+            {
+                const std::uint32_t BH = (Dim(m, true) + 3) / 4;
+                for (std::uint32_t r = 0; r < BH; r += 64) Jobs.push_back({ f, m, r, std::min(BH, r + 64) });
+            }
+            std::atomic<bool> bOk{ true };
+            const auto Run = [&](std::size_t i)
+            {
+                const auto& J = Jobs[i];
+                std::span<std::byte> Dest{ pPixels + J.f * FaceSize + pOffset[J.m], Bytes(J.m) };
+                if (!xtexture_basis::TranscodeUASTC(Out.m_MipFaceData[J.f * nLocal + J.m], Dest, Dim(J.m, false), Dim(J.m, true), F, J.r0, J.r1)) bOk = false;
+            };
+            if (ParallelFor && Jobs.size() > 1) ParallelFor(Jobs.size(), Run);
+            else for (std::size_t i = 0; i < Jobs.size(); ++i) Run(i);
+            if (!bOk) { xserializer::default_memory_handler_v.Free(xserializer::mem_type{ .m_bUnique = true }, pData); return xerr::create_f<xserializer::state, "The texture's UASTC blocks did not transcode">(); }
+
+            const auto Flags = Out.m_Bitmap.m_Flags; const auto Clamp = Out.m_Bitmap.m_ClampColor;
+            if (Out.m_pFree[3]) xserializer::default_memory_handler_v.Free(xserializer::mem_type{ .m_bUnique = true }, Out.m_pFree[3]);   // (part 1's UASTC: transcoded)
+            Out.m_pFree[3] = pData;
+            Out.m_Bitmap.m_pData = nullptr;
+            Out.m_Bitmap.setup(Dim(0, false), Dim(0, true), F, FaceSize, { pData, Size }, false, nLocal, 1, Tail.isCubemap());
+            Out.m_Bitmap.m_Flags = Flags; Out.m_Bitmap.m_Flags.m_bOwnsMemory = false; Out.m_Bitmap.m_ClampColor = Clamp;
+            PiecesOf(Out.m_Bitmap);
+            for (int m = 0; m < pP0->m_nPart1Mips; ++m)                    // (part 1's sizes as the GPU gets them: residency counts these)
+                Out.m_Part1MipSize[m] = static_cast<std::uint32_t>(std::size_t((std::max(1u, std::uint32_t(pP0->m_Width) >> m) + 3) / 4) * ((std::max(1u, std::uint32_t(pP0->m_Height) >> m) + 3) / 4) * DB);
+            return {};
+        };
+
+        if (pP0->m_nPart1Mips == 0 || Part1Path.empty()) { Out.m_bPart1Skipped = pP0->m_nPart1Mips != 0; View(Tail); return Transcode(); }
 
         part1* pP1 = nullptr;
         xserializer::stream S1; S1.setParallelFor(ParallelFor);
@@ -237,6 +322,7 @@ namespace xtexture_file
         Out.m_Bitmap.m_Flags      = Tail.m_Flags;
         Out.m_Bitmap.m_Flags.m_bOwnsMemory = false;
         Out.m_Bitmap.m_ClampColor = Tail.m_ClampColor;
+        if (pP0->m_Encoding == stored_encoding::UASTC) return Transcode();           // (the transcode assembles: one allocation in the xbitmap layout)
         if (!bAssemble && Tail.getFormat() != xbitmap::format::R8G8B8) return {};       // (xGPU expands R8G8B8 to RGBA from a whole bitmap)
 
         // assembled: per face, every mip in order, after the mip offset table (the xbitmap layout)
@@ -264,6 +350,24 @@ namespace xserializer::io_functions
 {
     template<> inline
     xerr SerializeIO<xtexture_file::part0>(xserializer::stream& Stream, const xtexture_file::part0& P) noexcept
+    {
+        xerr Err;
+        false
+        || (Err = Stream.Serialize(P.m_Tail))
+        || (Err = Stream.Serialize(P.m_Generation))
+        || (Err = Stream.Serialize(P.m_Part1MipSize))
+        || (Err = Stream.Serialize(P.m_Width))
+        || (Err = Stream.Serialize(P.m_Height))
+        || (Err = Stream.Serialize(P.m_nMips))
+        || (Err = Stream.Serialize(P.m_nPart1Mips))
+        || (Err = Stream.Serialize(reinterpret_cast<const std::uint8_t&>(P.m_Encoding)))
+        || (Err = Stream.Serialize(P.m_GpuFormat))
+        ;
+        return Err;
+    }
+
+    template<> inline
+    xerr SerializeIO<xtexture_file::part0_v3>(xserializer::stream& Stream, const xtexture_file::part0_v3& P) noexcept
     {
         xerr Err;
         false
