@@ -6,10 +6,11 @@
 #include "dependencies/crunch/inc/crnlib.h"
 #include "../xtexture_rsc_descriptor.h"
 #include "../xtexture_file.h"
-#define XTEXTURE_BASIS_IMPLEMENTATION       // Basis's transcoder in the compiler: the encoder needs it, and the file's read-back
-#include "../xtexture_basis.h"
 #include "dependencies/basis_universal/encoder/basisu_enc.h"
 #include "dependencies/basis_universal/encoder/basisu_uastc_enc.h"
+#include "dependencies/basis_universal/encoder/basisu_comp.h"
+#define XTEXTURE_BASIS_IMPLEMENTATION       // Basis's transcoder in the compiler (after the encoder's headers: its ASTC helpers once): the encoder needs it, and the file's read-back
+#include "../xtexture_basis.h"
 #include "dependencies/xproperty/source/sprop/property_sprop_xtextfile_serializer.h"
 #include "compressonator.h"   // cmp_compressonatorlib/compressonator.h (the case matters off Windows)
 #include "common.h"           // cmp_compressonatorlib/common.h: CMP_CMIPS (the GPU path allocates its mip set as CMP_ProcessTexture does)
@@ -37,7 +38,8 @@ struct implementation final : xtexture_compiler::instance
     std::unordered_map<std::wstring, int>           m_BitmapHash;
     std::vector<xbitmap>                            m_Bitmaps;
     xbitmap                                         m_FinalBitmap;
-    std::vector<std::vector<std::byte>>             m_UASTC;            // super compression BASIS_UASTC: each mip's UASTC blocks (MipSet's order: mip * faces + face); empty: plain
+    std::vector<std::vector<std::byte>>             m_UASTC;            // super compression: each mip's stored bytes (MipSet's order: mip * faces + face) - UASTC blocks or ETC1S slices; empty: plain
+    xtexture_file::stored_encoding                  m_StoredEncoding = xtexture_file::stored_encoding::NATIVE;
     void*                                           m_pDDSData;
     bool                                            m_HasMixes;
     xtexture_gpu::encoder                           m_GPU;              // block compression on the GPU (made the first time a texture can use it)
@@ -74,6 +76,8 @@ struct implementation final : xtexture_compiler::instance
 
         if (m_Descriptor.m_SuperCompression == xtexture_rsc::super_compression::BASIS_UASTC && !UASTCTarget())
             LogMessage(msg_type::WARNING, "Super Compression BASIS_UASTC does not apply to this texture (its usage or format): compiled with the plain format");
+        if (m_Descriptor.m_SuperCompression == xtexture_rsc::super_compression::BASIS_ETC1S && !ETC1STarget())
+            LogMessage(msg_type::WARNING, "Super Compression BASIS_ETC1S does not apply to this texture (its usage or format): compiled with the plain format");
 
         // The ORME input is its four titled channels: from here on it is the equivalent mix (O -> R, R -> G, M -> B, E -> A)
         if (const auto* pORME = std::get_if<xtexture_rsc::orme_input>(&m_Descriptor.m_InputVariant))
@@ -1690,6 +1694,85 @@ struct implementation final : xtexture_compiler::instance
         }
     }
 
+    // Super compression BASIS_ETC1S applies: asked for, the texture may have it, one image (not a cube map), a format ETC1S transcodes into
+    bool ETC1STarget(void) const noexcept
+    {
+        using cf = xtexture_rsc::compression_format;
+        const auto C = m_Descriptor.m_Compression;
+        return m_Descriptor.m_SuperCompression == xtexture_rsc::super_compression::BASIS_ETC1S && m_Descriptor.canSuperCompress() && !m_Descriptor.isCubeInput()
+            && (C == cf::RGB_BC1 || C == cf::RGBA_BC3_A8 || C == cf::R_BC4 || C == cf::RG_BC5 || C == cf::RGBA_BC7);
+    }
+
+    // Our mips (MipSet, 8-bit RGBA, one face) through Basis's ETC1S encoder (its frontend builds the codebooks shared by every mip), then its
+    // .basis file split: the codebooks and Huffman tables ([counts and sizes][endpoints][selectors][tables], xtexture_basis::etc1s) and each
+    // mip's slices ([colour slice bytes][colour slice][alpha slice]) into m_UASTC - the smallest mip led by the codebooks ([u32 size][...]),
+    // so they are with the tail. Channels as Basis's formats read them: BC4 its red in the colour slice, BC5 red there and green in the alpha
+    // slice, BC3/BC7 an alpha slice. Strength 0 -> quality 255, 1 -> quality 1 (smaller codebooks).
+    void EncodeETC1S(const CMP_MipSet& MipSet)
+    {
+        static std::once_flag s_Init;
+        std::call_once(s_Init, [] { basisu::basisu_encoder_init(); });
+        using cf = xtexture_rsc::compression_format;
+        const auto C = m_Descriptor.m_Compression;
+        basisu::basis_compressor_params P;
+        const int nMips = MipSet.m_nMipLevels;
+        for (int i = 0; i < nMips; ++i)
+        {
+            const auto& L = *MipSet.m_pMipLevelTable[i];
+            basisu::image Img(L.m_nWidth, L.m_nHeight);
+            const auto* pPx = reinterpret_cast<const std::uint8_t*>(L.m_pbData);
+            for (int y = 0; y < L.m_nHeight; ++y) for (int x = 0; x < L.m_nWidth; ++x) { const auto* q = pPx + (std::size_t(y) * L.m_nWidth + x) * 4; Img(x, y).set(q[0], q[1], q[2], q[3]); }
+            if (i == 0) P.m_source_images.push_back(Img);
+            else        { if (P.m_source_mipmap_images.empty()) P.m_source_mipmap_images.resize(1); P.m_source_mipmap_images[0].push_back(Img); }
+        }
+        if (nMips > 1 && P.m_source_mipmap_images.empty()) P.m_source_mipmap_images.resize(1);
+        P.m_quality_level   = std::clamp(static_cast<int>(std::lround(255.0f - 254.0f * m_Descriptor.m_SuperCompressionStrength)), 1, 255);
+        P.m_perceptual      = m_Descriptor.m_bSRGB;
+        P.m_check_for_alpha = false;
+        P.m_force_alpha     = C == cf::RGBA_BC3_A8 || C == cf::RGBA_BC7 || C == cf::RG_BC5;
+        if (C == cf::R_BC4) { P.m_swizzle[0] = P.m_swizzle[1] = P.m_swizzle[2] = 0; P.m_swizzle[3] = 3; }
+        if (C == cf::RG_BC5) { P.m_swizzle[0] = P.m_swizzle[1] = P.m_swizzle[2] = 0; P.m_swizzle[3] = 1; }
+        P.m_status_output   = false;
+        P.m_multithreading  = true;
+        basisu::job_pool Pool(std::max(1, getThreadCount()));
+        P.m_pJob_pool       = &Pool;
+        basisu::basis_compressor Comp;
+        if (!Comp.init(P) || Comp.process() != basisu::basis_compressor::cECSuccess) throw std::runtime_error("Basis ETC1S encoding failed");
+
+        const auto& F = Comp.get_output_basis_file();
+        const auto& H = *reinterpret_cast<const basist::basis_file_header*>(F.data());
+        const auto* pSlices = reinterpret_cast<const basist::basis_slice_desc*>(F.data() + static_cast<std::uint32_t>(H.m_slice_desc_file_ofs));
+        const auto  Bytes = [&](std::uint32_t Ofs, std::uint32_t Size) { return std::span<const std::byte>{ reinterpret_cast<const std::byte*>(F.data()) + Ofs, Size }; };
+        std::vector<std::byte> Codebooks(20);
+        const std::uint32_t Head[5] = { static_cast<std::uint32_t>(H.m_total_endpoints), static_cast<std::uint32_t>(H.m_endpoint_cb_file_size)
+                                      , static_cast<std::uint32_t>(H.m_total_selectors), static_cast<std::uint32_t>(H.m_selector_cb_file_size), static_cast<std::uint32_t>(H.m_tables_file_size) };
+        std::memcpy(Codebooks.data(), Head, sizeof(Head));
+        for (const auto B : { Bytes(H.m_endpoint_cb_file_ofs, H.m_endpoint_cb_file_size), Bytes(H.m_selector_cb_file_ofs, H.m_selector_cb_file_size), Bytes(H.m_tables_file_ofs, H.m_tables_file_size) })
+            Codebooks.insert(Codebooks.end(), B.begin(), B.end());
+
+        m_UASTC.assign(nMips, {});
+        for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(H.m_total_slices); ++i)
+        {
+            const auto& S = pSlices[i];
+            if (static_cast<std::uint32_t>(S.m_image_index) != 0) continue;
+            auto&      M      = m_UASTC[static_cast<std::uint32_t>(S.m_level_index)];
+            const auto Data   = Bytes(S.m_file_ofs, S.m_file_size);
+            if ((static_cast<std::uint32_t>(S.m_flags) & basist::cSliceDescFlagsHasAlpha) == 0)
+            {
+                std::vector<std::byte> Colour(4);
+                const std::uint32_t n = static_cast<std::uint32_t>(Data.size()); std::memcpy(Colour.data(), &n, 4);
+                Colour.insert(Colour.end(), Data.begin(), Data.end());
+                M.insert(M.begin(), Colour.begin(), Colour.end());             // (the colour slice first, whatever the order the file had)
+            }
+            else M.insert(M.end(), Data.begin(), Data.end());
+        }
+        auto& Last = m_UASTC.back();
+        std::vector<std::byte> Lead(4);
+        const std::uint32_t n = static_cast<std::uint32_t>(Codebooks.size()); std::memcpy(Lead.data(), &n, 4);
+        Lead.insert(Lead.end(), Codebooks.begin(), Codebooks.end());
+        Last.insert(Last.begin(), Lead.begin(), Lead.end());
+    }
+
     void UseCompressonator(void)
     {
         constexpr static auto TextureConversionTable = []() consteval ->auto
@@ -1951,7 +2034,8 @@ struct implementation final : xtexture_compiler::instance
         }
 
         // Super compression: the same mips as UASTC blocks (the file stores those; the GPU format's blocks below set its format and flags)
-        if (UASTCTarget()) { EncodeUASTC(MipSet); LogMessage(msg_type::INFO, std::format("Super Compression BASIS_UASTC, strength {:.2f}", m_Descriptor.m_SuperCompressionStrength)); }
+        if (UASTCTarget()) { EncodeUASTC(MipSet); m_StoredEncoding = xtexture_file::stored_encoding::UASTC; LogMessage(msg_type::INFO, std::format("Super Compression BASIS_UASTC, strength {:.2f}", m_Descriptor.m_SuperCompressionStrength)); }
+        if (ETC1STarget()) { EncodeETC1S(MipSet); m_StoredEncoding = xtexture_file::stored_encoding::ETC1S; LogMessage(msg_type::INFO, std::format("Super Compression BASIS_ETC1S, strength {:.2f}", m_Descriptor.m_SuperCompressionStrength)); }
 
         //
         // Set the compression type
@@ -2320,7 +2404,7 @@ struct implementation final : xtexture_compiler::instance
             UASTC.setFormat(Format);
         }
         if ( auto Err = m_UASTC.empty() ? xtexture_file::Save(m_FinalBitmap, FilePath, Part1Path, Level)
-                                        : xtexture_file::Save(UASTC, FilePath, Part1Path, Level, xtexture_file::stored_encoding::UASTC, m_FinalBitmap.getFormat()); Err )
+                                        : xtexture_file::Save(UASTC, FilePath, Part1Path, Level, m_StoredEncoding, m_FinalBitmap.getFormat()); Err )
         {
             throw(std::runtime_error( std::string(Err.getMessage()) ));
         }

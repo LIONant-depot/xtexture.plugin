@@ -95,7 +95,7 @@ DefineInterfaceComponent(crunch "dependencies/Crunch"
   "crnlib/lzma_Threads.cpp"
 )
 
-# Basis Universal's encoder (super compression: UASTC, xtexture_basis.h): its own library's source list; its transcoder comes through
+# Basis Universal's encoder and transcoder (super compression: UASTC, ETC1S - xtexture_basis.h): its own library's source list; the transcoder a source of its own (with the encoder's headers in one file it clashes: XTEXTURE_BASIS_TRANSCODER_LINKED) - formerly through
 # xtexture_basis.h (XTEXTURE_BASIS_IMPLEMENTATION in the compiler) - one copy of it for the encoder and the file's read-back; its tinyexr is
 # xbmp_tools' (the same library, compiled once)
 DefineInterfaceComponent(basis_universal "dependencies"
@@ -129,6 +129,7 @@ DefineInterfaceComponent(basis_universal "dependencies"
   "encoder/jpgd.cpp"
   "encoder/pvpngreader.cpp"
   "encoder/3rdparty/android_astc_decomp.cpp"
+  "transcoder/basisu_transcoder.cpp"
 )
 
 # its jpgd is another version than crunch's (both define jpgd::...): Basis's two files that have it use their own namespace name

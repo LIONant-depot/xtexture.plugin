@@ -41,7 +41,7 @@ target_compile_definitions(${TARGET_PROJECT} PRIVATE XRESOURCE_PIPELINE_NO_COMPI
 target_include_directories(${TARGET_PROJECT} BEFORE PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Basis Universal (super compression): no SSE4.1 code paths (no per-file flags), no OpenCL, no KTX2 zstd (the texture file's zstd is xserializer's)
-target_compile_definitions(${TARGET_PROJECT} PRIVATE BASISU_SUPPORT_SSE=0 BASISU_SUPPORT_OPENCL=0 BASISD_SUPPORT_KTX2_ZSTD=0)
+target_compile_definitions(${TARGET_PROJECT} PRIVATE BASISU_SUPPORT_SSE=0 BASISU_SUPPORT_OPENCL=0 BASISD_SUPPORT_KTX2_ZSTD=0 XTEXTURE_BASIS_TRANSCODER_LINKED)
 
 # ADD SUPPORT FOR OPEN_MP
 find_package(OpenMP REQUIRED)
