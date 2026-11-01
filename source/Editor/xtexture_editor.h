@@ -3,6 +3,7 @@
 #define XTEXTURE_EDITOR_H
 
 #pragma once
+#include "dependencies/xresource_pipeline_v2/source/editor/xresource_editor_inspector_pickers.h"
 #include "dependencies/xeditor/include/xeditor/full_editor_shell.h"
 #include "dependencies/xeditor/include/xeditor/host.h"
 
@@ -741,6 +742,7 @@ namespace xtexture_editor
 
 
             m_ViewerInspector.Clear();
+            xresource_editor::WireResourcePickerCallbacks(m_ViewerInspector.m_Inspector);      // (the standard resource references: the RscTexture row's thumbnail and name)
 
             m_ViewerInspector.m_Inspector.AppendEntity();
 
@@ -748,9 +750,9 @@ namespace xtexture_editor
 
             m_ViewerInspector.AppendComponent(*xproperty::getObject(m_Preview.m_DrawOptions), &m_Preview.m_DrawOptions);
 
-            m_ViewerInspector.AppendComponent(*xproperty::getObject(m_Preview.m_BitmapInspector), &m_Preview.m_BitmapInspector);
+            m_ViewerInspector.AppendComponent(*xproperty::getObject(m_Preview.m_Storage), &m_Preview.m_Storage);      // (first: its RscTexture where the bitmap's file name was)
 
-            m_ViewerInspector.AppendComponent(*xproperty::getObject(m_Preview.m_Storage), &m_Preview.m_Storage);
+            m_ViewerInspector.AppendComponent(*xproperty::getObject(m_Preview.m_BitmapInspector), &m_Preview.m_BitmapInspector);
 
 
 

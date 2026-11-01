@@ -1017,6 +1017,7 @@ struct mesh_mgr
     // The mips / faces / dimensions stay in "Bitmap Info" (they come from the loaded bitmap).
     struct texture_storage
     {
+        xrsc::texture_ref               m_RscTexture{};             // the texture itself (its thumbnail and name, the standard resource reference)
         xtexture_file::stored_encoding  m_Encoding  = xtexture_file::stored_encoding::NATIVE;
         xbitmap::format                 m_GpuFormat = xbitmap::format::INVALID;
         std::size_t                     m_Part0Size = 0;        // the file
@@ -1060,6 +1061,7 @@ struct mesh_mgr
 
         XPROPERTY_DEF
         ( "Storage", texture_storage
+        , obj_member<"RscTexture", &texture_storage::m_RscTexture, member_flags<xproperty::flags::SHOW_READONLY>, member_help<"The texture resource">>
         , obj_member_ro
             < "Stored Encoding"
             , +[](texture_storage& S, bool, std::string& Out) { Out = S.m_bValid ? EncodingName(S.m_Encoding) : "No texture loaded"; }
@@ -1137,6 +1139,12 @@ struct mesh_mgr
             m_Storage = {};
             if (!m_pDevice) return;
             m_ResourcePath = ResourcePathFromDescriptorPath(DescriptorPath);
+            {   // the texture's own reference: its descriptor's folder name is its instance guid (<guid hex>.desc)
+                std::filesystem::path D(DescriptorPath);
+                if (D.extension() != L".desc") D = D.parent_path();
+                m_Storage.m_RscTexture.m_Instance.m_Value = std::wcstoull(D.stem().wstring().c_str(), nullptr, 16);
+            }
+            m_BitmapInspector.m_bShowFileName = false;
             if (m_ResourcePath.empty() || !std::filesystem::exists(m_ResourcePath))
             {
                 m_BitmapInspector.clear();
