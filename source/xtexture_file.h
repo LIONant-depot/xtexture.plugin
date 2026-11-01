@@ -50,8 +50,8 @@ namespace xtexture_file
     enum class stored_encoding : std::uint8_t
     { NATIVE                                                                // the GPU format's own blocks
     , UASTC                                                                 // Basis UASTC blocks (16 bytes per 4x4, the tail's xbitmap says BC7): transcoded into m_GpuFormat
-    , ETC1S                                                                 // Basis ETC1S: each mip its slices (xtexture_basis::etc1s's layout, any size - the xbitmap's offsets
-                                                                            // say where), the smallest mip led by the shared codebooks ([u32 size][codebooks]): every load has them
+    , ETC1S                                                                 // Basis ETC1S: each (face, mip) its slices (xtexture_basis::etc1s's layout; a mip's faces padded to one size),
+                                                                            // face 0's smallest mip led by the codebooks all faces share ([u32 size][codebooks]): every load has them
     };
 
     struct part0
@@ -240,18 +240,18 @@ namespace xtexture_file
             auto* const pOffset = reinterpret_cast<std::int32_t*>(pData);
             std::byte* const pPixels = pData + nLocal * sizeof(std::int32_t);
             for (int m = 0, Offset = 0; m < nLocal; Offset += static_cast<int>(Bytes(m)), ++m) pOffset[m] = Offset;
-            // ETC1S: the codebooks lead the smallest mip (always in the tail), decoded once for every mip's job
+            // ETC1S: the codebooks lead face 0's smallest mip (always in the tail), decoded once for every (face, mip)'s job
             xtexture_basis::etc1s Codebooks;
-            const auto MipBytes = [&](int f, int m) -> std::span<const std::byte>      // (an ETC1S mip without the codebooks in front)
+            const auto MipBytes = [&](int f, int m) -> std::span<const std::byte>      // (an ETC1S piece without the codebooks in front)
             {
                 auto P = Out.m_MipFaceData[f * nLocal + m];
-                if (!bETC1S || m != nLocal - 1 || P.size() < 4) return P;
+                if (!bETC1S || f != 0 || m != nLocal - 1 || P.size() < 4) return P;
                 std::uint32_t n; std::memcpy(&n, P.data(), 4);
                 return n + 4 <= P.size() ? P.subspan(4 + n) : std::span<const std::byte>{};
             };
             if (bETC1S)
             {
-                const auto Last = Out.m_MipFaceData[nLocal - 1];
+                const auto Last = Out.m_MipFaceData[nLocal - 1];                   // (face 0's smallest mip)
                 std::uint32_t n = 0; if (Last.size() >= 4) std::memcpy(&n, Last.data(), 4);
                 if (Last.size() < 4 + std::size_t(n) || !Codebooks.Init(Last.subspan(4, n))) { xserializer::default_memory_handler_v.Free(xserializer::mem_type{ .m_bUnique = true }, pData); return xerr::create_f<xserializer::state, "The texture's ETC1S codebooks did not decode">(); }
             }
@@ -283,6 +283,7 @@ namespace xtexture_file
             Out.m_Bitmap.m_pData = nullptr;
             Out.m_Bitmap.setup(Dim(0, false), Dim(0, true), F, FaceSize, { pData, Size }, false, nLocal, 1, Tail.isCubemap());
             Out.m_Bitmap.m_Flags = Flags; Out.m_Bitmap.m_Flags.m_bOwnsMemory = false; Out.m_Bitmap.m_ClampColor = Clamp;
+            Out.m_Bitmap.setFormat(F);                                      // (the flags restored above carry the stored format - BC7's for UASTC: the GPU's is F)
             PiecesOf(Out.m_Bitmap);
             for (int m = 0; m < pP0->m_nPart1Mips; ++m)                    // (part 1's sizes as the GPU gets them: residency counts these)
                 Out.m_Part1MipSize[m] = static_cast<std::uint32_t>(std::size_t((std::max(1u, std::uint32_t(pP0->m_Width) >> m) + 3) / 4) * ((std::max(1u, std::uint32_t(pP0->m_Height) >> m) + 3) / 4) * DB);

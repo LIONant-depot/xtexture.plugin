@@ -32,10 +32,11 @@ namespace xtexture_basis
     // Row0 .. Row1 (the whole mip: 0 .. (Height + 3) / 4) - several calls on different rows can run at once. False: a bad block.
     bool TranscodeUASTC( std::span<const std::byte> Src, std::span<std::byte> Dest, std::uint32_t Width, std::uint32_t Height, xbitmap::format F, std::uint32_t Row0, std::uint32_t Row1 ) noexcept;
 
-    // ETC1S: the texture's shared codebooks and Huffman tables (stored once, with the tail: every load has them), decoded once, then any
-    // mip transcoded by itself - several at once (each call its own transcoder state). The codebooks' bytes:
+    // ETC1S: the texture's shared codebooks and Huffman tables (stored once - a cube map's faces share them too - with face 0's smallest
+    // mip, in the tail: every load has them), decoded once, then any (face, mip) transcoded by itself - several at once (each call its
+    // own transcoder state). The codebooks' bytes:
     //   [endpoints count][endpoints bytes][selectors count][selectors bytes][tables bytes] (u32 each) then the three blocks of data
-    // A mip's bytes: [colour slice bytes (u32)][colour slice][alpha slice (the rest, may be empty)]
+    // A (face, mip)'s bytes: [colour slice bytes (u32)][alpha slice bytes (u32)][colour slice][alpha slice] (zeros after: a mip's faces are one size)
     class etc1s
     {
     public:
@@ -114,10 +115,10 @@ namespace xtexture_basis
     bool etc1s::Transcode( std::span<const std::byte> Mip, std::span<std::byte> Dest, std::uint32_t Width, std::uint32_t Height, std::uint32_t Level, xbitmap::format F ) const noexcept
     {
         const auto* pT = static_cast<const basist::basisu_lowlevel_etc1s_transcoder*>(m_p);
-        if (!pT || Mip.size() < 4) return false;
-        std::uint32_t RGB; std::memcpy(&RGB, Mip.data(), 4);
-        if (std::uint64_t(4) + RGB > Mip.size()) return false;
-        const std::uint32_t Alpha = static_cast<std::uint32_t>(Mip.size() - 4 - RGB);
+        if (!pT || Mip.size() < 8) return false;
+        std::uint32_t Sizes[2]; std::memcpy(Sizes, Mip.data(), 8);
+        const std::uint32_t RGB = Sizes[0], Alpha = Sizes[1];
+        if (std::uint64_t(8) + RGB + Alpha > Mip.size()) return false;
         basist::transcoder_texture_format T;
         switch (F)
         {
@@ -133,7 +134,7 @@ namespace xtexture_basis
         basist::basisu_transcoder_state State;                      // (one per call: calls may run at once on the same codebooks)
         return const_cast<basist::basisu_lowlevel_etc1s_transcoder*>(pT)->transcode_image(T, Dest.data(), BW * BH
             , reinterpret_cast<const std::uint8_t*>(Mip.data()), static_cast<std::uint32_t>(Mip.size()), BW, BH, Width, Height, Level
-            , 4, RGB, 4 + std::uint64_t(RGB), Alpha, 0, Alpha != 0, false, 0, &State);
+            , 8, RGB, 8 + std::uint64_t(RGB), Alpha, 0, Alpha != 0, false, 0, &State);
     }
 }
 #endif

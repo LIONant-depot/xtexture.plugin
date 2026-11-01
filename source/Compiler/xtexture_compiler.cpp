@@ -1694,19 +1694,19 @@ struct implementation final : xtexture_compiler::instance
         }
     }
 
-    // Super compression BASIS_ETC1S applies: asked for, the texture may have it, one image (not a cube map), a format ETC1S transcodes into
+    // Super compression BASIS_ETC1S applies: asked for, the texture may have it (a cube map too: its faces share the codebooks), a format ETC1S transcodes into
     bool ETC1STarget(void) const noexcept
     {
         using cf = xtexture_rsc::compression_format;
         const auto C = m_Descriptor.m_Compression;
-        return m_Descriptor.m_SuperCompression == xtexture_rsc::super_compression::BASIS_ETC1S && m_Descriptor.canSuperCompress() && !m_Descriptor.isCubeInput()
+        return m_Descriptor.m_SuperCompression == xtexture_rsc::super_compression::BASIS_ETC1S && m_Descriptor.canSuperCompress()
             && (C == cf::RGB_BC1 || C == cf::RGBA_BC3_A8 || C == cf::R_BC4 || C == cf::RG_BC5 || C == cf::RGBA_BC7);
     }
 
-    // Our mips (MipSet, 8-bit RGBA, one face) through Basis's ETC1S encoder (its frontend builds the codebooks shared by every mip), then its
-    // .basis file split: the codebooks and Huffman tables ([counts and sizes][endpoints][selectors][tables], xtexture_basis::etc1s) and each
-    // mip's slices ([colour slice bytes][colour slice][alpha slice]) into m_UASTC - the smallest mip led by the codebooks ([u32 size][...]),
-    // so they are with the tail. Channels as Basis's formats read them: BC4 its red in the colour slice, BC5 red there and green in the alpha
+    // Our mips (MipSet, 8-bit RGBA, every face an image of its own) through Basis's ETC1S encoder (its frontend builds the codebooks shared
+    // by every mip and face), then its .basis file split: the codebooks and Huffman tables ([counts and sizes][endpoints][selectors][tables],
+    // xtexture_basis::etc1s) and each (mip, face)'s slices ([colour bytes u32][alpha bytes u32][colour slice][alpha slice]) into m_UASTC -
+    // face 0's smallest mip led by the codebooks ([u32 size][...]), so they are with the tail; a mip's faces padded to one size. Channels as Basis's formats read them: BC4 its red in the colour slice, BC5 red there and green in the alpha
     // slice, BC3/BC7 an alpha slice. Strength 0 -> quality 255, 1 -> quality 1 (smaller codebooks).
     void EncodeETC1S(const CMP_MipSet& MipSet)
     {
@@ -1715,17 +1715,18 @@ struct implementation final : xtexture_compiler::instance
         using cf = xtexture_rsc::compression_format;
         const auto C = m_Descriptor.m_Compression;
         basisu::basis_compressor_params P;
-        const int nMips = MipSet.m_nMipLevels;
+        const int nMips = MipSet.m_nMipLevels, nFaces = std::max(1, static_cast<int>(MipSet.m_nDepth));     // (a cube map: its 6 faces are 6 images of one basis file - one set of codebooks for all)
+        P.m_source_mipmap_images.resize(nFaces);
         for (int i = 0; i < nMips; ++i)
-        {
-            const auto& L = *MipSet.m_pMipLevelTable[i];
-            basisu::image Img(L.m_nWidth, L.m_nHeight);
-            const auto* pPx = reinterpret_cast<const std::uint8_t*>(L.m_pbData);
-            for (int y = 0; y < L.m_nHeight; ++y) for (int x = 0; x < L.m_nWidth; ++x) { const auto* q = pPx + (std::size_t(y) * L.m_nWidth + x) * 4; Img(x, y).set(q[0], q[1], q[2], q[3]); }
-            if (i == 0) P.m_source_images.push_back(Img);
-            else        { if (P.m_source_mipmap_images.empty()) P.m_source_mipmap_images.resize(1); P.m_source_mipmap_images[0].push_back(Img); }
-        }
-        if (nMips > 1 && P.m_source_mipmap_images.empty()) P.m_source_mipmap_images.resize(1);
+            for (int f = 0; f < nFaces; ++f)
+            {
+                const auto& L = *MipSet.m_pMipLevelTable[i * nFaces + f];
+                basisu::image Img(L.m_nWidth, L.m_nHeight);
+                const auto* pPx = reinterpret_cast<const std::uint8_t*>(L.m_pbData);
+                for (int y = 0; y < L.m_nHeight; ++y) for (int x = 0; x < L.m_nWidth; ++x) { const auto* q = pPx + (std::size_t(y) * L.m_nWidth + x) * 4; Img(x, y).set(q[0], q[1], q[2], q[3]); }
+                if (i == 0) P.m_source_images.push_back(Img);
+                else        P.m_source_mipmap_images[f].push_back(Img);
+            }
         P.m_quality_level   = std::clamp(static_cast<int>(std::lround(255.0f - 254.0f * m_Descriptor.m_SuperCompressionStrength)), 1, 255);
         P.m_perceptual      = m_Descriptor.m_bSRGB;
         P.m_check_for_alpha = false;
@@ -1750,27 +1751,39 @@ struct implementation final : xtexture_compiler::instance
         for (const auto B : { Bytes(H.m_endpoint_cb_file_ofs, H.m_endpoint_cb_file_size), Bytes(H.m_selector_cb_file_ofs, H.m_selector_cb_file_size), Bytes(H.m_tables_file_ofs, H.m_tables_file_size) })
             Codebooks.insert(Codebooks.end(), B.begin(), B.end());
 
-        m_UASTC.assign(nMips, {});
+        // each (face, mip) piece (MipSet's order: mip * faces + face): [colour slice bytes u32][alpha slice bytes u32][colour slice][alpha slice]
+        std::vector<std::vector<std::byte>> Colour(std::size_t(nMips) * nFaces), Alpha(Colour.size());
         for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(H.m_total_slices); ++i)
         {
-            const auto& S = pSlices[i];
-            if (static_cast<std::uint32_t>(S.m_image_index) != 0) continue;
-            auto&      M      = m_UASTC[static_cast<std::uint32_t>(S.m_level_index)];
-            const auto Data   = Bytes(S.m_file_ofs, S.m_file_size);
-            if ((static_cast<std::uint32_t>(S.m_flags) & basist::cSliceDescFlagsHasAlpha) == 0)
-            {
-                std::vector<std::byte> Colour(4);
-                const std::uint32_t n = static_cast<std::uint32_t>(Data.size()); std::memcpy(Colour.data(), &n, 4);
-                Colour.insert(Colour.end(), Data.begin(), Data.end());
-                M.insert(M.begin(), Colour.begin(), Colour.end());             // (the colour slice first, whatever the order the file had)
-            }
-            else M.insert(M.end(), Data.begin(), Data.end());
+            const auto& S    = pSlices[i];
+            const auto  Data = Bytes(S.m_file_ofs, S.m_file_size);
+            auto&       V    = ((static_cast<std::uint32_t>(S.m_flags) & basist::cSliceDescFlagsHasAlpha) == 0 ? Colour : Alpha)[std::size_t(S.m_level_index) * nFaces + S.m_image_index];
+            V.assign(Data.begin(), Data.end());
         }
-        auto& Last = m_UASTC.back();
-        std::vector<std::byte> Lead(4);
-        const std::uint32_t n = static_cast<std::uint32_t>(Codebooks.size()); std::memcpy(Lead.data(), &n, 4);
-        Lead.insert(Lead.end(), Codebooks.begin(), Codebooks.end());
-        Last.insert(Last.begin(), Lead.begin(), Lead.end());
+        m_UASTC.assign(Colour.size(), {});
+        for (std::size_t i = 0; i < m_UASTC.size(); ++i)
+        {
+            const std::uint32_t Sizes[2] = { static_cast<std::uint32_t>(Colour[i].size()), static_cast<std::uint32_t>(Alpha[i].size()) };
+            m_UASTC[i].resize(sizeof(Sizes)); std::memcpy(m_UASTC[i].data(), Sizes, sizeof(Sizes));
+            m_UASTC[i].insert(m_UASTC[i].end(), Colour[i].begin(), Colour[i].end());
+            m_UASTC[i].insert(m_UASTC[i].end(), Alpha[i].begin(), Alpha[i].end());
+        }
+        // the codebooks lead face 0's smallest mip ([u32 size][codebooks]): the tail is always read, so every load has them
+        {
+            std::vector<std::byte> Lead(4);
+            const std::uint32_t n = static_cast<std::uint32_t>(Codebooks.size()); std::memcpy(Lead.data(), &n, 4);
+            Lead.insert(Lead.end(), Codebooks.begin(), Codebooks.end());
+            auto& First = m_UASTC[std::size_t(nMips - 1) * nFaces];
+            First.insert(First.begin(), Lead.begin(), Lead.end());
+        }
+        // the file has one size per mip for all its faces (the xbitmap layout: one offset per mip) and the faces' slices differ: padded to the biggest
+        // (zeros: zstd makes them nothing; the slice sizes in front say where the data ends)
+        for (int m = 0; m < nMips; ++m)
+        {
+            std::size_t Max = 0;
+            for (int f = 0; f < nFaces; ++f) Max = std::max(Max, m_UASTC[std::size_t(m) * nFaces + f].size());
+            for (int f = 0; f < nFaces; ++f) m_UASTC[std::size_t(m) * nFaces + f].resize(Max);
+        }
     }
 
     void UseCompressonator(void)
