@@ -167,6 +167,8 @@ namespace xtexture_file
         // the whole texture's shape, whatever was read (a v1 file: all its mips, none in a part 1)
         std::uint16_t                           m_Width = 0, m_Height = 0;
         std::uint8_t                            m_nMips = 0, m_nPart1Mips = 0, m_nFaces = 0;
+        stored_encoding                         m_Encoding = stored_encoding::NATIVE;       // how the file stores its mips (a v1 file: native)
+        xbitmap::format                         m_GpuFormat = xbitmap::format::INVALID;     // the format the GPU gets (m_Bitmap's, once transcoded)
         std::array<std::uint32_t, max_mips_v>   m_Part1MipSize{};           // one face's bytes of each part 1 mip
 
         ~loaded() noexcept { for (void* p : m_pFree) if (p) xserializer::default_memory_handler_v.Free(xserializer::mem_type{ .m_bUnique = true }, p); }
@@ -219,6 +221,7 @@ namespace xtexture_file
         const xbitmap& Tail = pP0->m_Tail;
         Out.m_Width = pP0->m_Width; Out.m_Height = pP0->m_Height; Out.m_nMips = pP0->m_nMips; Out.m_nPart1Mips = pP0->m_nPart1Mips;
         Out.m_nFaces = std::uint8_t(Tail.getFaceCount()); Out.m_Part1MipSize = pP0->m_Part1MipSize;
+        Out.m_Encoding = pP0->m_Encoding; Out.m_GpuFormat = static_cast<xbitmap::format>(pP0->m_GpuFormat);
 
         // UASTC / ETC1S / UASTC HDR: the pieces read (every mip, or the tail's) transcoded into the GPU format, in the xbitmap layout of one
         // allocation that replaces the stored one - m_Bitmap then describes the GPU format's texture (its pixels too)

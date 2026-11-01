@@ -137,6 +137,7 @@ static void UastcHdrCube(std::uint32_t W, int nFaces)
     xtexture_file::loaded T;
     CHECK(!xtexture_file::Load(P0, {}, T, {}, false));                 // (the tail alone: the texture's smaller mips, transcoded without the body)
     CHECK(T.m_bPart1Skipped == (W > xtexture_file::tail_max_size_v) && T.m_Bitmap.getFormat() == xbitmap::format::BC6H_8RGB_UFLOAT);
+    CHECK(L.m_Encoding == xtexture_file::stored_encoding::UASTC_HDR && L.m_GpuFormat == xbitmap::format::BC6H_8RGB_UFLOAT && T.m_Encoding == L.m_Encoding);     // (what the texture editor's stats show)
     const int nSkipped = nMips - T.m_Bitmap.getMipCount();
     for (int f = 0; f < nFaces && L.m_MipFaceData.size() == std::size_t(nFaces * nMips); ++f)
         for (int m = 0; m < nMips; ++m)

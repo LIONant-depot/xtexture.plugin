@@ -750,6 +750,8 @@ namespace xtexture_editor
 
             m_ViewerInspector.AppendComponent(*xproperty::getObject(m_Preview.m_BitmapInspector), &m_Preview.m_BitmapInspector);
 
+            m_ViewerInspector.AppendComponent(*xproperty::getObject(m_Preview.m_Storage), &m_Preview.m_Storage);
+
 
 
             m_bInspectorsBound = true;

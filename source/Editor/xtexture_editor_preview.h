@@ -1012,6 +1012,99 @@ struct mesh_mgr
         return ResourcePath;
     }
 
+    // What the compiled file says about how the texture is stored: the encoding (super compression), the GPU format it becomes,
+    // the bytes on disk (part 0 + part 1) next to the GPU's size (what the transcoded texture takes in memory) and their ratio.
+    // The mips / faces / dimensions stay in "Bitmap Info" (they come from the loaded bitmap).
+    struct texture_storage
+    {
+        xtexture_file::stored_encoding  m_Encoding  = xtexture_file::stored_encoding::NATIVE;
+        xbitmap::format                 m_GpuFormat = xbitmap::format::INVALID;
+        std::size_t                     m_Part0Size = 0;        // the file
+        std::size_t                     m_Part1Size = 0;        // its ".1" (0: the texture has none)
+        std::size_t                     m_GpuSize   = 0;        // the bitmap's data, in the GPU format
+        bool                            m_bValid    = false;
+
+        static const char* EncodingName(xtexture_file::stored_encoding E) noexcept
+        {
+            switch (E)
+            {
+                case xtexture_file::stored_encoding::NATIVE:     return "NATIVE";
+                case xtexture_file::stored_encoding::UASTC:      return "UASTC";
+                case xtexture_file::stored_encoding::ETC1S:      return "ETC1S";
+                case xtexture_file::stored_encoding::UASTC_HDR:  return "UASTC_HDR";
+                default:                                         return "Unexpected encoding";
+            }
+        }
+
+        static const char* FormatName(xbitmap::format F) noexcept
+        {
+            switch (F)
+            {
+                case xbitmap::format::BC1_4RGB:             return "BC1_4RGB";
+                case xbitmap::format::BC1_4RGBA1:           return "BC1_4RGBA1";
+                case xbitmap::format::BC2_8RGBA:            return "BC2_8RGBA";
+                case xbitmap::format::BC3_8RGBA:            return "BC3_8RGBA";
+                case xbitmap::format::BC3_81Y0X_NORMAL:     return "BC3_81Y0X_NORMAL";
+                case xbitmap::format::BC4_4R:               return "BC4_4R";
+                case xbitmap::format::BC5_8RG:              return "BC5_8RG";
+                case xbitmap::format::BC5_8YX_NORMAL:       return "BC5_8YX_NORMAL";
+                case xbitmap::format::BC6H_8RGB_SFLOAT:     return "BC6H_8RGB_SFLOAT";
+                case xbitmap::format::BC6H_8RGB_UFLOAT:     return "BC6H_8RGB_UFLOAT";
+                case xbitmap::format::BC7_8RGBA:            return "BC7_8RGBA";
+                case xbitmap::format::R8G8B8A8:             return "R8G8B8A8";
+                case xbitmap::format::R16G16B16A16_SFLOAT:  return "R16G16B16A16_SFLOAT";
+                case xbitmap::format::R32G32B32A32_FLOAT:   return "R32G32B32A32_FLOAT";
+                default:                                    return "Unexpected format";
+            }
+        }
+
+        XPROPERTY_DEF
+        ( "Storage", texture_storage
+        , obj_member_ro
+            < "Stored Encoding"
+            , +[](texture_storage& S, bool, std::string& Out) { Out = S.m_bValid ? EncodingName(S.m_Encoding) : "No texture loaded"; }
+            , member_help<"How the compiled file stores the mips: NATIVE (the GPU format's blocks, zstd packed), or one of the Basis super compressions "
+                          "(UASTC, ETC1S, UASTC_HDR) that the loader transcodes into the GPU format"
+            >>
+        , obj_member_ro
+            < "GPU Format"
+            , +[](texture_storage& S, bool, std::string& Out) { Out = S.m_bValid ? FormatName(S.m_GpuFormat) : "No texture loaded"; }
+            , member_help<"The format the GPU gets: what the stored mips are transcoded into (the stored format itself when NATIVE)"
+            >>
+        , obj_member_ro
+            < "Part 0"
+            , +[](texture_storage& S, bool, std::string& Out) { Out = S.m_bValid ? e05::bitmap_inspector::ConvertToCommas(S.m_Part0Size) : "No texture loaded"; }
+            , member_help<"Size of the resource file: the header and the small mips (always loaded)"
+            >>
+        , obj_member_ro
+            < "Part 1"
+            , +[](texture_storage& S, bool, std::string& Out) { Out = !S.m_bValid ? "No texture loaded" : S.m_Part1Size ? e05::bitmap_inspector::ConvertToCommas(S.m_Part1Size) : "none"; }
+            , member_help<"Size of the '.1' file: the big mips (streamed in as the texture needs them)"
+            >>
+        , obj_member_ro
+            < "Total On Disk"
+            , +[](texture_storage& S, bool, std::string& Out) { Out = S.m_bValid ? e05::bitmap_inspector::ConvertToCommas(S.m_Part0Size + S.m_Part1Size) : "No texture loaded"; }
+            , member_help<"Part 0 + part 1"
+            >>
+        , obj_member_ro
+            < "GPU Size"
+            , +[](texture_storage& S, bool, std::string& Out) { Out = S.m_bValid ? e05::bitmap_inspector::ConvertToCommas(S.m_GpuSize) : "No texture loaded"; }
+            , member_help<"What the texture takes in memory once transcoded into the GPU format, all its mips and faces (no zstd, no super compression)"
+            >>
+        , obj_member_ro
+            < "Disk / GPU"
+            , +[](texture_storage& S, bool, std::string& Out)
+            {
+                if (!S.m_bValid || S.m_GpuSize == 0) { Out = "No texture loaded"; return; }
+                const double Disk = double(S.m_Part0Size + S.m_Part1Size);
+                Out = std::format("{:.2f}%  ({:.2f} : 1)", 100.0 * Disk / double(S.m_GpuSize), double(S.m_GpuSize) / Disk);
+            }
+            , member_help<"The file's bytes over the GPU size: how much smaller the disk copy is (lower is smaller)"
+            >>
+        );
+    };
+    XPROPERTY_REG(texture_storage)
+
     struct runtime
     {
         xgpu::device*                  m_pDevice = nullptr;
@@ -1021,6 +1114,7 @@ struct mesh_mgr
         draw_controls                   m_DrawControls{m_DrawOptions};
         std::unique_ptr<xtexture_file::loaded> m_pLoaded{};      // the compiled texture (both parts, assembled); the inspector borrows its bitmap
         e05::bitmap_inspector           m_BitmapInspector{};
+        texture_storage                 m_Storage{};
         material_mgr::material_instance m_UserMaterial{};
         material_mgr::material_instance m_BackgroundMaterial{};
         std::wstring                    m_ResourcePath{};
@@ -1040,6 +1134,7 @@ struct mesh_mgr
         void LoadFromDescriptorPath(const std::wstring& DescriptorPath) noexcept
         {
             m_bHasTexture = false;
+            m_Storage = {};
             if (!m_pDevice) return;
             m_ResourcePath = ResourcePathFromDescriptorPath(DescriptorPath);
             if (m_ResourcePath.empty() || !std::filesystem::exists(m_ResourcePath))
@@ -1059,8 +1154,13 @@ struct mesh_mgr
             }
             std::error_code Ec;
             std::size_t FileSize = std::filesystem::file_size(m_ResourcePath, Ec);
-            if (const auto S1 = std::filesystem::file_size(m_ResourcePath + L".1", Ec); !Ec) FileSize += S1;
+            m_Storage.m_Part0Size = Ec ? 0 : FileSize;
+            if (const auto S1 = std::filesystem::file_size(m_ResourcePath + L".1", Ec); !Ec) { FileSize += S1; m_Storage.m_Part1Size = S1; }
             m_pLoaded = std::move(pLoaded);
+            m_Storage.m_Encoding  = m_pLoaded->m_Encoding;
+            m_Storage.m_GpuFormat = m_pLoaded->m_Bitmap.getFormat();
+            m_Storage.m_GpuSize   = m_pLoaded->m_Bitmap.getDataSize();
+            m_Storage.m_bValid    = true;
             m_BitmapInspector.Borrow(m_ResourcePath, m_pLoaded->m_Bitmap, FileSize);
             if (m_BitmapInspector.m_pBitmap->getFormat() == xbitmap::format::INVALID)
                 return;
