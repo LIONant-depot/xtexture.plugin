@@ -334,8 +334,8 @@ namespace xtexture_inspector
             >>
         , obj_member_ro
             < "File Parts"
-            , +[](bitmap_info& I, bool, std::string& Out) { const auto A = ConvertToCommas(I.m_Part0Size); Out = A.substr(0, A.find(' ')) + " + " + (I.m_Part1Size ? ConvertToCommas(I.m_Part1Size) : std::string("none")); }
-            , member_help<"FileSize split: the resource file (the header and the small mips, always loaded) + its '.1' (the big mips, streamed)">
+            , +[](bitmap_info& I, bool, std::string& Out) { Out = I.m_Part1Size ? "2" : "1"; }
+            , member_help<"The files the texture is stored in (FileSize is their total): the resource file - the header and the small mips, always loaded - and, when it has big mips, its '.1' with them (streamed in as needed)">
             , member_dynamic_flags<+[](const bitmap_info& O) { xproperty::flags::type F{}; F.m_bDontShow = O.m_StoredEncoding.empty(); return F; }
             >>
         , obj_member_ro
