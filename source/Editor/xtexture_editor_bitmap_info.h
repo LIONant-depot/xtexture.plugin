@@ -195,10 +195,9 @@ namespace xtexture_inspector
 
         XPROPERTY_DEF
         ( "Bitmap Info", bitmap_info
-        , obj_member
+        , obj_member_ro
             < "RscTexture"
             , &bitmap_info::m_RscTexture
-            , member_flags<xproperty::flags::SHOW_READONLY>
             , member_help<"The texture resource">
             , member_dynamic_flags<+[](const bitmap_info& O) { xproperty::flags::type F{}; F.m_bDontShow = O.m_RscTexture.empty(); return F; }
             >>
