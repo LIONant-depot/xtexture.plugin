@@ -196,7 +196,7 @@ namespace xtexture_file
         {
             XPROFILE_SCOPE("Texture part 0");
             auto Err = xserializer::stream{}.Load(Part0Path, pP0);
-            if (!Err || Err.getState<xserializer::state>() != xserializer::state::WRONG_VERSION) return Err;
+            if (!Err || !Err.isState<xserializer::state>() || Err.getState<xserializer::state>() != xserializer::state::WRONG_VERSION) return Err;   // (a file that cannot be opened is an xfile error: no other version to try)
             part0_v3* pV3 = nullptr;                                            // version 3: native blocks
             if (auto Err3 = xserializer::stream{}.Load(Part0Path, pV3); Err3) return Err3;
             pP0 = pV3;
@@ -206,7 +206,7 @@ namespace xtexture_file
         };
         if (auto Err = LoadP0(); Err)
         {
-            if (Err.getState<xserializer::state>() != xserializer::state::WRONG_VERSION) return Err;
+            if (!Err.isState<xserializer::state>() || Err.getState<xserializer::state>() != xserializer::state::WRONG_VERSION) return Err;
 
             // version 1: the bitmap as it is
             xbitmap* pB = nullptr;
