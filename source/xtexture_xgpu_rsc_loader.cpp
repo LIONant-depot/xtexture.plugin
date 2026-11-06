@@ -1,4 +1,5 @@
 
+#include "dependencies/xLIONRender/src/xlionrender_env.h"      // (the environment switches: one answer to MSVC's C4996, header only)
 #include "dependencies/xGPU/source/Tools/xgpu_xcore_bitmap_helpers.h"
 #include "dependencies/xbitmap/source/xbitmap.h"
 #include "dependencies/xbitmap/source/bridges/xserializer/xbitmap_to_xserializer.h"
@@ -109,8 +110,8 @@ namespace
         std::unordered_map<const void*, std::uint64_t> m_DataBytes;         // each image's counted bytes, until Destroy
         std::uint64_t                           m_Bytes     = 0;            // the images' (old and new during a transition)
         std::uint64_t                           m_Reserved  = 0;            // the transitions in flight
-        std::uint64_t                           m_Budget    = [] { const char* p = std::getenv("XTEXTURE_BUDGET_MB"); return p ? std::uint64_t(std::max(0, std::atoi(p))) << 20 : 0; }();
-        int                                     m_DefaultTop = [] { const char* p = std::getenv("XTEXTURE_TOP_MIP"); return p ? std::max(0, std::atoi(p)) : 0; }();
+        std::uint64_t                           m_Budget    = [] { const char* p = xlionrender::Env("XTEXTURE_BUDGET_MB"); return p ? std::uint64_t(std::max(0, std::atoi(p))) << 20 : 0; }();
+        int                                     m_DefaultTop = [] { const char* p = xlionrender::Env("XTEXTURE_TOP_MIP"); return p ? std::max(0, std::atoi(p)) : 0; }();
         std::deque<job>                         m_Waiting;
         std::vector<std::unique_ptr<xfile::read_buffer>> m_ReadBuffers;     // part 1 read whole at the disk's speed into one of these (one per job in flight, kept: no page faults per file)
         int                                     m_nInFlight = 0;
@@ -120,7 +121,7 @@ namespace
         clock::time_point                       m_Start     = {};
     };
     inline residency s_Residency;
-    inline const bool s_bFastRead = std::getenv("XTEXTURE_CACHED_READ") == nullptr;     // XTEXTURE_CACHED_READ=1: part 1 through the file cache as before (A/B)
+    inline const bool s_bFastRead = xlionrender::Env("XTEXTURE_CACHED_READ") == nullptr;     // XTEXTURE_CACHED_READ=1: part 1 through the file cache as before (A/B)
 
     // the profiler's plots of the residency (s_Residency.m_Lock held): whenever its numbers change
     void PlotResidency(void) noexcept
@@ -341,7 +342,7 @@ xresource::loader< xrsc::texture_type_guid_v >::data_type* xresource::loader< xr
     auto&           UserData    = Mgr.getUserData<resource_mgr_user_data>();
     auto            Texture     = std::make_unique<xgpu::texture>();
     xtexture_file::loaded Loaded;
-    static const bool bSync = std::getenv("XTEXTURE_SYNC") != nullptr;
+    static const bool bSync = xlionrender::Env("XTEXTURE_SYNC") != nullptr;
 
     // Load the texture file (part 0 - and part 1 later, in the background: see above). A missing/not-yet-compiled resource is an expected, recoverable case (confirmed
     // live: the thumbnail system eagerly requests a Load for every texture merely SCROLLED into view, so a
