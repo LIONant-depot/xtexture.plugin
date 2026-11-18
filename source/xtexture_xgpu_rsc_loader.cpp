@@ -338,6 +338,8 @@ namespace xtexture_residency
 
 xresource::loader< xrsc::texture_type_guid_v >::data_type* xresource::loader< xrsc::texture_type_guid_v >::Load( xresource::mgr& Mgr, const full_guid& GUID )
 {
+    // E61: no device (the windowless editor, a server): a resource that only draws is not loaded - every caller handles null
+    if (!Mgr.getUserData<resource_mgr_user_data>().m_Device.m_Private) return nullptr;
     XPROFILE_SCOPE("Texture load (tail)");
     auto&           UserData    = Mgr.getUserData<resource_mgr_user_data>();
     auto            Texture     = std::make_unique<xgpu::texture>();
