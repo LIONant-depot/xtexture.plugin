@@ -37,6 +37,25 @@
 #include "gpu_kernels/xtexture_gpu_bc5.h"
 #include "gpu_kernels/xtexture_gpu_bc7.h"
 
+#include <algorithm>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+// std::getenv / std::fopen / std::sscanf are the standard's and safe as used here (switches read once; numbers only); MSVC deprecates them
+// (C4996, its own _s forms), so the warning is answered once, here (the same answer as xlionrender_env.h; Q1: zero warnings in our code)
+namespace xtexture_env
+{
+#if defined(_MSC_VER)
+    #define xtexture_env_ENV_PUSH __pragma(warning(push)) __pragma(warning(disable: 4996))
+    #define xtexture_env_ENV_POP  __pragma(warning(pop))
+#else
+    #define xtexture_env_ENV_PUSH
+    #define xtexture_env_ENV_POP
+#endif
+    inline const char* Env(const char* pName) noexcept { xtexture_env_ENV_PUSH return std::getenv(pName); xtexture_env_ENV_POP }
+}
+
+
 namespace xtexture_gpu
 {
     enum class format { BC1, BC3, BC4, BC5, BC7 };
@@ -64,7 +83,7 @@ namespace xtexture_gpu
         // A device and the kernels' pipelines; false when there is no usable GPU (the compiler then stays on the CPU)
         bool Init() noexcept
         {
-            if (std::getenv("XTEXTURE_NO_GPU")) return false;
+            if (xtexture_env::Env("XTEXTURE_NO_GPU")) return false;
             Mark();
         #if defined(_WIN32)
             m_hLib = LoadLibraryA("vulkan-1.dll");

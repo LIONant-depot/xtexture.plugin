@@ -387,7 +387,7 @@ struct implementation final : xtexture_compiler::instance
                 }
             // break-even on this PC: CPU BC1 ~87 ns/texel and BC7 ~313 ns/texel on 28 threads against ~0.4 s of start-up (lower on smaller CPUs)
             // (XTEXTURE_GPU_MIN_TEXELS replaces the threshold: the calibration knob for another machine, 0 = always the GPU)
-            const char* pMin = std::getenv("XTEXTURE_GPU_MIN_TEXELS");
+            const char* pMin = xtexture_env::Env("XTEXTURE_GPU_MIN_TEXELS");
             // (measured warm 2026-10-31: start-up ~150 ms - instance 121 ms is the NVIDIA driver itself, device 29 ms; a 1024^2 BC1 / BC5
             //  already compiles as fast as on the CPU, a 2048^2 BC7 in 0.90 s vs 1.65 s. The first run after a rebuild is slower: driver caches)
             if (Texels < (pMin ? std::strtoull(pMin, nullptr, 10) : (Fmt == xtexture_gpu::format::BC7 ? 256u * 1024u : 1024u * 1024u))) return false;
